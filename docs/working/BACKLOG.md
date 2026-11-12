@@ -174,8 +174,6 @@ three were adopted on 2026-10-12, and 1, 2 and 7 on 2026-11-11 (now in
   - SP-B4-Q3 / SC-B4F-1: the SDK's requests have no timeout: a write
     checkpoint hung on a dead connection holds uploads, Esci, the erase and the
     restart until a reopen (owner check 2026-10-28); only inserts are batched.
-- `docs/OWNER_TODO.md` mixes what is passed with what waits, in milestone order, so the
-  owner scrolls for the next step. List what waits first (generator, after B7).
 - B3 SELF-B3-Q1: a switch deferred after sign-in says "Backup pronto. Riapri
   l’app" only in Impostazioni. Consider a one-line notice on Home.
 - B1 SC-B1-Q6: an older app beside a synced tab makes a refused save say "sostituito o
@@ -184,6 +182,28 @@ three were adopted on 2026-10-12, and 1, 2 and 7 on 2026-11-11 (now in
 - T1 CQ-6: each e2e seeding fixture re-reads the course `bootstrapCourse` just created.
 - Persistence API invariant (D3 DI-R2-Q4 / DI-Q5): forbid mutating SQL through read APIs
   or raw execution, or route it through the guarded write lock. No app caller does so.
+
+From the WX1 reviews (`.evidence/WX1/`, round 1), not fixed in WX1:
+
+- the method: rerun `scripts/weather-backtest.mjs` with the shipped windows and
+  gust alignment once a source holds July–October 2026 for Cap Pertusato and La
+  Chiappa (FM-2); count lead from each model's run, not the download (FM-3); thunder
+  from every point and more than one model (FM-5); FM-Q2 to FM-Q6;
+- the budget and refresh: Aggiorna ignores a tap within a minute of a download
+  (SP-WX1-Q1); an `online` event clears the back-off at most once a minute
+  (SP-WX1-Q5); import and backup restore assert the forecast goes (SP-WX1-Q3); the
+  disclosure and README say what each provider receives (SP-WX1-Q2, FUX-64);
+- large text: at 200% the Home line pushes the six cards down (FUX-57), its thunder
+  line can sit under the bottom bar (FUX-58), and Vento's first number is 1.7
+  screens down at 320 px (FUX-59);
+- one wording everywhere: the week's eight-point direction against sixteen
+  elsewhere (FUX-60), the gust written five ways (FUX-61), Italian wind names and
+  units in spoken text (A11Y-Q25); a storm just outside the outing (FUX-62); small
+  overflows and credit links under 44 px (FUX-63, A11Y-Q28);
+- focus and announcements: the hand-over at an outing's last hour drops focus and
+  announces nothing (A11Y-38); an inserted status may go unheard (A11Y-Q23); error
+  texts that name the wrong cause (A11Y-Q24); Back from Vento lands on main
+  (A11Y-Q26, earlier A11Y-20); the chart's peak hour lacks its day (A11Y-Q27).
 
 From the UG2 code-quality review, before the shared database; the detail of
 each id is in `.evidence/UG2/code-quality-review.json`:

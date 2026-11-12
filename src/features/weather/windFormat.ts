@@ -6,11 +6,17 @@ import {
   windName,
 } from "@/domain/wind"
 import {
+  TENDENCY_AFTER_HOURS,
   WEATHER_KINDS,
   WIND_SESSION_HOURS,
   WIND_TINTS,
   type WeatherKindId,
 } from "@/domain/windConfig"
+
+/** "~" before a number more than 3 days ahead: a trend, on every screen (docs/VENTO.md). */
+export function farMark(lead: number) {
+  return lead >= TENDENCY_AFTER_HOURS ? "~" : ""
+}
 
 export function formatKnots(knots: number) {
   return String(Math.round(knots))
@@ -171,14 +177,19 @@ export function readingInWords(reading: {
   direction: number | null
   mid: number
   gust: number | null
+  lead?: number
 }) {
+  const tilde =
+    reading.lead !== undefined && farMark(reading.lead) ? "circa " : ""
   const from =
     reading.direction === null
       ? "direzione variabile"
       : `da ${compassPoint(reading.direction)}`
   const gust =
-    reading.gust === null ? "" : `, raffica ${formatKnots(reading.gust)}`
-  return `${from}, ${formatKnots(reading.mid)} nodi${gust}`
+    reading.gust === null
+      ? ""
+      : `, raffica ${tilde}${formatKnots(reading.gust)}`
+  return `${from}, ${tilde}${formatKnots(reading.mid)} nodi${gust}`
 }
 
 /** One hour's sky for a screen reader, after its wind. */
@@ -196,7 +207,9 @@ export function hourSkyInWords(hour: {
 export function summaryInWords(summary: WindSummary) {
   const tilde = summary.reach === "near" ? "" : "circa "
   const gust =
-    summary.gust === null ? "" : `, raffiche ${formatKnots(summary.gust)}`
+    summary.gust === null
+      ? ""
+      : `, raffiche ${tilde}${formatKnots(summary.gust)}`
   return `${directionText(summary.direction)} ${tilde}${formatKnots(summary.mid)} nodi${gust}`
 }
 

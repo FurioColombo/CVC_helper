@@ -5,6 +5,7 @@ import { holdCourse, prepareDatabase } from "@/persistence/migrations"
 import { COURSE_TABLES } from "@/persistence/schema"
 import { stamp, TOUCH } from "@/persistence/stamp"
 import { adoptCreatedCourse } from "@/persistence/courseSession"
+import { announceCourseReplacement } from "@/persistence/localDataOperations"
 import {
   disconnectForErase,
   eraseSyncedCopy,
@@ -132,6 +133,9 @@ export async function eraseAllCourseData() {
     // Not supported by every browser storage backend.
   }
   clearCoursePreferences()
+  // Other tabs leave the erased course, and an open Vento there stops before
+  // its first copy can land (SP-WX1-1). A synced erase also said so earlier.
+  announceCourseReplacement()
 }
 
 /** Per-course interface preferences, cleared when the course goes away. */

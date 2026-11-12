@@ -1,0 +1,102 @@
+{
+  "reviewerRole": "accessibility-mobile",
+  "persona": "La Maestra",
+  "milestone": "WX1",
+  "commit": "aa944b6",
+  "verdict": "PASS_WITH_FINDINGS",
+  "blockers": [],
+  "importantFindings": [
+    {
+      "id": "A11Y-36",
+      "title": "'Riprova la mappa' can never draw the map. The message gives no cause and leaves out the one remedy that works, which is reloading the app",
+      "evidence": "src/features/weather/WeatherScreen.tsx:600-604. retryMap makes a new lazy() component, but it calls the same import() of the same URL. Chromium and WebKit both keep a failed module fetch for the life of the page. Throwaway spec a-map.maestra.ts in my scratchpad's m2/ aborted **/WindZoneMap* and pressed Mappa, then removed the route and pressed 'Riprova la mappa'. Output on pixel-7-chrome and on iphone-13-webkit-core: 'retry online: map drawn false', and the error is still shown. 'after leaving and reopening Vento: map drawn false'. 'after reload: map drawn true'. A second variant, where the chunk first answers 404 (a deploy) and is then served, also printed 'map drawn: false'. The fallback text at WeatherScreen.tsx:420 is 'La mappa dell'area non si è caricata: i luoghi sono qui sotto.' It names no cause (no signal, or the app was updated) and no remedy that works. tests/e2e/weather.spec.ts:660-694, 'the map can be tried again', only checks that focus lands on 'Ore 15' after the retry. It never checks that the map appears, so it passes on a retry that cannot work. The A11Y-29 harms themselves are fixed: see evidenceInspected.",
+      "reproduction": "Pixel 7 and iPhone 13 projects, dev server. Route **/WindZoneMap* to abort. Create a Deriva course, open Vento, press Mappa. Remove the route and press 'Riprova la mappa'. Expected: the map is drawn. Observed: the same error comes back each time until the page reloads.",
+      "specRef": "docs/design/06_DESIGN_RULEBOOK.md R14 (azioni di recupero reali); round-four A11Y-29's expected outcome (the map area offers a retry); AGENTS.md §9"
+    },
+    {
+      "id": "A11Y-37",
+      "title": "At 320 and 360 px with 200% text, the 'Riprova la mappa' label spills out of its button, over the message above and past the box",
+      "evidence": "The shared Button has a fixed h-11 (src/components/ui/button.tsx:17), and MapBoundary uses it (WeatherScreen.tsx:422-428). At 200% the label wraps onto three lines inside an 88 px box. tests/e2e/layout-audit.ts expectCleanLayout on the hero reports '\"Riprova\" is outside button[Riprova la mappa]' and '\"mappa\" is outside button[Riprova la mappa]', at both 320/200 and 360/200. Measured at 320/200: the button spans 276-364 px and its text spans 261-378 px. A DPR-2 screenshot (my scratchpad's m2/d1-retry-320-200.png) shows 'Riprova' drawn over the box's last line of text and 'mappa' drawn under the button's border. The weather journeys' 200% cases never put the map into its failed state, so this goes untested.",
+      "reproduction": "c-size.maestra.ts 'C1 map failure box and switches at 320 px 200' and '... 360 px 200' (pixel-7-chrome), plus d-shot.maestra.ts 'D1'.",
+      "specRef": "docs/design/06_DESIGN_RULEBOOK.md R05 (testo al 200%, niente perdita), R18; WCAG 1.4.4 / 1.4.10"
+    },
+    {
+      "id": "A11Y-38",
+      "title": "When an outing gives way to the next in its last hour, a focused 'Dopo' button disappears and focus falls to BODY. The new half-day is never announced",
+      "evidence": "Clock at Saturday 16:58, numbers view, focus on 'Dopo · Dom AM: …'. The clock then moved to 17:00:30 and a visibilitychange fired. The heading became 'Prossima uscita · Domenica AM', focus was BODY, and no live region changed. The fix for A11Y-33 (WeatherScreen.tsx:562-573) covers hour buttons only. The click path for the same button is covered by focusHero, but this time-driven removal is not (WeatherScreen.tsx:788-796, 1273-1279). In map view the same hand-over moved focus from Saturday's 'Ore 16' to Sunday's 'Ore 9: direzione variabile, 16 nodi…'. That name does not say Sunday, and nothing announced the change of half-day. A sighted user sees the heading change.",
+      "reproduction": "a-map.maestra.ts 'A5' (focus BODY, live []) and 'A4' (A4b heading 'Prossima uscita · Domenica AM', focus on Sunday's Ore 9, only the status line's refresh text changed). Pixel 7, dev server.",
+      "specRef": "docs/design/06_DESIGN_RULEBOOK.md R12 (ritorno del focus); WCAG 2.4.3; same class as A11Y-6, A11Y-24 and A11Y-33"
+    }
+  ],
+  "qolFindings": [
+    {
+      "id": "A11Y-Q23",
+      "title": "The map-failure text is inserted already holding its words, and after a retry focus lands on an hour, so a second failure may go unheard",
+      "evidence": "MapBoundary renders a new <p role=status> that already contains its text (WeatherScreen.tsx:419), inside a newly inserted div. Suspense's 'Carico la mappa…' works the same way. A MutationObserver recorded only 'inserted status already holding: …' and never a text change in a live region that was already there. retryMap moves focus to the hour button before the attempt (WeatherScreen.tsx:601), so after the retry the user hears 'Ore 15: …'. Whether TalkBack speaks a role=status that arrives already filled varies; not checked on a device.",
+      "reproduction": "a-map.maestra.ts 'A1' live log",
+      "specRef": "Lens 5; rulebook R14"
+    },
+    {
+      "id": "A11Y-Q24",
+      "title": "Three error texts name the wrong cause or the wrong remedy",
+      "evidence": "(1) A malformed or past-only answer, which windData.ts:168-185 rejects, is reported as 'Il servizio meteo non ha risposto: riprova tra poco.' The service did answer, just with nothing usable. (2) Without signal, LaMMA's failure says 'Prova un'altra ora' (WindLammaMap.tsx:116-117). The LaMMA section unmounts while loading and comes back afterwards, so each failed Riprova ends with this message announced through its live region: 'changed live: Mappa non caricata: serve la rete, o LaMMA non l'ha pubblicata. Prova un'altra ora.' (3) The whole-screen fallback (src/App.tsx, view === 'weather') says the forecast was deleted but not what to do next, for example 'riapri Vento con la rete'.",
+      "reproduction": "e-script.maestra.ts 'E2' (offline Riprova and malformed answer logs)",
+      "specRef": "Lens 12 (errors that say how to fix the problem)"
+    },
+    {
+      "id": "A11Y-Q25",
+      "title": "Spoken text uses English compass letters and raw unit abbreviations, where the Italian wind name is already on screen",
+      "evidence": "Names and announcements say 'da NW', 'NW circa 10 nodi', and the chart says 'Direzione NW.' (windFormat.ts:170-201, WindChart.tsx:134-143). The hero shows 'NW · Maestrale', but the wind's Italian name (windName) appears in no spoken summary. Text read raw: the hero's big number '15kn' has no space between number and unit (WeatherScreen.tsx:758-761); also 'Probabile 11–20 kn', 'Nell'area: 15–18 kn', and the 'Ora per ora' rows ('r 22', '7–13'). html lang='it' is set and every Intl format is it-IT, so this is about wording, not the language attribute. Not heard with TalkBack's Italian voice.",
+      "reproduction": "e-script.maestra.ts 'E1' aria snapshot",
+      "specRef": "Lens 11 (Italian read as Italian); rulebook R13"
+    },
+    {
+      "id": "A11Y-Q26",
+      "title": "Back from Vento still puts focus on main, not on the Home line that opened it (A11Y-20, still open)",
+      "evidence": "After 'Indietro da Vento', activeElement was MAIN in E1. Round four's table records no fix for this.",
+      "reproduction": "e-script.maestra.ts 'E1' ('focus back home: MAIN')",
+      "specRef": "docs/design/06_DESIGN_RULEBOOK.md R12"
+    },
+    {
+      "id": "A11Y-Q27",
+      "title": "The chart's name gives the peak hour without its day",
+      "evidence": "At Saturday 09:00 the name says 'massimo alle 8', which is Sunday 08:00, inside a 24-hour window that starts on Saturday (WindChart.tsx:136-137).",
+      "reproduction": "e-script.maestra.ts 'E1' aria snapshot",
+      "specRef": "Lens 2"
+    },
+    {
+      "id": "A11Y-Q28",
+      "title": "Inline credit links are still below the 44 px preference (A11Y-Q18)",
+      "evidence": "At 412/100: 'Open-Meteo.com' 110x19, 'CC BY 4.0' 58x19, the OpenStreetMap link 195x19. At 320/200: 'CC BY 4.0' 116x37. The Segmented switches now measure 44 px or more at every size tried.",
+      "reproduction": "c-size.maestra.ts 'C1' target lists",
+      "specRef": "docs/design/06_DESIGN_RULEBOOK.md R04"
+    }
+  ],
+  "evidenceInspected": [
+    "Read docs/agents/REVIEW_PROTOCOL.md, 04_IMPLEMENTATION_PLAN.md WX1, docs/VENTO.md, docs/working/WEATHER_EVIDENCE.md (round-four table), the three earlier accessibility reports in docs/working/weather-reviews/, and docs/design/06_DESIGN_RULEBOOK.md R04-R21. Read the diff fd0febc..aa944b6 for src/App.tsx, styles.css and persistence, plus src/features/weather/WeatherScreen.tsx, WeatherBoundary.tsx, WeatherDisclosure.tsx, WeatherHomeCard.tsx, WindLammaMap.tsx, WindZoneMap.tsx (markers), windFormat.ts, useWindForecast.ts, and tests/e2e/weather.spec.ts.",
+    "A11Y-29 re-tested on Chromium and WebKit. With the map chunk aborted and Mappa pressed by keyboard, focus stays on 'Mappa', no role=alert appears, the stored forecast key remains (before and after: cvc-helper.weather.v3.derive), the place list and the outing summary stay visible, and only the hero shows the failure. Same result when Vento reopens on a remembered Mappa view with the chunk unavailable (focus on main, forecast kept). The original blocker is resolved. Its retry is A11Y-36.",
+    "Other round-four fixes checked. The list under the map gives each place's wind at text size. When the focused hour ends inside an outing, focus moves to the hour shown ('Ore 16'). Each hour pick is announced with every place's wind, and a week pick is announced with thunder and sky. 'raffica' is used for one hour and 'raffiche' for an outing, consistently. Markers below 11 kn are white. Vista, Area, Orizzonte and Campo switches are at least 44 px. The map is aria-hidden, and the place list carries its values.",
+    "Screen-reader script against what a sighted user sees (Pixel 7, aria tree). Home: the button 'Vento, Sab PM: NW 15 nodi, raffiche 32. Poco nuvoloso, da 17 a 19 gradi.' matches the visible 'Vento · Sab PM / NW 15 kn raffiche 32 / Poco nuvoloso · 17–19 °C'. After 7 h it adds 'dati di ieri 20:00.'; after 25 h it says 'Vento. Dati vecchi: tocca per aggiornare'. Open Vento: focus on main; then 'Indietro da Vento', 'Vento' (h1), group 'Area' (Derive pressed), status 'Aggiornato alle 09:00', 'Aggiorna le previsioni', region 'Prossima uscita · Sabato PM', group 'Vista', image 'Vento da NW', '15kn', 'Raffiche 32', 'NW · Maestrale · Forza 4', 'Probabile 11–20 kn', the sky, and the list 'Ora per ora, Sabato PM' with 5 spoken hours. Mappa: the sighted user sees the map; the listener hears 'Alle 15 · Poco nuvoloso · 19 °C', the hour buttons, 'Luoghi alle 15' and the outing summary. Pick Ore 18: polite 'Alle 18, dopo l'uscita: Cala Fico da NW, 15 nodi, …'. Pick a week cell: polite 'Domenica PM: NW 10 nodi, raffiche 22. Temporali possibili. 17 gradi.', and focus stays on the cell. Back: focus on main (A11Y-Q26). Map fails: the sighted user sees the box; the listener depends on an inserted status (A11Y-Q23).",
+    "Error states checked under lens 12: first open offline ('Senza rete. Previsioni non scaricate.' plus 'Serve la rete per la prima previsione…', focus kept on Riprova, status changes announced), malformed answer, LaMMA unavailable, other area not downloaded, map chunk failure.",
+    "Lens 11 (language): html lang='it'; every Intl formatter is it-IT, with en-CA/en-GB used only for parsing; no English UI strings apart from brand names; AM/PM is the app's own session vocabulary (src/domain/config.ts).",
+    "Impostazioni 'Previsioni del vento' at 320/200: region with an h2 between 'Conservazione dei dati' and 'Copia del corso', 28/40 px text, no sideways scroll; its wording matches 03's network rule and the Vento source note.",
+    "Home line at 320/200 in its fresh, 7 h and 25 h states: accessible name begins with the visible 'Vento', no layout faults, heights 410, 450 and 194 px.",
+    "The repository's tests/e2e/weather.spec.ts on iphone-13-webkit-core, through a scratch config whose output stays out of test-results/: 22 of 24 passed. 'Home never connects…' stopped on 'Apertura del corso…' after the erase's reload, and passed on 1 of 2 repeats: this is the known Windows WebKit reopen hang, classed as environment. 'the map shows each place's wind…' failed on 'raffica 32' at 18, because the dev server was serving the uncommitted gust-alignment change in src/domain/wind.ts (18 now reads 'raffica 30'). That journey's expectation will need updating along with that change. It is not a WebKit fault.",
+    "Throwaway specs (a-map, c-size, d-shot, e-script, f-home) and their logs are in my scratchpad's m2/. test-results/ was emptied by a concurrent run, so scratch work moved there."
+  ],
+  "anglesTried": {
+    "seed": 166758587,
+    "lenses": [
+      "Lens A = 166758587 mod 12 = 11, error messages that say how to fix the problem, not tried before: A11Y-36, A11Y-Q24, A11Y-Q23.",
+      "Lens B = floor(seed/12) mod 12 = 8, landscape, tried in round 1. Index 9, input behaviour, was tried in round 4, so I took index 10, language attributes: lang and locales are clean, which leaves A11Y-Q25."
+    ],
+    "wildcard": "The round-four fixes under time and failure. A map chunk that never arrives, followed by retry, leave-and-reopen, reload, and a remembered Mappa view on the next open (A11Y-36, A11Y-37). The clock crossing an outing's last hour while focus sits on a control that the hand-over removes (A11Y-38)."
+  },
+  "notTested": [
+    "TalkBack and VoiceOver on a real device. Announcements were inferred from live-region mutations and the accessibility tree, so whether an already-filled role=status is spoken (A11Y-Q23) and how 'NW', 'kn' and en-dash ranges are pronounced (A11Y-Q25) are unconfirmed.",
+    "The production build and service worker: the retry failure was reproduced on the dev server in both engines. Round four showed the same module-map behaviour in a built app; I did not rebuild.",
+    "Focus and announcement for the whole-screen WeatherBoundary fallback: I found no way to cause a render error through the UI.",
+    "Landscape, safe areas and keyboard/switch traversal (lenses 9 and 7), beyond what the main-path script touched.",
+    "HEAD moved to 1f70e96 during the review with no change under src/ or tests/ since aa944b6. From about the E1 run onward, the dev server served the uncommitted wind.ts and WeatherScreen.tsx changes (gust alignment and 'r~' in week cells). None of the findings above depends on those lines."
+  ]
+}

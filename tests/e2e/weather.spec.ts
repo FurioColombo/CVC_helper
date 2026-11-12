@@ -605,7 +605,9 @@ test("the map shows each place's wind at the chosen hour, drawn without a downlo
   // The choice is said, with the places it changed.
   await expect(
     page.getByText(
-      /^Alle 18, dopo l'uscita: Cala Fico da NW, 15 nodi, raffica 32; Isola del Porco /,
+      // The hour 18–19 takes the gust stamped 19, past the windy window:
+      // 22, lifted to twice the 15 kn expected (FM-1).
+      /^Alle 18, dopo l'uscita: Cala Fico da NW, 15 nodi, raffica 30; Isola del Porco /,
     ),
   ).toBeAttached()
   for (const width of [320, 360, 412]) {
@@ -657,7 +659,7 @@ test("the map shows each place's wind at the chosen hour, drawn without a downlo
   ).toBeVisible()
 })
 
-test("if the map's code cannot be had, the forecast stays and the map can be tried again", async ({
+test("if the map's code cannot be had, the forecast stays and a reload brings the map", async ({
   page,
 }) => {
   await routeWeather(page)
@@ -684,13 +686,10 @@ test("if the map's code cannot be had, the forecast stays and the map can be tri
   )
 
   await page.unroute("**/WindZoneMap*")
-  await hero(page).getByRole("button", { name: "Riprova la mappa" }).click()
-  // The button goes; focus stays in the hero, on the hour shown.
-  await expect(
-    hero(page)
-      .getByRole("list", { name: "Ora da mostrare sulla mappa, Sabato PM" })
-      .getByRole("button", { name: /^Ore 15:/ }),
-  ).toBeFocused()
+  // A page keeps a failed module for its life: the remedy offered is the
+  // one that works, and it returns to Vento with the map drawn (A11Y-36).
+  await hero(page).getByRole("button", { name: "Ricarica l'app" }).click()
+  await expect(hero(page).locator("[data-zone-map=derive]")).toBeVisible()
 })
 
 test("at lunch, Home and Vento already show the afternoon", async ({
@@ -784,7 +783,13 @@ test("Home does not quote a far forecast as firmly as tomorrow's", async ({
   // Monday 2 Nov: the first session is more than three days ahead.
   await createCourse(page, "Deriva", new Date("2026-11-02T09:00:00+01:00"))
   await openVento(page)
-  await expect(hero(page).getByText(/^~/)).toBeVisible()
+  await expect(hero(page).getByText(/^~\d+kn$/)).toBeVisible()
+  // Every far number wears it, the hours too, seen and said (FUX-55).
+  const hours = hero(page).getByRole("list", { name: /^Ora per ora/ })
+  await expect(hours.getByText(/^~\d+$/).first()).toBeAttached()
+  await expect(hours.getByRole("listitem").first()).toContainText(
+    /circa \d+ nodi/,
+  )
   await backHome(page)
   await expect(strip(page)).toContainText("solo tendenza")
   await expect(strip(page)).toContainText("~")
@@ -1015,5 +1020,21 @@ for (const { width, textScale } of [
       week.getByRole("button", { name: /^Sabato 7 PM:/ }),
     ).toBeVisible()
     await expect(page.getByRole("link", { name: /^Windy/ })).toBeVisible()
+
+    // A failed refresh writes the longest status: Aggiorna stays on the
+    // screen and the page does not widen (FUX-54).
+    weather.online = false
+    await page.evaluate(() => window.scrollTo(0, 0))
+    const refresh = page.getByRole("button", { name: "Aggiorna le previsioni" })
+    await refresh.click()
+    await expect(
+      page.getByText(/Aggiornamento non riuscito, riprova tra poco/),
+    ).toBeVisible()
+    await expectNoSidewaysScroll(
+      page,
+      `Vento after a failed refresh at ${width} px, ${textScale}%`,
+    )
+    const box = (await refresh.boundingBox())!
+    expect(box.x + box.width).toBeLessThanOrEqual(width)
   })
 }

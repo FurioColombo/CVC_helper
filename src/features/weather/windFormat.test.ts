@@ -113,7 +113,7 @@ describe("spokenSummary", () => {
         reach: "tendency",
       }),
     ).toBe(
-      "NW circa 14 nodi, raffiche 28. Temporali possibili. Modelli divisi. Solo una tendenza.",
+      "NW circa 14 nodi, raffiche circa 28. Temporali possibili. Modelli divisi. Solo una tendenza.",
     )
   })
 

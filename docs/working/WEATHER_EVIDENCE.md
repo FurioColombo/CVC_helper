@@ -24,8 +24,15 @@ Mean hourly speed error at +1 day, knots, common sample:
 | CHIA | 3.25  | 3.82 | 3.48   | 3.87 | 3.42    | 4.34    | 3.84 | 3.95 |
 
 The blend itself, computed by the app's own domain code, on sessions with all seven
-models (session windows 9–13 and 14–18, before the owner widened them to 8–14 and 14–19
-on 2026-11-12; the hourly figures do not depend on them) (the second build's table had let in sessions without them, and said otherwise).
+models (the second build's table had let in sessions without them, and said otherwise).
+It was scored on 2026-11-05 with session windows 9–13 and 14–18, each hour's gust read
+at its own stamp. What ships differs: the afternoon is 15–18, and each hour takes the
+gust stamped at its end (Open-Meteo's gust is the preceding hour's maximum; WX1 review
+FM-1). The hourly error counts only session hours, so it depends on the windows too.
+A rerun on 2026-11-12 was not possible: Météo-France's station file now holds only
+June 2026 for the two capes, so the sea-station rows could not be recomputed (the
+airports could). These figures stand as measured, not as the shipped blend's
+(`docs/working/BACKLOG.md`).
 +1 d covers August to October only, 171 sessions; short range covers 306. The session
 error compares session means; the hourly one is comparable with the table above.
 

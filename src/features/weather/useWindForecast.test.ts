@@ -8,6 +8,17 @@ import {
 } from "@/features/weather/useWindForecast"
 import { appChannelConfig } from "@/runtimeConfig"
 
+// The course database is not opened here; the hook only listens for its end.
+const localData = vi.hoisted(() => ({
+  listeners: new Set<(state: string) => void>(),
+}))
+vi.mock("@/persistence/localDataOperations", () => ({
+  watchLocalData: (listener: (state: string) => void) => {
+    localData.listeners.add(listener)
+    return () => localData.listeners.delete(listener)
+  },
+}))
+
 const NOW = Date.UTC(2026, 10, 5, 8) / 1000
 const key = `${appChannelConfig.weatherCachePrefix}v3.derive`
 
@@ -261,6 +272,51 @@ describe("useWindForecast", () => {
     unmount()
   })
 
+  it("stops and keeps nothing when the course is erased, even before a first copy", async () => {
+    // Another tab erasing the course has no key to remove yet, so no storage
+    // event comes: the course's own notice must stop the download (SP-WX1-1).
+    let release: (response: Response) => void = () => undefined
+    vi.mocked(fetch).mockImplementation(
+      (_url, init) =>
+        new Promise((resolve, reject) => {
+          release = resolve
+          init?.signal?.addEventListener("abort", () =>
+            reject(new DOMException("aborted", "AbortError")),
+          )
+        }),
+    )
+    const { result, unmount } = renderHook(() =>
+      useWindForecast("derive", "network"),
+    )
+    await waitFor(() => expect(result.current.state).toBe("loading"))
+    expect(localStorage.getItem(key)).toBeNull()
+    await act(async () => {
+      for (const listener of localData.listeners) listener("changed")
+      await new Promise((resolve) => setTimeout(resolve, 20))
+    })
+    release(respondWith(payload()))
+    vi.mocked(fetch).mockClear()
+    await act(async () => {
+      document.dispatchEvent(new Event("visibilitychange"))
+      await new Promise((resolve) => setTimeout(resolve, 20))
+    })
+    expect(localStorage.getItem(key)).toBeNull()
+    expect(fetch).not.toHaveBeenCalled()
+    unmount()
+  })
+
+  it("drops a copy written just before the course's end was heard", async () => {
+    localStorage.setItem(key, stored(60))
+    const { unmount } = renderHook(() => useWindForecast("derive", "network"))
+    await act(async () => {
+      for (const listener of localData.listeners) listener("changed")
+      await new Promise((resolve) => setTimeout(resolve, 20))
+    })
+    expect(localStorage.getItem(key)).toBeNull()
+    unmount()
+    expect(localData.listeners.size).toBe(0)
+  })
+
   it("does not retry by itself right after a failure, but does when signal returns", async () => {
     vi.mocked(fetch).mockImplementation(async () => {
       throw new TypeError("no signal")
@@ -319,5 +375,22 @@ describe("useWindForecast", () => {
 
   it("asks again once the whole copy is 45 minutes old", async () => {
     expect(await downloadsOnOpening(REFRESH_AFTER_SECONDS + 60)).toBe(true)
+  })
+
+  it("waits the full floor when the extras were asked for and failed", async () => {
+    // Every extra fails here: the ensemble's answer is not an ensemble's.
+    const first = renderHook(() => useWindForecast("derive", "network"))
+    await waitFor(() => expect(first.result.current.state).toBe("idle"))
+    await waitFor(() => expect(localStorage.getItem(key)).not.toBeNull())
+    expect(first.result.current.forecast?.ensemble).toBeUndefined()
+    first.unmount()
+    vi.mocked(fetch).mockClear()
+    vi.setSystemTime((NOW + 10 * 60) * 1000)
+    const again = renderHook(() => useWindForecast("derive", "network"))
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 20))
+    })
+    expect(fetch).not.toHaveBeenCalled()
+    again.unmount()
   })
 })

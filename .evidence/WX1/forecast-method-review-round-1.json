@@ -1,0 +1,113 @@
+{
+  "reviewerRole": "forecast-method",
+  "persona": "Il Previsore di Banchina: a marine forecaster who verifies wind products for small-boat sailing schools",
+  "milestone": "WX1",
+  "commit": "aa944b6",
+  "verdict": "FAIL",
+  "blockers": [
+    {
+      "id": "FM-1",
+      "title": "The outing's gust is taken from the wrong hours. Open-Meteo stamps each gust at the end of the hour it covers, so the 15–18 afternoon shows the gust of 14:00–17:00 and the morning shows 8:00–12:00.",
+      "evidence": "Open-Meteo's hourly table (open-meteo.com/en/docs) defines wind_gusts_10m as 'Gusts at 10 meters above ground as a maximum of the preceding hour'. Speed and direction are instantaneous values. src/domain/wind.ts:705 hoursBetween keeps the stamps with start <= hour < end, and src/domain/windConfig.ts:114-117 sets AM {9,13} and PM {15,18}. So the PM gust reads the stamps 15, 16 and 17, which cover 14:00–17:00: it includes the lunch hour and leaves out the 17–18 sailed hour. The AM gust reads the stamps 9 to 12, which cover 8:00–12:00: it includes the hour before boarding and leaves out 12:00–12:30. summariseHours (wind.ts:498) takes the maximum over those hours, so the headline 'Raffiche' and the Home line both carry the offset. The hour row's 'r N' under '15' is likewise the gust of 14–15. docs/VENTO.md says 'Every number said about an outing comes from those hours', and decision 27 split the windows precisely so that hours nobody sails would not move the headline.",
+      "reproduction": "Synthetic case (my scratchpad's vento-review/probe3.mjs runs the bundled src/domain code). All seven models give 10 kn from 300°, with a 14 kn gust except one hour at 35 kn. With 35 kn stamped 15:00 (wind of 14–15, lunch), the 15–18 outing shows 'WNW 10 nodi, raffiche 35'. With 35 kn stamped 18:00 (wind of 17–18, still on the water), it shows 'WNW 10 nodi, raffiche 20'. Live case: the Derive download of 2026-11-12 at 12:08 UTC, run through the same code (probe2.mjs). Today's PM headline is 'raffiche 37' from stamps 15–17, while the 17–18 hour, stamped 18:00, has a model gust of 39.5 kn (40.0 by the rule) in a wind the screen itself calls 'In rinforzo'. The backtest has the same alignment, because Météo-France's FXI is also the maximum of the hour ending at HH. Its calibration therefore describes the shifted window as well, not the outing.",
+      "specRef": "docs/VENTO.md 'Outings' (every number about an outing comes from 9:00–12:30 and 15:00–18:00); docs/working/OWNER_DECISIONS.md decision 27"
+    }
+  ],
+  "importantFindings": [
+    {
+      "id": "FM-2",
+      "title": "The evidence behind the screen's figures was never recomputed for the shipped outing windows, and the evidence file describes the windows wrongly.",
+      "evidence": "docs/working/weather-backtest.json was last written at f735e2c (2026-11-05), when src/domain/windConfig.ts had PM {start:14,end:18}; I checked with git show f735e2c:src/domain/windConfig.ts. The shipped PM is 15–18: three stamps instead of four, and with scripts/weather-backtest.mjs's 'seen.length < 3' rule a single missing reading now drops a session. docs/working/WEATHER_EVIDENCE.md §1 still says 'session windows 9–13 and 14–18, before the owner widened them to 8–14 and 14–19 ... the hourly figures do not depend on them'. Both parts are wrong now. The outing numbers use 9–13 and 15–18, not 8–14 and 14–19. The hourly error is computed only over session hours (evaluateBlend's hourlyErrors), so it does depend on the windows. The 'Modelli e pesi' text ('7-8 ore su 10', 'solo 5-6 da 12 nodi', '3-5 uscite su 10'; WeatherScreen.tsx ModelDetails) quotes these figures as if they were the shipped blend's.",
+      "reproduction": "git log -- docs/working/weather-backtest.json (last commit f735e2c); compare git show f735e2c:src/domain/windConfig.ts with the current WIND_SESSION_HOURS; read WEATHER_EVIDENCE.md §1, second paragraph. Because the script imports WIND_SESSION_HOURS, a rerun now would give different session counts, coverage and gust-passed rates.",
+      "specRef": "AGENTS.md §3 and §12 (evidence must match what ships); docs/VENTO.md 'The numbers'"
+    },
+    {
+      "id": "FM-3",
+      "title": "The app measures lead time from the download, but the weights, the 72 h and 120 h cuts and the short-range calibration were measured from model initialisation, and on fresher runs than the app ever receives.",
+      "evidence": "src/domain/wind.ts:271 sets lead = time − fetchedAt. Open-Meteo's run metadata (/data/<model>/static/meta.json, read at 12:08 UTC on 2026-11-12) gave these run ages at download: AROME HD 6.2 h, ARPEGE 6.2 h, AIFS 6.2 h, ICON-EU 3.2 h, ICON-2I 12.2 h, IFS 12.2 h, GFS 12.2 h. The IFS 00Z run stays the newest until about 20 UTC (available 8.3 h after initialisation), so its true lead is up to about 20 h longer than the app's. In the backtest, previous_dayN means a true lead of 24N to 24N+23 h, and the 'short' rows come from the Historical Forecast API, which stitches together the first hours of each run. scripts/weather-backtest.mjs:331 then sets fetchedAt only 6 h before the session. Consequences: (a) an outing the app calls 'near', at a download lead of up to 72 h, can have IFS and GFS at a true lead of about 80–90 h, past the cut the evidence placed at 3 days; (b) 'no gust and seasonal beyond 120 h' falls at a true lead of 126–140 h for the long-range models; (c) the short-range rows (81% and 77% inside, gust passed 25% and 42%) score fresher data than any copy the app shows, so they overstate short-range skill, and the screen's 'fino a un giorno prima' figure includes them.",
+      "reproduction": "Run curl https://api.open-meteo.com/data/ecmwf_ifs025/static/meta.json (and the same for the other models), then compare last_run_initialisation_time with the time of download. For the backtest side, see scripts/weather-backtest.mjs lines 162-175 (archive: hist versus previous_dayN) and line 331 (fetchedAt).",
+      "specRef": "docs/VENTO.md 'Lead time counts from the download'; WEATHER_PROPOSAL.md §3 (cuts at 3 and 5 days)"
+    },
+    {
+      "id": "FM-4",
+      "title": "Beyond 3 days the week grid prints the gust without '~', although the hero and Home mark it. This is a residual of round three's WX-22.",
+      "evidence": "src/features/weather/WeatherScreen.tsx:963-969 puts '~' before the expected wind but prints the gust as 'r{formatKnots(summary.gust)}' with no tilde. The hero (line 766) and Home (WeatherHomeCard.tsx:110) both add '~' when reach is not 'near'. docs/VENTO.md: 'Beyond 3 days a number wears ~ and is called a trend'.",
+      "reproduction": "Live Derive download of 2026-11-12: the slots 2026-11-15 PM to 2026-11-17 AM have reach 'tendency'. Their cells read, for example, '~12' above 'r27' and '~13' above 'r33', while the hero for the same slot reads 'Raffiche ~27'.",
+      "specRef": "docs/VENTO.md 'The numbers', fifth item"
+    },
+    {
+      "id": "FM-5",
+      "title": "Thunder and sky come from one deterministic model at one grid cell, and both areas share that cell. The screen falls silent when that cell shows no storm.",
+      "evidence": "windData.ts:128 asks for weather_code and temperature_2m with best_match at the zone's centre. A live request returns the same sea cell, 41.1947 9.4730, for Derive (41.18, 9.455) and Cabinati (41.2, 9.43). Cabinati covers about 17 km, from Spargi to Liscia di Vacca. The thunder flag is code >= 95 at that cell (wind.ts:228-231). When the flag is false the screen shows no line at all, and a reader takes that as 'no thunder'. Convective cells are local and the models place them poorly, so a forecaster would at least check every point and more than one model before staying silent. VENTO.md states the single point, but the screen does not.",
+      "reproduction": "curl 'https://api.open-meteo.com/v1/forecast?latitude=41.18,41.2&longitude=9.455,9.43&hourly=weather_code&cell_selection=sea' returns the same latitude and longitude for both locations.",
+      "specRef": "docs/VENTO.md 'Sky and temperature come from one point at the area's centre'"
+    }
+  ],
+  "qolFindings": [
+    {
+      "id": "FM-Q1",
+      "title": "The morning counts as 'in progress' until 13:00 although it ends at 12:30, and the two outings hand over at different points.",
+      "evidence": "wind.ts:630-636: slotInProgress(AM) is still true at 12:40, so the AM cell stays in the week until 13:00 and tapping it shows 'In corso'. nextDecisionSlot hands over at 12:00, 30 minutes before the morning ends, but at 17:00, 60 minutes before the afternoon ends.",
+      "reproduction": "Bundled domain at 2026-07-15 12:40 Rome: AM in progress true, next slot PM, AM still listed in the 'seven' horizon.",
+      "specRef": "docs/VENTO.md 'Outings'"
+    },
+    {
+      "id": "FM-Q2",
+      "title": "'Oltre 3 giorni' is said from the copy's time, not from now.",
+      "evidence": "With a 20-hour-old copy, an outing 55 h from now reads 'Oltre 3 giorni: solo una tendenza'. The caution is right, but the words are wrong (WeatherScreen.tsx HeroLines and the week legend).",
+      "reproduction": "Use reach = firstHour.lead >= 72 with lead measured from fetchedAt (wind.ts:478-483).",
+      "specRef": "docs/VENTO.md 'The numbers'"
+    },
+    {
+      "id": "FM-Q3",
+      "title": "'Vale poco più della media di stagione' from 120 h is a judgement the d5 rows support only loosely.",
+      "evidence": "At d5 the blend's hourly error was 4.20 against 5.09, and 4.25 against 5.36, for a constant mean chosen with hindsight: 0.9–1.1 kn better. 'Little more' fits d7 (0.25–0.46 kn). WEATHER_EVIDENCE.md §1, 'Beyond +1 d' table.",
+      "reproduction": "Read the table.",
+      "specRef": "windConfig.ts SEASONAL_AFTER_HOURS comment"
+    },
+    {
+      "id": "FM-Q4",
+      "title": "Home's '· incerto' names the division with a word and no numbers, and Home's contract does not list it.",
+      "evidence": "WeatherHomeCard.tsx:102. VENTO.md says division is 'named in numbers or not at all'.",
+      "reproduction": "Code reading.",
+      "specRef": "docs/VENTO.md 'Home' and 'The screen'"
+    },
+    {
+      "id": "FM-Q5",
+      "title": "'Raffiche: troppo presto' also appears inside 120 h when no model sent a gust column.",
+      "evidence": "wind.ts:383 returns null for either cause, and WeatherScreen.tsx:765 words both as 'too early'. It is rare: in the live download six of seven models carried gusts.",
+      "reproduction": "Code reading.",
+      "specRef": "docs/VENTO.md 'The numbers'"
+    },
+    {
+      "id": "FM-Q6",
+      "title": "The backtest's model scores use 07–16 UTC as 'sailing hours', which is 08–17 local after 25 October.",
+      "evidence": "scripts/weather-backtest.mjs sailingHour. This affects the model scores only, not the blend rows.",
+      "reproduction": "Code reading.",
+      "specRef": "WEATHER_EVIDENCE.md §1"
+    }
+  ],
+  "evidenceInspected": [
+    "docs/agents/REVIEW_PROTOCOL.md; 04_IMPLEMENTATION_PLAN.md WX1; docs/VENTO.md, every claim checked against the code; 03_TECHNICAL_DECISIONS.md §3.4; docs/working/OWNER_DECISIONS.md decision 27; WEATHER_PROPOSAL.md §3–§4; WEATHER_EVIDENCE.md; round 1–3 forecast-method reports",
+    "src/domain/wind.ts, src/domain/windConfig.ts, src/features/weather/windData.ts, windFormat.ts, WeatherHomeCard.tsx, WeatherScreen.tsx (hero, hero lines, week cell, place rows, model details), WindChart.tsx, WindLammaMap.tsx, zonePlaces.ts; scripts/weather-backtest.mjs",
+    "git history: backtest JSON last written at f735e2c with PM 14–18; 8deb923 split the outing hours from the trend hours",
+    "npx vitest run on wind.test.ts, windData.test.ts and windFormat.test.ts: 221 passed (Node 24.21.0)",
+    "The bundled domain (esbuild, as the backtest does), run on a live Derive download of 2026-11-12 12:08 UTC: every slot's summary, the hourly model gusts against the rule, and the reach and tilde per slot",
+    "Open-Meteo, a few requests: one forecast, one ensemble (hourly, no gaps, cell 41.25 9.5), the sky cell for sea against land, run metadata for seven models, and the docs table for the gust and speed aggregation",
+    "Confirmed as correct: every outing number (Home, hero, map footer, Dopo, week, places, chart marks) comes from hoursInSlot; the trend hours are display-only and greyed; the last-hour handover; the sky and temperature summary rules; thunder unknown versus false; the family cap and the taper"
+  ],
+  "anglesTried": {
+    "seed": 354970376,
+    "lenses": [
+      "(9) What the screen claims against what the evidence supports (seed mod 9 = 8)",
+      "(5) Lead time and long-range caution (floor(seed/9) mod 9 = 2 drew the gust rule, already tried in round three; the division lens was tried in round one's agreement-skill lens; next untried)"
+    ],
+    "wildcard": "Open-Meteo's aggregation semantics (gust as the maximum of the preceding hour, speed instantaneous) against decision 27's outing windows, and the backtest's matching alignment. Also covered as briefed: outing hours and the last-hour handover, sky, temperature and thunder from the centre point."
+  },
+  "notTested": [
+    "A rerun of scripts/weather-backtest.mjs with the shipped windows or a shifted gust window: about 72 archive requests plus the Météo-France file, beyond the 'a few requests' allowance, and no cache exists locally. The size of FM-1 and FM-2 on the sample is therefore not measured.",
+    "Playwright journeys (weather.spec.ts) were not run; the unit tests were.",
+    "Whether Open-Meteo's weather_code at an hour reflects the preceding hour's precipitation, which would shift the sky and thunder in the same way as FM-1.",
+    "Readings from the water, and the owner's phone check."
+  ]
+}

@@ -1,0 +1,113 @@
+{
+  "reviewerRole": "field-ux",
+  "persona": "Il Nostromo",
+  "milestone": "WX1",
+  "commit": "aa944b6",
+  "verdict": "FAIL",
+  "blockers": [
+    {
+      "id": "FUX-54",
+      "title": "After a failed or offline refresh at 200% text the page scrolls sideways and the Aggiorna button goes off the screen, at 320, 360 and even 412 px",
+      "evidence": "Measured on pixel-7 and iphone-13 viewports (Chromium). Fresh copy: no overflow at any size. After a failed refresh with signal ('Aggiornamento non riuscito, riprova tra poco. Dati delle 09:00'): scrollWidth 409 at 320 px/200%, 437 at 360/200, 437 at 412/200. The 'Aggiorna le previsioni' button's box is x 296.6-384.6 at 320 px, so only 23 px of it is on the screen, and the screenshot shows no button. Offline with a 30-hour-old copy ('Senza rete. Dati di ieri alle 09:00: potrebbero essere superati'): scrollWidth 352 at 320/200 and 380 at 360/200. The wide element is the header wrapper 'grid gap-1' (src/features/weather/WeatherScreen.tsx:1308). It has an auto track, so StatusLine's min-content sets its width (WeatherScreen.tsx:123-200): the longest word ('Aggiornamento') plus the icon, the 88 px button and rem-scaled padding comes to 397 px. tests/e2e/weather.spec.ts audits sideways scroll only in the fresh state (lines 916-1019). It happens in both areas (Derive and Cabinati).",
+      "reproduction": "Throwaway specs in my scratchpad's n2/ (e-offline.spec.ts, f-failed.spec.ts; config pw.config.ts, projects pixel-7 and iphone-13-chromium). By hand: Deriva course, clock Sat 7 Nov 09:00, open Vento, let it download, make the API fail (or go offline), tap Aggiorna, then set the viewport to 320x640 and the html font-size to 200%. Expected: no sideways scroll and the retry button visible beside 'riprova tra poco'. Observed: the page is 409 px wide and the button is off the right edge, at the very moment the message says to try again.",
+      "specRef": "docs/design/07_PAGE_CHANGELOG.md P21 Accettazione ('nessuno scorrimento orizzontale a 320 px e 200%'); 04_IMPLEMENTATION_PLAN.md WX1 adversarial checklist ('no signal', '320 px at 200% text'); docs/VENTO.md 'The screen ... offers Aggiorna'"
+    },
+    {
+      "id": "FUX-55",
+      "title": "A gust more than 3 days ahead shows no '~' in the week cell at aa944b6 (now fixed only in the uncommitted tree); the hour row, the place lists and the map's outing line still show far numbers without it",
+      "evidence": "At aa944b6, SlotCell prints `r{formatKnots(summary.gust)}` with no tilde (WeatherScreen.tsx:966-969), while the hero prints 'Raffiche ~50' (764-767) and Home prints 'raffiche ~' (WeatherHomeCard.tsx:108-112). Run 1 (aa944b6 source) showed the Wednesday 11 AM cell as 'NW | ~24 | r50' under a hero of '~24 kn | Raffiche ~50'. The uncommitted working tree now shows the cell as 'r~50' (re-run). Still unmarked in the working tree, under the same far hero: hour cells '24 | r 50' (HourCell, WeatherScreen.tsx:234-240), the map's place list '24 kn | r 50' (PlaceList 385-388), Cabinati's PlaceRows, and the map's 'Uscita 9–12:30: NW circa 24 nodi, raffiche 50', where 'circa' covers the knots but not the gust (summaryInWords, windFormat.ts:196-201). The proposal says far gusts wear the '~' (docs/working/WEATHER_PROPOSAL.md:97).",
+      "reproduction": "Scratchpad n2/c-concept.spec.ts, test 'a far half-day: tilde and gust across hero, hours, map, week' (pixel-7). Clock Sat 7 Nov 09:00, open Vento, tap 'Mercoledì 11 AM', read the cell, the hero, then Mappa. Expected: every number for that half-day carries the trend mark. Observed: see above.",
+      "specRef": "docs/VENTO.md:72 ('Beyond 3 days a number wears `~` and is called a trend')"
+    },
+    {
+      "id": "FUX-56",
+      "title": "A morning picked in the week between 12:30 and 12:59 is headed 'In corso', after the boats are back",
+      "evidence": "slotInProgress uses WIND_SESSION_HOURS.AM.end = 13 (src/domain/wind.ts:630-637, windConfig.ts AM {start 9, end 13}). Measured on Sunday 8 Nov: at 12:05 and at 12:40, Home and the hero correctly show 'Dom PM' and 'Prossima uscita · Domenica PM' (FUX-37 is fixed). But the week still offers 'Domenica 8 AM', and tapping it at 12:40 heads the hero 'In corso · Domenica AM', with the 'Dopo · Dom PM' button below it.",
+      "reproduction": "Scratchpad n2/d-retest.spec.ts, test 'FUX-37 and FUX-39 ...' (pixel-7): F37 output 'pickedSunAM 12:40': 'In corso · Domenica AM'. Expected at 12:40: not 'In corso' (the outing is 9:00–12:30). Low field impact; fixing it means using the outing's real end for this label.",
+      "specRef": "docs/VENTO.md:51-54 ('The morning outing is 9:00–12:30 ... and so do \"In corso\" ...')"
+    }
+  ],
+  "importantFindings": [
+    {
+      "id": "FUX-57",
+      "title": "Wildcard: with large text the Vento line pushes most of Home's six cards below the bottom bar",
+      "evidence": "Home measured with the line, then with it hidden (as at fd0febc). 360x740 at 150%: the line is 184-244 px tall, and 2 of 6 cards are fully above the bottom bar against 6 of 6 without it (4 of 6 when the line has no thunder or split). 320x640 at 200%: the line is 370-450 px, 0 cards against 2. At 100% text nothing changes (6 of 6 at 320, 360 and 412). The 6 pm routine still has Equipaggi in the bottom bar, but Comandate, Valutazioni and Volontari now need a scroll.",
+      "reproduction": "Scratchpad n2/b-home.spec.ts 'Home line, worst real states, and what it pushes below the fold' (pixel-7): download Sat 21:00, reopen Home at Sun 07:00, 12:10 and 17:20.",
+      "specRef": "01_PRODUCT_SPEC.md §2 (Home: the Vento line and six cards)"
+    },
+    {
+      "id": "FUX-58",
+      "title": "FUX-39 is half fixed: thunder now comes before the sky, but at 320x640 and 200% the Home thunder line is under the bottom bar, and it overflows its column",
+      "evidence": "Sunday 13:05, PM thunder: the 'Temporali possibili' line starts at y 494, while the bottom bar's top is at 490, so the first screen hides it. At 360/150 it is at y 321, visible. The line's flex row is 171 px inside a 160 px column (layout audit: 'span[Temporali possibili] is wider inside (171) than outside (160)', WeatherHomeCard.tsx:115-122). In the Vento hero at 320x640/200%, the thunder line is at y 1377.",
+      "reproduction": "Scratchpad n2/d-retest.spec.ts (F37 output 'homeThunder 320/200', 'heroThunder'); b-home.spec.ts at 12:10.",
+      "specRef": "docs/VENTO.md Home ('thunder when forecast'); round-4 FUX-39"
+    },
+    {
+      "id": "FUX-59",
+      "title": "At 320 px and 200% the first screen of Vento shows no wind number; the six-hour row alone is 631 px tall",
+      "evidence": "In a 640 px viewport the expected-wind number is at y 1065 (Derive) and 1105 (Cabinati). The header, the stacked area switch, the three-line place description, the heading and the stacked Numeri/Mappa switch come first. The Sunday morning row wraps into 3 rows of 2 cells, each about 202 px tall (631 px in all). Numbers view hero: 1929 px; map view: 2671 px. This was noted as QoL in round 4 (FUX-53); measured here, it is about 1.7 screens of scrolling before the one number that matters.",
+      "reproduction": "Scratchpad n2/a-fux36.spec.ts and c-concept.spec.ts ('long names ...', windNumberTop); screenshot offline-320-200-Deriva.png in my scratchpad.",
+      "specRef": "docs/VENTO.md 'What it answers' (on the dock, in a hurry)"
+    }
+  ],
+  "qolFindings": [
+    {
+      "id": "FUX-60",
+      "title": "One half-day, two directions: the week cell rounds to eight points, everything else to sixteen",
+      "evidence": "With every model at 340°: Home 'NNW 12 kn', hero 'NNW · Tramontana', hour list 'NNW', map list 'da NNW', but the week cell 'N'. At 20°: 'NNE' against 'N'. At 200°: 'SSW · Ostro' against 'S'. compassPoint8 is used in SlotCell (WeatherScreen.tsx:960); the legend does not say so.",
+      "reproduction": "Scratchpad n2/c-concept.spec.ts 'one wind, every screen: direction 340/20/200'.",
+      "specRef": "Lens: the same concept looks the same on every screen"
+    },
+    {
+      "id": "FUX-61",
+      "title": "The gust is written five ways",
+      "evidence": "'raffiche 32' (Home), 'Raffiche 32' (hero), 'r 32' (hour cells, lists), 'r32' (week cell), 'raffica 32' (spoken). Direction 'Variabile' on Home and in the hero, 'var' in the week.",
+      "reproduction": "Same DIR output.",
+      "specRef": "Lens 12"
+    },
+    {
+      "id": "FUX-62",
+      "title": "A storm in the hour just before or after the outing appears only as a muted icon in the hour row",
+      "evidence": "With storm codes only at Sat 14:00 and 18:00, the hero, Home and the week cell say nothing (as decision 27 intends: FUX-38 is fixed). The 14:00 storm, an hour before launch, is visible only in a greyed hour cell. One line such as 'temporali alle 14, prima dell'uscita' would cost little.",
+      "reproduction": "Scratchpad n2/d-retest.spec.ts 'FUX-38 ...' (its last assertion is mine and too broad: the '30' it caught is the muted 14:00 cell).",
+      "specRef": "docs/working/OWNER_DECISIONS.md decision 27"
+    },
+    {
+      "id": "FUX-63",
+      "title": "Small overflows and targets at 320 px and 200% (Cabinati)",
+      "evidence": "The summary 'Nell'area: 15–18 kn' is 238 px inside 230. The header div and the LaMMA section are 308 px inside 296 (12 px into the page padding, no scroll when fresh). The 'CC BY 4.0' link is 116x37 px, and the wrapped 'Open-Meteo.com' link's box lies over 'Dati:'.",
+      "reproduction": "Scratchpad n2/c-concept.spec.ts 'long names and many places ...' (auditLayout on main).",
+      "specRef": "Rulebook R04/R18"
+    },
+    {
+      "id": "FUX-64",
+      "title": "Impostazioni and the Vento screen describe the connection differently",
+      "evidence": "WeatherDisclosure.tsx: 'Quando apri Vento, l'app chiede ...' (it connects when Vento opens). The screen's SourceNote says it connects 'anche da solo per aggiornare' while open (WeatherScreen.tsx:1199-1201), and useWindForecast refreshes on return, when signal comes back and after a reload. The disclosure itself renders cleanly at 320/200 (audit: no issues).",
+      "reproduction": "Scratchpad n2/c-concept.spec.ts 'Impostazioni: the Vento disclosure ...'.",
+      "specRef": "03_TECHNICAL_DECISIONS.md §3.4"
+    }
+  ],
+  "evidenceInspected": [
+    "04_IMPLEMENTATION_PLAN.md WX1 (success predicate, adversarial checklist); docs/VENTO.md; 01_PRODUCT_SPEC.md §2 Home; 03 §3.4 (Online backup paragraph); 07 P01 and P21; docs/working/WEATHER_EVIDENCE.md 'Round four' table; all docs/working/weather-reviews/*.json anglesTried, and round4-field-ux.json in full",
+    "Code: src/features/weather/WeatherScreen.tsx (whole), WeatherHomeCard.tsx, windFormat.ts, WindZoneMap.tsx, WeatherDisclosure.tsx, Segmented.tsx, useWindForecast.ts, WindArrow.tsx; src/domain/wind.ts (slots, compass, gust rule), windConfig.ts (session and trend hours, GUST_RULE); src/styles.css diff; App.tsx diff; tests/e2e/weather.spec.ts, weatherFixtures.ts, layout-audit.ts",
+    "Baseline: npm run verify:e2e -- tests/e2e/weather.spec.ts --project=pixel-7-chrome: 23 passed, 1 flaky ('the map shows each place's wind at the chosen hour', line 548)",
+    "Round-four re-test. FUX-36 FIXED: Sunday 6-hour row, both views, at 320/200, 320/175, 344/175, 360/150, 360/200, 390/200, 412/200, 320/100 and 360/100, on pixel-7 and iphone-13 viewports. No cell overlap, no part outside its cell; narrowest hour button 46 px (360/100), 81 px at 360/150 (was 37); gaps 2-4 px; hero audit clean; no sideways scroll. FUX-37 FIXED (12:05 and 12:40 show Dom PM on Home and in the hero). FUX-38 FIXED (storm, rain and 30 °C only in the trend hours stay out of the headline, Home and the week). FUX-39 PARTLY (see FUX-58). FUX-42 (Probabile under the map), FUX-43 ('LaMMA' jump), FUX-44 (week icons only when wet: 0 icons on dry cells), FUX-45 (view remembered, baseline test), FUX-49 (Torna on its own row), FUX-51 (header '9–12:30'/'15–18'): seen in the running app. FUX-40/41/48 checked in code and through the baseline expectMapClear.",
+    "Working-tree note: after aa944b6 HEAD moved to 1f70e96 (no src/ or tests/ changes); uncommitted edits in wind.ts (FM-1 gust from the next stamp), WeatherScreen.tsx (week gust '~'), useWindForecast.ts and courses.ts. My dev-server runs used the working tree. Run 1 (week cell 'r50') predates the tilde edit, and run 6 confirms 'r~50'. None of the other findings depends on those edits.",
+    "Signature move, one morning on the pier (Pixel 7, 100% text unless noted). 1) 08:20, phone out of the pouch, Home: 'Vento · Sab PM | NW 15 kn raffiche 32 | Poco nuvoloso · 17–19 °C', 0 taps, read once. 2) Tap the line (1): Vento, '15 kn Raffiche 32' on the first screen. 3) Scroll to the week and tap Wednesday AM for the crossing (2): the cell says 'NW ~24 r50', the hero 'Raffiche ~50' (read twice at aa944b6). 4) Mappa (3), hour 11 (4): '24 kn r 50' with no '~' (read twice). 5) Torna (5), back Home (6). 6) 11:00 on the RIB, no signal, older eyes at 200%: Aggiorna (7) fails and the button vanishes off the right edge, so I have to swipe sideways to find the retry (read twice, FUX-54). 7) 12:40 back on the pier, I tap Sunday AM to see how the morning went: 'In corso' (read twice). Total: 7 taps, 1 sideways swipe, 4 moments read twice. Seconds were not timed: the dev server's numbers would not be the phone's."
+  ],
+  "anglesTried": {
+    "seed": 951163148,
+    "lenses": [
+      "Lens A drew index 8 (recovering from a wrong tap), already tried in round 4, so I took the next untried, index 10: long names, many items. Applied as Cabinati's six places and long Italian status strings at 320/200, the seven-day horizon, and the stale, failed and offline states. Found FUX-54 and FUX-63.",
+      "Lens B drew index 7 (arm's length), tried in round 1; 8 and 9 were tried and 10 was taken, so index 11: the same concept looks the same on every screen. Applied as one fixed wind (340, 20, 200 degrees) read on Home, hero, week, hour list and map, and a far half-day's tilde and gust everywhere. Found FUX-55, FUX-60 and FUX-61."
+    ],
+    "wildcard": "Worst-case Home line: every optional row at once (age, 'incerto', thunder, sky) on the smallest phone with the largest text, measuring how many of the six routine cards stay above the bottom bar with the line shown and with it hidden, as before Vento (FUX-57, FUX-58). The other 40 % of the effort went to re-testing FUX-36 to FUX-51, the lunch hand-over, outing hours versus trend hours, the Impostazioni disclosure and the checklist's '320 px at 200%' and 'no signal' items."
+  },
+  "notTested": [
+    "WebKit (iphone-13-webkit-core): local WebKit on this Windows PC is flaky on reopen, as the brief says. The iPhone 13 checks ran on its viewport in Chromium. FUX-54 is a text-width layout and should behave the same on WebKit, but this is unconfirmed.",
+    "A real Android phone, sunlight, wet fingers and the installed PWA (owner's device check). Contrast in glare was not re-measured.",
+    "Cold-start timing and the seconds of the morning narrative on a phone; the production build and its service worker (a reload offline cannot be run on the dev server, so offline was entered after loading).",
+    "The interruption of a refresh by a call or screen lock (round 1 covered interruptions; not re-run).",
+    "The forecast numbers themselves and FM-1's gust shift (the forecast-method reviewer's ground)."
+  ]
+}

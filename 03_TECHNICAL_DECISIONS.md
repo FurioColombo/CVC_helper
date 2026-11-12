@@ -389,17 +389,20 @@ the last copy and contacts nobody. Permitted calls:
   shown unaltered (CC BY-ND), never read by the app.
 - Meteomar, LaMMA, Windy and Windfinder are links, opened only by a tap.
 
-Every request carries the area's fixed sea coordinates and model names, no
-credentials and no referrer: no course, name or account. The provider still
-sees the phone's address, Origin, User-Agent, language and the hour, and the
-coordinates reveal the course's family. The coastline map is drawn on the phone
+Open-Meteo's requests carry the area's fixed sea coordinates and model names,
+no cookies and no referrer: no course, name or account. Open-Meteo still sees
+the phone's address, Origin, User-Agent, language and the hour, and the
+coordinates reveal the course's family. LaMMA's image asks only for a fixed map
+and its estimated run, with no referrer; like any embedded image it carries the
+cookies the browser holds for LaMMA, if any. The coastline map is drawn on the phone
 from an OpenStreetMap extract served from this origin (ODbL, credited on the
 map; `scripts/build-coastline.mjs`).
 
 **Refresh.** An open Vento fetches on opening, on returning to it, when signal
-returns and after a reload, but only when its copy is at least 45 minutes old,
-or 5 minutes for a copy missing its extras or after a failure; Aggiorna fetches
-at once. **Budget** (owner, 2026-11-11): Open-Meteo's free tier allows 600
+returns and after a reload, but only when its copy is at least 45 minutes old.
+A copy kept before its extras came back, or a failure, waits 5 minutes; a copy
+whose extras were asked for and failed waits the full 45. Aggiorna fetches at
+once. **Budget** (owner, 2026-11-11): Open-Meteo's free tier allows 600
 weighted calls a minute, 5,000 an hour, 10,000 a day and 300,000 a month per
 address, and a centre's shared Wi-Fi is one address. A refresh weighs 12.4
 calls for Derive and 19.7 for Cabinati (measured through its `X-RateLimit-Cost`

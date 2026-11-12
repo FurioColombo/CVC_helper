@@ -71,6 +71,7 @@ import {
   directionText,
   directionWithName,
   formatDecimal,
+  farMark,
   formatKnots,
   formatRange,
   formatTemperature,
@@ -97,8 +98,9 @@ const VERY_STALE_AFTER_SECONDS = 24 * 3600
 
 // The coastline is most of the map's weight: its own file, fetched when Vento opens.
 const loadZoneMap = () => import("@/features/weather/WindZoneMap")
-const lazyZoneMap = () =>
-  lazy(() => loadZoneMap().then((module) => ({ default: module.WindZoneMap })))
+const ZoneMap = lazy(() =>
+  loadZoneMap().then((module) => ({ default: module.WindZoneMap })),
+)
 
 type HeroView = "numbers" | "map"
 
@@ -151,7 +153,7 @@ function StatusLine({
           : "flex items-center justify-between gap-2 px-1 py-1 text-sm text-muted-foreground"
       }
     >
-      <div className="min-w-0">
+      <div className="min-w-0 [overflow-wrap:anywhere]">
         <p className="m-0">{description}</p>
         <p className="m-0 flex items-start gap-1.5 font-semibold" role="status">
           {failed && offline && (
@@ -231,13 +233,16 @@ function HourCell({
         aria-hidden="true"
         className="text-base leading-none font-black tabular-nums"
       >
+        {farMark(hour.lead)}
         {formatKnots(hour.mid)}
       </span>
       <span
         aria-hidden="true"
         className="text-sm whitespace-nowrap tabular-nums"
       >
-        {hour.gust === null ? "–" : `r ${formatKnots(hour.gust)}`}
+        {hour.gust === null
+          ? "–"
+          : `r ${farMark(hour.lead)}${formatKnots(hour.gust)}`}
       </span>
       {hour.weather !== null && isWetWeather(hour.weather) && (
         <WeatherIcon className="size-4" kind={hour.weather} />
@@ -337,10 +342,14 @@ function PlaceRows({
                 >
                   <WindArrow degrees={summary.direction} size={16} />
                   <span className={differs ? "font-black" : "font-semibold"}>
+                    {summary.reach !== "near" && "~"}
                     {formatKnots(summary.mid)} kn
                   </span>
                   {summary.gust !== null && (
-                    <span>r {formatKnots(summary.gust)}</span>
+                    <span>
+                      r {summary.reach !== "near" && "~"}
+                      {formatKnots(summary.gust)}
+                    </span>
                   )}
                 </span>
               ) : (
@@ -382,9 +391,15 @@ function PlaceList({
                   className="flex items-center gap-1.5 tabular-nums"
                 >
                   <WindArrow degrees={hour.direction} size={18} />
-                  <span className="font-black">{formatKnots(hour.mid)} kn</span>
+                  <span className="font-black">
+                    {farMark(hour.lead)}
+                    {formatKnots(hour.mid)} kn
+                  </span>
                   {hour.gust !== null && (
-                    <span className="text-sm">r {formatKnots(hour.gust)}</span>
+                    <span className="text-sm">
+                      r {farMark(hour.lead)}
+                      {formatKnots(hour.gust)}
+                    </span>
                   )}
                 </span>
               </>
@@ -402,8 +417,13 @@ function PlaceList({
  * The map's code comes in its own file: if it cannot be had, the hero keeps
  * its forecast and offers to try again, instead of the whole screen's error.
  */
+/**
+ * A browser keeps a failed module fetch for the life of the page, so only a
+ * reload can bring the map: the button says so (A11Y-36). The reload returns
+ * to Vento on its map, which the screen remembers.
+ */
 class MapBoundary extends Component<
-  { children: ReactNode; onRetry: () => void },
+  { children: ReactNode },
   { failed: boolean }
 > {
   state = { failed: false }
@@ -417,14 +437,15 @@ class MapBoundary extends Component<
     return (
       <div className="grid gap-2 rounded-xl border p-3">
         <p className="m-0 text-sm" role="status">
-          La mappa dell&apos;area non si è caricata: i luoghi sono qui sotto.
+          La mappa dell&apos;area non si è caricata: serve la rete, o l&apos;app
+          è stata aggiornata. I luoghi sono qui sotto.
         </p>
         <Button
-          className="min-h-11"
-          onClick={this.props.onRetry}
+          className="h-auto min-h-11 whitespace-normal"
+          onClick={() => window.location.reload()}
           variant="secondary"
         >
-          Riprova la mappa
+          Ricarica l&apos;app
         </Button>
       </div>
     )
@@ -554,8 +575,6 @@ function SlotHero({
     [forecast, now, view, zone],
   )
   // A failed download leaves a component that fails for ever: a retry makes a new one.
-  const [ZoneMap, setZoneMap] = useState(lazyZoneMap)
-  const [mapAttempt, setMapAttempt] = useState(0)
   const row = useRef<HTMLUListElement>(null)
   const focusedHour = useRef<number | null>(null)
 
@@ -595,12 +614,6 @@ function SlotHero({
     onAnnounce(
       `Alle ${romeClock(time).hour}${aside ? `, ${aside}` : ""}: ${readings.join("; ")}.`,
     )
-  }
-
-  function retryMap() {
-    row.current?.querySelector<HTMLElement>("button[aria-current]")?.focus()
-    setZoneMap(() => lazyZoneMap())
-    setMapAttempt((attempt) => attempt + 1)
   }
 
   const hourRow = (
@@ -723,7 +736,7 @@ function SlotHero({
                   </span>
                 )}
               </p>
-              <MapBoundary key={mapAttempt} onRetry={retryMap}>
+              <MapBoundary>
                 <Suspense
                   fallback={
                     <p
@@ -965,7 +978,8 @@ function SlotCell({
       </span>
       {summary.gust !== null && (
         <span className="text-sm leading-tight whitespace-nowrap tabular-nums">
-          r{formatKnots(summary.gust)}
+          r{summary.reach !== "near" && "~"}
+          {formatKnots(summary.gust)}
         </span>
       )}
       {(storm || wet || summary.split) && (
@@ -1305,7 +1319,8 @@ export function WeatherScreen({
 
   return (
     <div className="grid grid-cols-[minmax(0,1fr)] gap-4">
-      <div className="grid gap-1">
+      {/* A fixed track: a long status word must wrap, not widen the page (FUX-54). */}
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-1">
         <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
           <div className="flex min-w-0 items-center gap-1">
             <button

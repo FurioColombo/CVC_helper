@@ -1,0 +1,113 @@
+{
+  "reviewerRole": "security-privacy",
+  "persona": "Il Garante",
+  "milestone": "WX1",
+  "commit": "aa944b6",
+  "verdict": "FAIL",
+  "blockers": [
+    {
+      "id": "SP-WX1-1",
+      "title": "If the course is erased in another tab while that tab's first Vento download is still running, the forecast comes back after the erase and the tab keeps refreshing for the erased course",
+      "evidence": "The hook stops a running refresh only when a storage event reports that this zone's key was removed (src/features/weather/useWindForecast.ts:115-122). A browser fires no storage event when removeItem is called on a key that does not exist. While the first download is running there is no key yet: the first write happens in onWind (useWindForecast.ts:67-73), and clearCoursePreferences (src/persistence/courses.ts:138-145) removes only keys that already exist. So in that window the erase sends no signal, removedElsewhere stays false, and the held answer writes cvc-helper.weather.v3.derive after the erase. Tab A is still on Vento for the erased course, so it keeps refreshing on its own. The unit test 'stops when another tab removes the forecast' (src/features/weather/useWindForecast.test.ts:233-262) dispatches a synthetic StorageEvent that a real browser would not send in this case, so it misses the gap. No e2e test opens a second tab (tests/e2e/weather.spec.ts). Round 2 recommended broadcasting from the erase (SP-WX-R2-2); that was not done. The leftover copy holds no personal data. It still breaks the success predicate ('erase ... remove the forecast'), the checklist item 'the course erased in another tab', and the 03 §3.4 sentence 'an erase in another tab stops a refresh running here'.",
+      "reproduction": "Throwaway Playwright spec (since removed), same browser context, synthetic Deriva course, weather hosts mocked with tests/e2e/weatherFixtures.ts and every answer held. Tab A opens Vento, and the wind request is seen. Tab B: Impostazioni > Elimina il corso e inizia un nuovo corso > confirm > 'Crea il corso' is shown. Observed on both pixel-7 and Desktop Chrome: weather keys before the erase [], after the erase [], after releasing the answers [\"cvc-helper.weather.v3.derive\"]. Tab A still shows the Vento heading and not 'Crea il corso'. Control case: when a copy already exists and Aggiorna is held, the same erase leaves [] after release, so the existing fix works only when a key exists. In either case, one tap on Aggiorna in tab A afterwards writes the key again, because tab A never learns that its course is gone.",
+      "specRef": "04_IMPLEMENTATION_PLAN.md WX1 success predicate and adversarial checklist; 03_TECHNICAL_DECISIONS.md §3.4 'The copy'",
+      "recommendedFix": "Make the erase announce itself to other tabs the way import does (the 'changed' broadcast), so tab A leaves the erased course and its Vento unmounts and aborts. Alternatively, write and then remove a sentinel key under the weather prefix so the storage event always fires, and handle that key in onStorage. Add a two-tab e2e case with no copy and one with a copy. If you would rather accept the gap, the owner must change the predicate and 03; a test does not settle that."
+    }
+  ],
+  "importantFindings": [
+    {
+      "id": "SP-WX1-2",
+      "title": "LaMMA's map image request carries the browser's LaMMA cookies, while 03 §3.4 says every request carries 'no credentials'",
+      "evidence": "Only the Open-Meteo fetches drop credentials: credentials:'omit' and referrerPolicy:'no-referrer' (src/features/weather/windData.ts:91-96). LaMMA's map is a plain <img> with no crossOrigin attribute (src/features/weather/WindLammaMap.tsx:131-139). Under the Fetch standard that is a no-cors request that includes credentials, and referrerPolicy only removes the Referer. crossOrigin='anonymous' cannot fix it, because LaMMA sends no CORS headers. Chrome on Android still sends third-party cookies marked SameSite=None by default. The Vento screen itself links to LaMMA's pages, so a reader can pick up LaMMA cookies there. The e2e checks query parameters only, not request headers.",
+      "reproduction": "Throwaway spec: context.addCookies sets a SameSite=None; Secure cookie 'spcookie' on www.lamma.toscana.it and one on api.open-meteo.com. Open Vento and scroll to Mappa LaMMA. request.allHeaders() on pixel-7 and Desktop Chrome: on api., ensemble-api. and the sky call there is no Referer, no Cookie, and Origin is the app's origin. On www.lamma.toscana.it there is no Referer and no Origin, but there is 'cookie: spcookie=x'.",
+      "specRef": "03_TECHNICAL_DECISIONS.md §3.4 ('no credentials and no referrer'); README.md third-party paragraph",
+      "recommendedFix": "Change the claim to say that LaMMA's image, like any embedded image, sends whatever cookies the browser holds for LaMMA. Add header assertions to the weather journey: no Referer on any weather host, and no Cookie on Open-Meteo. I did not check whether LaMMA actually sets SameSite=None cookies (no real LaMMA request was made)."
+    },
+    {
+      "id": "SP-WX1-3",
+      "title": "The budget claim ignores the 5-minute floor for incomplete copies: while the ensemble fails, every reopen after 5 minutes is a full charged refresh, and the screen says 'Aggiornato'",
+      "evidence": "refreshIfDue applies the 45-minute floor only to a whole copy, meaning one with both sky and ensemble (useWindForecast.ts:105-108). The download carries sky and waves over from the previous copy, but never the ensemble (windData.ts:326-349). One ensemble failure therefore keeps the phone on the 5-minute floor until an ensemble answer succeeds. An ensemble failure is not a failure state: status goes back to idle (useWindForecast.ts:77-81), so neither the user nor lastFailureAt sees it. Upper bound per phone: 288 refreshes a day instead of 32. At a full refresh cost that is about 5,670 weighted calls for Cabinati (288 × 19.7), more than half of the centre's daily 10,000 from one phone. The 15-second secondary timeout (windData.ts:26) on weak dock signal is a plausible trigger, and so is the provider throttling the heaviest call. In both cases the app asks more often exactly when the budget or the signal is short. 03 §3.4 ('one phone left open all day, at most 32 refreshes, about 630') and windBudget.test.ts:54-59 (32 × the worst refresh) both leave this path out. Measured cost confirmed: two real requests on 2026-11-12 returned X-RateLimit-Cost 6.2999997 for Derive's forecast and 5.1 for the ensemble, as pinned.",
+      "reproduction": "Throwaway spec: the ensemble host is aborted with route.abort('failed') and the other hosts are mocked. Open Vento at 09:00, 09:06, 09:12 and 09:18, going back Home each time. Wind requests grow 1, 2, 3, 4, and the status reads 'Aggiornato alle 09:00' / '09:06' / '09:12' / '09:18'. Same on pixel-7 and Desktop Chrome.",
+      "specRef": "03_TECHNICAL_DECISIONS.md §3.4 Refresh and Budget; owner's budget request of 2026-11-11 (plan WX1)",
+      "recommendedFix": "Base the floor on the time of the last attempt, not on whether the extras are present: a copy whose extras failed less than 45 minutes ago counts as fresh. Alternatively, carry the ensemble over as sky is. Extend windBudget.test.ts or the hook test to cover the incomplete-copy path, and state the real worst case in 03."
+    },
+    {
+      "id": "SP-WX1-4",
+      "title": "docs/DEPLOY.md, rewritten by this diff, says the app makes cross-origin requests 'in two places only'. Signed in, it also talks to Supabase and PowerSync, and the CSP guidance leaves them out",
+      "evidence": "In this diff, docs/DEPLOY.md 'What ships' says: 'The app makes cross-origin requests in two places only: the Whisper model weights ... and ... the Vento screen's forecasts'. It then lists connect-src entries for Open-Meteo only. The build sets VITE_BACKUP_SUPABASE_URL and VITE_BACKUP_POWERSYNC_URL (vite.config.ts:173-181), src/backup/config.ts:26-30 turns the backup on when they are present, and src/backup/session.ts:71 creates the Supabase client. The test build the owner runs (B3–B6 checks) signs in and syncs. huggingface.co is also missing from the CSP list. The sentence was already wrong before WX1, but WX1 rewrote it without correcting it.",
+      "reproduction": "Read docs/DEPLOY.md lines 194-202 at aa944b6 next to vite.config.ts:173-181 and 03 §'Online backup' ('Signed out, nothing connects but Vento').",
+      "specRef": "docs/DEPLOY.md 'What ships'; 03_TECHNICAL_DECISIONS.md §'Online backup (0.5.0)'",
+      "recommendedFix": "Name all four destinations: Whisper weights, Vento's hosts, and Supabase and PowerSync after sign-in. Make the future CSP list complete, including huggingface.co and the backend hosts."
+    }
+  ],
+  "qolFindings": [
+    {
+      "id": "SP-WX1-Q1",
+      "title": "Aggiorna has no floor: each tap is a full refresh",
+      "evidence": "WeatherScreen.tsx:181-185 blocks Aggiorna only while a download runs, and download() (useWindForecast.ts:56-62) skips the floor. At 19.7 a refresh, 31 Cabinati taps in one minute from anywhere on the centre's Wi-Fi use up Open-Meteo's 600 a minute for every phone there. At 12.4 for Derive, about 400 taps in an hour reach the 5,000 hourly limit.",
+      "reproduction": "Throwaway spec: five taps on 'Aggiorna le previsioni' 600 ms apart produced 5 wind requests.",
+      "specRef": "03_TECHNICAL_DECISIONS.md §3.4 ('Aggiorna fetches at once')",
+      "recommendedFix": "Keep Aggiorna immediate, but ignore a tap within about 60 s of a successful download (for example by showing 'Aggiornato ora'). This costs the user nothing and puts a bound on the shared address."
+    },
+    {
+      "id": "SP-WX1-Q2",
+      "title": "README and the disclosure are a little loose about what each provider receives",
+      "evidence": "README.md: 'Opening Vento sends the area's fixed coordinates to both'. LaMMA receives no coordinates, only a fixed image path and the estimated run time in ?run= (lammaMap.ts:226-228), plus any cookie (SP-WX1-2). Neither the README nor the Impostazioni text (WeatherDisclosure.tsx:248-253) mentions that the providers also see the browser, the language and the app's address (Origin), which 03 §3.4 lists. The disclosure is otherwise accurate and enough for a user: Home not connecting, no course data, coordinates only.",
+      "reproduction": "Header capture in the throwaway spec: Open-Meteo requests carry Origin and accept-language it-IT. The LaMMA request carries no Origin.",
+      "specRef": "03_TECHNICAL_DECISIONS.md §3.4",
+      "recommendedFix": "README: 'sends the area's fixed coordinates to Open-Meteo and asks LaMMA for its published map'. Optionally add 'e il browser' to the disclosure."
+    },
+    {
+      "id": "SP-WX1-Q3",
+      "title": "Import and backup replace clear the forecast according to the code, but no test checks it",
+      "evidence": "Import calls clearCoursePreferences (src/persistence/courseArchive.ts:172) and replace calls eraseAllCourseData (src/backup/session.ts:590). Only erase (courses.test.ts) and reset (browserStorage.test.ts, weather.spec.ts:300) assert the key. This is the residual part of SP-WX-10.",
+      "reproduction": "grep for weatherCachePrefix across src/ and tests/: no import or restore test.",
+      "specRef": "04_IMPLEMENTATION_PLAN.md WX1 success predicate",
+      "recommendedFix": "Add one assertion to an existing import test and one to the B5 restore harness."
+    },
+    {
+      "id": "SP-WX1-Q4",
+      "title": "A test comment now says the opposite of the assertion under it",
+      "evidence": "src/persistence/courses.test.ts:167-168: the comment 'A display preference belongs to the device, not to the course.' now sits directly above expect(forecastKey).toBeNull(), which asserts that the forecast goes with the course.",
+      "reproduction": "Read the lines.",
+      "specRef": "none",
+      "recommendedFix": "Move the forecast assertion above the comment."
+    },
+    {
+      "id": "SP-WX1-Q5",
+      "title": "Each 'online' event clears the failure back-off, so flapping signal with no copy starts a new download every time",
+      "evidence": "useWindForecast.ts:111-114 sets lastFailureAt = 0 and then calls refreshIfDue. With no copy, age is Infinity, so every online event on a flaky dock starts a full download.",
+      "reproduction": "Code reading. The existing unit test at useWindForecast.test.ts:264 shows that 'online' bypasses the back-off.",
+      "specRef": "03_TECHNICAL_DECISIONS.md §3.4 Refresh",
+      "recommendedFix": "Clear the back-off on 'online' at most once a minute."
+    }
+  ],
+  "evidenceInspected": [
+    "docs/agents/REVIEW_PROTOCOL.md; .claude/agents/reviewer-security-privacy.md; earlier reports docs/working/weather-reviews/security-privacy.json and round2-security-privacy.json (anglesTried, SP-WX-R2-2, SP-WX-Q5)",
+    "04_IMPLEMENTATION_PLAN.md WX1 section and 'Rules for this cycle'; 03_TECHNICAL_DECISIONS.md §'Online backup' and §3.4; docs/DEPLOY.md 'What ships'; docs/VENTO.md; README.md third-party paragraph; docs/working/OWNER_DECISIONS.md decision 25; docs/OWNER_TODO.md WX1 items",
+    "git diff fd0febc..aa944b6 for src/App.tsx, src/appChannel.ts, src/persistence/{courses,browserStorage}.ts and their tests, and src/features/weather/{windData,useWindForecast,WindLammaMap,lammaMap,WeatherHomeCard,WeatherDisclosure,WeatherBoundary}.tsx/.ts, WeatherScreen.tsx (links, VIEW_KEY, Aggiorna and Riprova), windBudget.test.ts, useWindForecast.test.ts, tests/e2e/weather.spec.ts and weatherFixtures.ts; vite.config.ts runtimeCaching (no weather host is cached) and the backup env defines; src/backup/config.ts; src/persistence/courseArchive.ts:160-176; src/backup/session.ts:580-592",
+    "Ran npx vitest run on src/features/weather plus courses.test.ts and browserStorage.test.ts: 9 files, 119 tests passed (Node 24.21.0)",
+    "Ran npm run verify:e2e -- tests/e2e/weather.spec.ts --project=pixel-7-chrome: 24 passed",
+    "Throwaway Playwright specs, pixel-7 and Desktop Chrome, synthetic courses and mocked hosts only: request headers per host with planted cookies; a two-tab erase during the first download and during a refresh over an existing copy; ensemble-failure refresh cadence; Aggiorna taps. They lived in an ignored folder under playwright-report/ because a concurrent run wiped test-results/, and were deleted afterwards",
+    "Two real requests to Open-Meteo (Derive's forecast and the ensemble URL as the app builds them): X-RateLimit-Cost 6.2999997 and 5.1, matching windBudget.test.ts",
+    "Who can read the forecast copy (localStorage, per channel prefix): any script on the origin, including the other channel and any other site served from the same GitHub Pages origin. It is validated on read for shape and range (isStoredForecast) but cannot be authenticated, as already accepted in SP-WX-8. The server never receives it: it is not in the synced schema or the export. Open-Meteo sees IP, Origin, User-Agent, language, the area's coordinates (and so the course family) and the time, with no Referer and no Cookie (measured). LaMMA sees IP, User-Agent, language, the time, the run guess and any LaMMA cookie (SP-WX1-2). Outbound links are tap-only, rel=noreferrer",
+    "Home never connects: the 'Home stays silent' and 'Home never connects, however old its copy' journeys passed. WeatherHomeCard uses cacheOnly, and its hook returns before adding any listener. There is no preconnect or prefetch, and no weather URL is in the service worker",
+    "Nothing of the course leaves the device: the zone comes only from course.family (zoneForCourse). URLs are built from WIND_ZONES and WIND_MODELS constants. The e2e allowlist of query keys passed",
+    "The stated exceptions (a course erased from another phone or swapped by the backup, and sign-out) are acceptable. The copy holds only forecast numbers, fetch times and the area. Sign-out keeps the course on the device anyway. A later user of the phone learns at most when Vento was last opened and for which area"
+  ],
+  "anglesTried": {
+    "seed": 90983014,
+    "lenses": [
+      "11. Data minimisation (seed mod 12 = 10, counted from zero): no field sent or stored that a screen does not need. Only the course family is inferable, and 03 says so",
+      "6. Logs, errors and analytics (floor(seed / 12) mod 12 = 5): no console calls, telemetry or error reporting in src/features/weather. Errors render fixed Italian text. The boundary clears the copy and logs nothing of its own; React's default console output stays on the device"
+    ],
+    "wildcard": "What actually goes on the wire, not what the code asks for: per-host headers with planted cookies (found SP-WX1-2), whether the storage-event fix fires when there is nothing to remove (found SP-WX1-1), and whether the budget's floor holds when only one of the four calls fails (found SP-WX1-3)."
+  },
+  "notTested": [
+    "Whether www.lamma.toscana.it really sets SameSite=None cookies: no real LaMMA request was made",
+    "WebKit for the header capture and the two-tab case: Chromium (Pixel 7 and Desktop Chrome) only",
+    "Whether Open-Meteo charges requests the app aborts, and the marine and sky costs, which I did not re-measure",
+    "Whether the browser's HTTP cache keeps forecast responses or LaMMA images after a local reset (public data; not checked)",
+    "A physical phone and a real shared Wi-Fi with many devices: no load was generated against Open-Meteo, per the brief"
+  ]
+}

@@ -106,14 +106,15 @@ export function zoneForCourse(family: CourseFamily): WindZoneId {
 }
 
 /**
- * The outings (Italy), whole hours with the end excluded: the school boats at
- * 9:00 and is back by 12:30, then out from 15:00 to 18:00 (the CT's guide).
- * They decide everything said about an outing: its numbers and sky, when it is
- * under way, and when the next one becomes the answer.
+ * The outings (Italy): the school boats at 9:00 and is back by 12:30, then out
+ * from 15:00 to 18:00 (the CT's guide). The numbers and sky are made of whole
+ * hours, the end excluded; when the outing is under way, and when the next
+ * one becomes the answer, follow the minute the boats are back (`backAt`, in
+ * minutes after midnight).
  */
 export const WIND_SESSION_HOURS = {
-  AM: { start: 9, end: 13, label: "9–12:30" },
-  PM: { start: 15, end: 18, label: "15–18" },
+  AM: { start: 9, end: 13, backAt: 12 * 60 + 30, label: "9–12:30" },
+  PM: { start: 15, end: 18, backAt: 18 * 60, label: "15–18" },
 } as const
 
 /**

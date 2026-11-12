@@ -497,7 +497,9 @@ describe("blendForecast", () => {
     )
     expect(hours[20]!.gust).toBe(50)
     expect(hours[30]!.gust).toBe(22)
-    for (let index = 1; index < length; index += 1) {
+    // The last hour has no stamp after it, so no gust covers it.
+    expect(hours[length - 1]!.gust).toBeNull()
+    for (let index = 1; index < length - 1; index += 1) {
       const step = Math.abs(hours[index]!.gust! - hours[index - 1]!.gust!)
       expect(step, `hour ${index}`).toBeLessThanOrEqual(6)
     }
@@ -876,10 +878,15 @@ describe("names and scales", () => {
 
 describe("time in Caprera", () => {
   it("reads the Italian clock, summer and winter", () => {
-    expect(romeClock(THURSDAY_9)).toEqual({ date: "2026-11-05", hour: 9 })
+    expect(romeClock(THURSDAY_9)).toEqual({
+      date: "2026-11-05",
+      hour: 9,
+      minute: 0,
+    })
     expect(romeClock(Date.UTC(2026, 6, 15, 8) / 1000)).toEqual({
       date: "2026-07-15",
       hour: 10,
+      minute: 0,
     })
   })
 
@@ -887,6 +894,7 @@ describe("time in Caprera", () => {
     expect(romeClock(Date.UTC(2026, 10, 5, 23, 30) / 1000)).toEqual({
       date: "2026-11-06",
       hour: 0,
+      minute: 30,
     })
   })
 
@@ -929,6 +937,33 @@ describe("time in Caprera", () => {
     expect(
       hoursInSlot(hours, slot).map((item) => romeClock(item.time).hour),
     ).toEqual([15, 16, 17])
+  })
+
+  it("gives an hour the gust stamped at its end, so an outing's gust is its own hours'", () => {
+    // Open-Meteo stamps a gust at the end of the hour it covers. Thursday
+    // 9:00 is index 0: the stamp 15:00 holds the lunch hour 14–15, the stamp
+    // 18:00 the last sailed hour 17–18.
+    const slot = {
+      key: "2026-11-05-PM",
+      date: "2026-11-05",
+      period: "PM",
+      sessionId: null,
+    } as const
+    const gustOf = (stamp: number) => {
+      const quiet: ModelSeries = {
+        ...series(24, 10, 300, 14),
+        gust: Array.from({ length: 24 }, (_, index) =>
+          index === stamp ? 35 : 14,
+        ),
+      }
+      const hours = blendForecast(
+        forecastOf({ ecmwf_ifs: quiet }, 24),
+        THURSDAY_9,
+      )
+      return summariseHours(hoursInSlot(hours, slot))!.gust
+    }
+    expect(gustOf(6)).toBe(20)
+    expect(gustOf(9)).toBe(35)
   })
 })
 
@@ -988,6 +1023,9 @@ describe("slotsForHorizon", () => {
     // The outing, not the hours shown around it: 8:00 is not under way.
     expect(slotInProgress(slot, THURSDAY_9)).toBe(true)
     expect(slotInProgress(slot, THURSDAY_9 + 3 * HOUR)).toBe(true) // 12:00
+    // The boats are back at 12:30 (FUX-56).
+    expect(slotInProgress(slot, THURSDAY_9 + 3.5 * HOUR - 60)).toBe(true) // 12:29
+    expect(slotInProgress(slot, THURSDAY_9 + 3.5 * HOUR)).toBe(false) // 12:30
     expect(slotInProgress(slot, THURSDAY_9 + 4 * HOUR)).toBe(false) // 13:00
     expect(slotInProgress(slot, THURSDAY_9 - HOUR)).toBe(false) // 8:00
   })
@@ -1000,6 +1038,16 @@ describe("nextDecisionSlot", () => {
       "during a morning session",
       Date.UTC(2026, 10, 8, 10) / 1000,
       "2026-11-08-AM",
+    ],
+    [
+      "at 11:20, an hour and more before the boats are back: the morning",
+      Date.UTC(2026, 10, 8, 10, 20) / 1000,
+      "2026-11-08-AM",
+    ],
+    [
+      "from 11:30, its last hour: the afternoon",
+      Date.UTC(2026, 10, 8, 10, 30) / 1000,
+      "2026-11-08-PM",
     ],
     [
       "in its last hour: the afternoon",

@@ -65,8 +65,9 @@ sea cell.
   points, so one model far from the rest moves it little.
 - The likely range is at least ±3 kn and at least ±30% of the expected wind,
   wider when the models disagree. It is no upper limit.
-- The gust is twice the expected wind, or the highest model's gust if higher.
-  It is no ceiling, and over water it may read high.
+- An hour's gust is the strongest within that hour. It is twice the expected
+  wind, or the highest model's gust if higher. It is no ceiling, and over
+  water it may read high.
 - Division is named only within 3 days: by direction ("Modelli divisi: NW 20 o
   SE 6") or by strength, with the range in words.
 - Beyond 3 days a number wears `~` and is called a trend; beyond 5 days the
@@ -99,5 +100,11 @@ the course and a local reset remove it.
   than on the beach.
 - The coastline is an extract of 2026-11-11. The map has no scale bar and no
   zoom; Derive's three points are a few hundred metres apart.
+- Lead time counts from the download, but a model's run is already 3 to 12
+  hours old then, more by evening: the 3- and 5-day lines fall a little later
+  in the models' own time than they did when the method was scored.
+- Thunder is one sea cell's, shared by both areas, from one model: no line
+  about thunder does not mean that none is possible.
 - The method was scored at two exposed capes in south Corsica, June to October
-  2026; nothing has been measured on the water.
+  2026, with the afternoon as 14–18 and each hour's gust read an hour early;
+  nothing has been measured on the water.

@@ -297,9 +297,15 @@ export function blendForecast(
         if (direction !== null && direction !== undefined) {
           entry.direction.push({ value: direction, weight })
         }
-        const gust = series?.gust[index]
+        // Open-Meteo stamps a gust at the end of the hour it covers, while
+        // speed and direction are the value at the stamp: the hour from this
+        // stamp takes its gust from the next one.
+        const gust = series?.gust[index + 1]
         if (gust !== null && gust !== undefined) {
-          gusts.push({ value: gust, taper })
+          gusts.push({
+            value: gust,
+            taper: Math.min(1, hoursLeft / MODEL_END_TAPER_HOURS),
+          })
         }
         perModel.set(model.id, entry)
       }
@@ -574,6 +580,7 @@ const romeParts = new Intl.DateTimeFormat("en-GB", {
   month: "2-digit",
   day: "2-digit",
   hour: "2-digit",
+  minute: "2-digit",
   hourCycle: "h23",
 })
 
@@ -586,7 +593,12 @@ export function romeClock(epochSeconds: number) {
   return {
     date: `${parts.year}-${parts.month}-${parts.day}`,
     hour: Number(parts.hour),
+    minute: Number(parts.minute),
   }
+}
+
+function minutesOf(clock: { hour: number; minute: number }) {
+  return clock.hour * 60 + clock.minute
 }
 
 function addDays(date: string, days: number) {
@@ -624,7 +636,7 @@ function sessionSlots(course: CourseDates): WindSlot[] {
 function slotEnded(slot: WindSlot, now: number) {
   const clock = romeClock(now)
   if (slot.date !== clock.date) return slot.date < clock.date
-  return clock.hour >= WIND_SESSION_HOURS[slot.period].end
+  return minutesOf(clock) >= WIND_SESSION_HOURS[slot.period].backAt
 }
 
 export function slotInProgress(slot: WindSlot, now: number) {
@@ -632,7 +644,7 @@ export function slotInProgress(slot: WindSlot, now: number) {
   return (
     slot.date === clock.date &&
     clock.hour >= WIND_SESSION_HOURS[slot.period].start &&
-    clock.hour < WIND_SESSION_HOURS[slot.period].end
+    minutesOf(clock) < WIND_SESSION_HOURS[slot.period].backAt
   )
 }
 
@@ -691,7 +703,7 @@ export function nextDecisionSlot(course: CourseDates, now: number): WindSlot {
   const first = ordered[0] as WindSlot
   const inLastHour =
     slotInProgress(first, now) &&
-    romeClock(now).hour >= WIND_SESSION_HOURS[first.period].end - 1
+    minutesOf(romeClock(now)) >= WIND_SESSION_HOURS[first.period].backAt - 60
   return inLastHour ? (ordered[1] ?? first) : first
 }
 

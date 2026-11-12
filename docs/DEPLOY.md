@@ -193,12 +193,15 @@ who opens the URL gets an empty app.
 
 Nothing was added for the deployment — no analytics, no beacons, no error
 reporting. Measured on a cold load through course creation: **zero off-origin
-requests**. The app makes cross-origin requests in two places only: the Whisper
-model weights, from huggingface.co on first dictation (`CHANGELOG.md`), and,
-from 0.5.0, the Vento screen's forecasts while it is open (Open-Meteo, and
-LaMMA's map image; `03_TECHNICAL_DECISIONS.md` §3.4). Home never connects.
-When a Content Security Policy lands, `connect-src` needs `api.`,
-`ensemble-api.` and `marine-api.open-meteo.com`, and `img-src`
+requests**. The app makes cross-origin requests in three places: the Whisper
+model weights, from huggingface.co on first dictation (`CHANGELOG.md`); from
+0.5.0, the Vento screen's forecasts while it is open (Open-Meteo, and LaMMA's
+map image; `03_TECHNICAL_DECISIONS.md` §3.4); and, signed in, the online
+backup's Supabase and PowerSync hosts (03, "Online backup"). Home never
+connects. When a Content Security Policy lands, `connect-src` needs
+`huggingface.co` and the hosts it redirects to, `api.`, `ensemble-api.` and
+`marine-api.open-meteo.com`, and the build's `VITE_BACKUP_SUPABASE_URL` and
+`VITE_BACKUP_POWERSYNC_URL` hosts (HTTPS and WebSocket); `img-src` needs
 `www.lamma.toscana.it`.
 
 The WebAssembly engine that _runs_ that model (`onnxruntime-web`, loaded

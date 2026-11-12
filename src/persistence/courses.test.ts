@@ -164,8 +164,9 @@ describe("course persistence", () => {
     expect(
       window.localStorage.getItem("cvc-helper.scan-name-order.course-1"),
     ).toBeNull()
-    // A display preference belongs to the device, not to the course.
+    // The forecast goes with the course (SP-WX1-Q4).
     expect(window.localStorage.getItem(forecastKey)).toBeNull()
+    // A display preference belongs to the device, not to the course.
     expect(window.localStorage.getItem("cvc-helper.crew-display-columns")).toBe(
       "3",
     )

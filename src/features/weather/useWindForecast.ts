@@ -8,6 +8,7 @@ import {
   readCachedForecast,
   writeCachedForecast,
 } from "@/features/weather/windData"
+import { watchLocalData } from "@/persistence/localDataOperations"
 
 /**
  * How old a forecast may be before reopening Vento fetches a newer one. It
@@ -25,6 +26,12 @@ function nowSeconds() {
 }
 
 let lastFailureAt = 0
+/**
+ * The copy a whole download left without its extras, by fetch time: its
+ * extras were asked for and failed, so it waits the full floor like a whole
+ * copy. Only a copy kept before its extras came back retries sooner (SP-WX1-3).
+ */
+const extrasFailed = new Map<WindZoneId, number>()
 
 /**
  * `cacheOnly` is Home's mode: it shows the forecast last downloaded and contacts
@@ -75,6 +82,7 @@ export function useWindForecast(
       // Aborted means the screen left, or a reset closed the course: nothing
       // may be written back after that.
       if (signal.aborted) return
+      if (!(next.sky && next.ensemble)) extrasFailed.set(zone, next.fetchedAt)
       writeCachedForecast(zone, next)
       setDownloaded({ zone, forecast: next })
       setNow(nowSeconds())
@@ -104,7 +112,9 @@ export function useWindForecast(
       }
       // A copy kept before its extras arrived is not fresh: it has no thunder.
       const age = stored ? moment - stored.fetchedAt : Infinity
-      const whole = Boolean(stored?.sky && stored.ensemble)
+      const whole =
+        Boolean(stored?.sky && stored.ensemble) ||
+        (stored !== null && extrasFailed.get(zone) === stored.fetchedAt)
       if (age < (whole ? REFRESH_AFTER_SECONDS : RETRY_AFTER_SECONDS)) return
       void download()
     }
@@ -120,6 +130,20 @@ export function useWindForecast(
       running.current = null
       setStatus({ zone, state: "idle" })
     }
+    // The course was erased, replaced or reset, here or in another tab: stop,
+    // and drop what may have been written before the news arrived. Nothing
+    // writes after this, so the copy cannot outlive the course (SP-WX1-1).
+    const stopWatching = watchLocalData(() => {
+      removedElsewhere.current = true
+      running.current?.abort()
+      running.current = null
+      try {
+        localStorage.removeItem(cacheKey(zone))
+      } catch {
+        // Storage may be unavailable; then nothing was kept either.
+      }
+      setStatus({ zone, state: "idle" })
+    })
     const timer = window.setTimeout(refreshIfDue, 0)
     window.addEventListener("storage", onStorage)
     // Signal back after a dead spot, or the phone picked up again hours later.
@@ -128,6 +152,7 @@ export function useWindForecast(
     document.addEventListener("visibilitychange", refreshIfDue)
     return () => {
       window.clearTimeout(timer)
+      stopWatching()
       window.removeEventListener("storage", onStorage)
       window.removeEventListener("online", onlineAgain)
       window.removeEventListener("pageshow", refreshIfDue)
