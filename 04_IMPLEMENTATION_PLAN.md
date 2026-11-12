@@ -109,7 +109,7 @@ sync-chaos, field UX and security/privacy reviews.
 ## WX1 — Vento, the wind forecast
 
 **Category:** FEATURE
-**Status:** PENDING
+**Status:** IN_PROGRESS
 
 A Vento line on Home and a Vento screen: the next session in detail, the next
 24 hours, the week or seven days; seven models blended through Open-Meteo,

@@ -1444,7 +1444,7 @@
     {
       "id": "WX1",
       "category": "FEATURE",
-      "status": "PENDING",
+      "status": "IN_PROGRESS",
       "ownerEvidence": [
         ".evidence/WX1/owner-setup.json",
         ".evidence/WX1/physical-device-review.json"
@@ -1484,7 +1484,17 @@
           "id": "B7",
           "reason": "The choice between two courses never reads the forecast; Vento follows whichever course is open."
         }
-      ]
+      ],
+      "startedFrom": {
+        "commit": "1d7d844e62c526df1679e7e076995ca6daf784b7",
+        "sourceDigest": "ab8689b1bea8e3b9074e5c8d6a1ea7a243850c6962fa1067c3afd07156433e05",
+        "ownerPrerequisites": [
+          {
+            "id": "B7",
+            "commit": "cb51dbb1d859bc92afc9a7cd4ce37fe55f3c95cf"
+          }
+        ]
+      }
     },
     {
       "id": "UG4",
