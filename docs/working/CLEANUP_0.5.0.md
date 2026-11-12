@@ -16,10 +16,6 @@ evidence. An item leaves when it is scheduled in the plan or dropped.
   and isolation checks, dropping the three Chromium projects and `verify`,
   which Linux runs. Evidence: run `ddedbd6`, macOS 76 min against Linux 29;
   every macOS-only failure on record is WebKit.
-- **CL-4: OWNER_TODO shows what is open.** `scripts/owner-checks.mjs`
-  (`renderOwnerTodo`) and its test. Open items first and in full; a PASSED item
-  of a COMPLETE milestone becomes one line with its evidence link. Evidence:
-  359 lines for 5 open items, 13 of 18 items PASSED, some from 0.4.0.
 - **CL-14: dead scripts and stale ignore entries.** Delete
   `scripts/record-roster-paste-robustness.mjs` (no reference),
   `scripts/measure-isolation.mjs` (a V01 one-off), the `verify:e2e:v05` script

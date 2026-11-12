@@ -314,6 +314,32 @@ describe("owner checklist and completion helpers", () => {
     expect(markdown).toContain("explicit dependency permissions")
   })
 
+  it("lists open requests first and in full, and each passed one on a line with its anchor", () => {
+    const open = deviceItem({
+      id: "D3-SECOND",
+      status: "NEEDS_SETUP",
+      testedCommit: null,
+      testUrl: null,
+    })
+    const done = deviceItem({
+      status: "PASSED",
+      result: ownerResult(),
+      updatedAt: "2026-10-20T08:00:00.000Z",
+    })
+    const markdown = renderOwnerTodo({ schemaVersion: 1, items: [done, open] })
+    const passedAt = markdown.indexOf("## Passed")
+    expect(markdown.indexOf('<a id="d3-second"></a>')).toBeLessThan(passedAt)
+    const passedLine = markdown
+      .split("\n")
+      .find((line) => line.includes('id="d3-phone-update"'))
+    expect(passedLine).toMatch(
+      /^- <a id="d3-phone-update"><\/a>.* — D3, recorded 2026-10-20: report in `\.evidence\//,
+    )
+    expect(markdown.slice(passedAt)).not.toContain("**What to do:**")
+    const nothingOpen = renderOwnerTodo({ schemaVersion: 1, items: [done] })
+    expect(nothingOpen).toContain("Nothing is waiting for you.")
+  })
+
   it("finds required items and rejects incomplete or stale checkpoints", () => {
     const pending = queue(deviceItem({ status: "NEEDS_SETUP" }))
     expect(ownerItemsFor(pending, "D3")).toHaveLength(1)

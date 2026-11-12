@@ -4,150 +4,6 @@ This is the current owner checklist, regenerated from `.milestones/owner-checks.
 
 Tell your agent the item name and what happened. It records your feedback and keeps this list current. [How pending checks affect agent work](./OWNER_WORKFLOW.md).
 
-<a id="b2-backend-setup"></a>
-
-## Create the 0.5.0 development backend projects — B2
-
-**State:** Passed from owner report · Required
-
-**What to do:**
-
-The owner reported: The owner created the Supabase development project cvc-helper-dev (West EU), ran the course-backup migration (13 tables with row-level security), created powersync_role, created the PowerSync Cloud project CVC Helper with a CLI token, and two synthetic test accounts; all values are in the ignored .env. Chose email magic-link sign-in. The agent verified each value's shape without printing it, linked and deployed the Development instance (EU), and confirmed replication of all 13 tables and both test sign-ins.
-
-**Expected:** Development projects only, in the EU, with synthetic data; credentials stay in .env. The agent then links, deploys and checks the instance before any app code connects.
-
-**Build:** No test build is assigned yet.
-
-**Work affected:** The owner report is recorded.
-
-<a id="b3-phone-signin"></a>
-
-## Sign in to the online backup on Android and use it offline — B3
-
-**State:** Passed from owner report · Required
-
-**What to do:**
-
-The owner reported: Passed with steps not observed. Observed on the phone: the emailed sign-in link opened CVC Helper Test from the mail app (not the installed app nor the browser) and signed in; Copia online aggiornata appeared almost at once; notes and students added, closing and reopening kept them. Airplane mode: 'Tutto inviato. Ora senza connessione.', then after a note 'In attesa di connessione: 2 modifiche da inviare' (still 2 after adding a student), and with signal back the count went 3, 2, 1 to 'Copia online aggiornata' without reopening; closing and reopening worked as expected. The Esci question about unsent changes appeared as expected and the course remained on the phone. Signing in from the mail link and from Chrome showed no difference. Sign-in is fast. NOT OBSERVED: typing a student during the one reload after sign-in (the owner reports sign-in is fast); the installed CVC Helper Test app (the owner used Chrome because the test app cannot be installed beside the regular one, BACKLOG).
-
-**Expected:** Sign-in by the link (or the code) works on the phone and the backup reaches 'Copia online aggiornata'; offline the account stays signed in and the backup resumes with signal; nothing typed is lost around the one reload; Esci warns about unsent changes and keeps the course. Only your actual phone observations can pass this check.
-
-**Build:** `b8de760f1c7f8e398b8abcf58818ad8c3a8822c1`
-
-**Test address:** https://furiocolombo.github.io/CVC_helper_test/
-
-**Guide:** [Device check guide](./DEVICE_CHECKS.md)
-
-**Work affected:** The owner report is recorded.
-
-<a id="b4-phone-uploads"></a>
-
-## Update to 0.5.3: the PC finishes its restore and follows the phone — B4
-
-**State:** Passed from owner report · Required
-
-**What to do:**
-
-The owner reported: 1: on the PC the app briefly showed another page, closed and reopened by itself very quickly, then opened the course correctly with the correct version. 2: on the phone the update button showed after a couple of seconds and worked flawlessly. 3: a note changed on the phone was on the PC after reopening the screen, fast even on an immediate refresh; no automatic refresh, which is known. 4: the same from the PC to the phone. Nothing odd came up.
-
-**Expected:** 0.5.3 updates in place on both devices and keeps the backup. The PC leaves the stuck restore and opens on your course. An edit on either device reaches the other after its screen is left and reopened. Only your actual observations can pass this check.
-
-**Build:** `6e17c1d313eabf15f6afdded9c401b36fa5fabe8`
-
-**Test address:** https://furiocolombo.github.io/CVC_helper_test/
-
-**Guide:** [Device check guide](./DEVICE_CHECKS.md)
-
-**Work affected:** The owner report is recorded.
-
-<a id="b5-minimum-read"></a>
-
-## Let the app read the server's minimum app version — B5
-
-**State:** Passed from owner report · Required
-
-**What to do:**
-
-The owner reported: The owner ran the migration once in cvc-helper-dev. Resuming the milestone to reverify it on the current source reset this item, but the migration stays in the database. Nothing to run again.
-
-**Expected:** A signed-in account can read the minimum writer version and nothing else; a restored course adopts it, so an app older than it opens the course read-only.
-
-**Build:** No test build is assigned yet.
-
-**Work affected:** The owner report is recorded.
-
-<a id="b5-phone-restore"></a>
-
-## Restore your course on an emptied phone, and see the question for another course — B5
-
-**State:** Passed from owner report · Required
-
-**What to do:**
-
-The owner reported: Steps 1-5 passed on the phone: after Esci and Azzera tutti i dati locali, the restore from the backup online brought back the course; the students and the two notes checked were there. It was fast, never more than 2 seconds of waiting. After an edit, Copia online aggiornata came immediately. Step 6 (optional, a PC with another course asked before replacing) skipped by the owner.
-
-**Expected:** An emptied phone restores the course in full from the backup and reopens on it; nothing can be created meanwhile; a device with another course asks before replacing it. Only your actual observations can pass this check.
-
-**Build:** `3bdd415a0c061c6ba45e562bc7d5ec8238c3e519`
-
-**Test address:** https://furiocolombo.github.io/CVC_helper_test/
-
-**Guide:** [Device check guide](./DEVICE_CHECKS.md)
-
-**Work affected:** The owner report is recorded.
-
-<a id="b6-erase-rules"></a>
-
-## Let the server keep an erased course erased — B6
-
-**State:** Passed from owner report · Required
-
-**What to do:**
-
-The owner reported: The owner ran the migration once in cvc-helper-dev. Resuming the milestone to reverify it on the current source reset this item, but the migration stays in the database. Nothing to run again.
-
-**Expected:** The server records the ids of erased courses (no course data, readable only by their owner) and refuses that course from any phone afterwards.
-
-**Build:** No test build is assigned yet.
-
-**Work affected:** The owner report is recorded.
-
-<a id="b6-phone-erase"></a>
-
-## Erase your course on the phone, once offline, and see it gone from the backup — B6
-
-**State:** Passed from owner report · Required
-
-**What to do:**
-
-The owner reported: Steps 1-9 passed with the phone and the PC on one account. Online: the erase question named the backup and what the provider's backups keep; Elimina tutto opened Crea il corso; the PC dropped the course by itself, without a reload; a new course with one student reached the PC by itself. All almost immediate. Offline (airplane mode): the question said 'appena c'è connessione', the phone opened Crea il corso without signal, the PC kept the course until the phone reconnected, then dropped it in under 2 seconds without a reload, and after a later reload it stayed gone. Step 10 (optional, Azzera tutti i dati locali) skipped by the owner.
-
-**Expected:** Erasing the course on the phone erases it from the backup, also when the erase was made offline and the phone reconnected later; the erased course never comes back. Only your actual observations can pass this check.
-
-**Build:** `3bdd415a0c061c6ba45e562bc7d5ec8238c3e519`
-
-**Test address:** https://furiocolombo.github.io/CVC_helper_test/
-
-**Guide:** [Device check guide](./DEVICE_CHECKS.md)
-
-**Work affected:** The owner report is recorded.
-
-<a id="b7-keep-rule"></a>
-
-## Let the server keep the one course you choose — B7
-
-**State:** Passed from owner report · Required
-
-**What to do:**
-
-The owner reported: The owner ran supabase/migrations/20261104000000_keep_course.sql in cvc-helper-dev. The live spec then found keep_course installed and passed on both browser projects (.evidence/B7/live-keep-rule.json).
-
-**Expected:** The server can keep one of an account's courses in one step, erasing only what your phone showed, so two devices choosing together can never erase both. It adds and replaces functions and a trigger, and changes no data.
-
-**Build:** No test build is assigned yet.
-
-**Work affected:** The owner report is recorded.
-
 <a id="b7-phone-choice"></a>
 
 ## Reach two courses on one account, see both, and keep one — B7
@@ -179,106 +35,6 @@ Use the test address below and the linked device instructions.
 
 **Work affected:** Completion of B7 and the release gate wait for this result. Other agent work follows the plan's explicit dependency permissions.
 
-<a id="d3-phone-update"></a>
-
-## Install CVC Helper Test and check Android updates — D3
-
-**State:** Passed from owner report · Required
-
-**What to do:**
-
-The owner reported: Accepted by the owner with two steps not observed. Observed on the phone: 0.4.0 installed from the test address and kept, no reinstall; after other use, Nuova versione disponibile with Più tardi and Aggiorna appeared within a few seconds of returning (not timed precisely); after Aggiorna the bar said once CVC Helper è aggiornata alla versione 0.4.1, Impostazioni Versione shows 0.4.1, and previously registered students remained. Cerca aggiornamenti said offline in airplane mode and Nessuna versione più recente disponibile ora online. NOT OBSERVED: typing a student-note change and tapping Aggiorna immediately (Salvataggio…/Salvato state and survival of that edit); reachability of Allievi + and Equipaggi controls with enlarged text while the offer showed (owner did not check; said it looked ok).
-
-**Expected:** The 0.4.0 → 0.4.1 update appears within one minute of returning, without reinstalling; the typed edit survives and controls remain reachable. Only your actual phone observations can pass this check.
-
-**Build:** `761530f820908db8355e1bcdd661bc8c6f495385`
-
-**Test address:** https://furiocolombo.github.io/CVC_helper_test/
-
-**Guide:** [Updates and versions](./DEVICE_CHECKS.md#updates-and-versions)
-
-**Work affected:** The owner report is recorded.
-
-<a id="d4-phone-transfer"></a>
-
-## Check course files, persistent storage and full reset on Android — D4
-
-**State:** Passed from owner report · Required
-
-**What to do:**
-
-The owner reported: Update 0.4.2 to 0.4.3 offered within about 5 seconds of starting the app; Impostazioni shows 0.4.3. Conservazione dei dati: the browser agreed to keep the app data even when space is low. Prepara then Salva file worked on the first tap. Condividi sent the course file to WhatsApp as a .txt file. Import of the shared or saved file: preview, cancel, then confirmed replacement worked; students, notes, duties and crews checked. Azzera tutti i dati locali finished on its own and the app reopened without a course (import and reset sections shown, which the owner questioned but accepted). Regular app: the owner did not open an installed regular CVC Helper app; opening the regular CVC Helper in Chrome, its data stayed separate from the test app.
-
-**Expected:** The actual Android share/save/import round trip preserves the synthetic course. Storage permission is reported honestly, full reset completes without restoring erased data, and the regular app retains its course. No simulated or inferred device PASS.
-
-**Build:** `7ac55d8210e9c08c36dd676e80bc018d2cd216b4`
-
-**Test address:** https://furiocolombo.github.io/CVC_helper_test/
-
-**Guide:** [Device check guide](./DEVICE_CHECKS.md)
-
-**Work affected:** The owner report is recorded.
-
-<a id="ug3-final-build"></a>
-
-## Confirm the final 0.4.0 build on your regular app — UG3
-
-**State:** Passed from owner report · Required
-
-**What to do:**
-
-The owner reported: Closed and reopened the regular CVC Helper; Impostazioni shows 0.4.0 and the course opened with its students as before.
-
-**Expected:** The regular app runs the final 0.4.0 build with the course intact. Only actual phone observations pass.
-
-**Build:** `ed83223c9a4b5455b736109f062b798ae5324262`
-
-**Test address:** https://furiocolombo.github.io/CVC_helper/
-
-**Guide:** [Device check guide](./DEVICE_CHECKS.md)
-
-**Work affected:** The owner report is recorded.
-
-<a id="ug3-phone-release"></a>
-
-## Check the 0.4.0 release build on Android — UG3
-
-**State:** Passed from owner report · Optional
-
-**What to do:**
-
-The owner reported: The owner reports observing every step and all good: the update arriving without reinstalling with a typed note kept after Aggiorna, the controls reachable at enlarged text (also seen on the earlier 0.4.2 update), export, share and import, and Conservazione dei dati. Individual values (offer time, version shown) were not restated. Exception, not blocking by the owner's judgement: having CVC Helper Test and the regular app installed together is problematic; it worked once, then after problems and reinstalling the regular app, installing the test app says it is already installed although it is not visible (perhaps a failed uninstall or a conflict with the regular app; a phone reboot may fix it). Their data stayed separate.
-
-**Expected:** The update arrives without reinstalling and keeps the typed note; controls stay reachable at enlarged text; export, share and import round-trip the synthetic course; storage persistence is reported honestly. Only actual phone observations pass.
-
-**Build:** `c56ffe77c81427a25d237adf11995ae4c44092a9`
-
-**Test address:** https://furiocolombo.github.io/CVC_helper_test/
-
-**Guide:** [Device check guide](./DEVICE_CHECKS.md)
-
-**Work affected:** The owner report is recorded.
-
-<a id="ug3-regular-update"></a>
-
-## Update your regular CVC Helper from 0.3.0 to 0.4.0 — UG3
-
-**State:** Passed from owner report · Optional
-
-**What to do:**
-
-The owner reported: Owner: done and passed, no issue to signal. The installed regular app took 0.4.0 from 0.3.0 without reinstalling and the real course opened; no further detail (offer timing, counts, Conservazione answer, saved file) was given.
-
-**Expected:** The installed 0.3.0 app takes 0.4.0 without reinstalling, the real course opens unchanged, Impostazioni shows 0.4.0 and the course can be saved to a file. Only actual phone observations pass.
-
-**Build:** `92b0d94bbc7f5fa521e0a3f5c32a1a36f023c505`
-
-**Test address:** https://furiocolombo.github.io/CVC_helper/
-
-**Guide:** [Device check guide](./DEVICE_CHECKS.md)
-
-**Work affected:** The owner report is recorded.
-
 <a id="b3-email-code"></a>
 
 ## Add the sign-in code to the backend email, with a custom email sender — UG4
@@ -296,22 +52,6 @@ The owner reported: Owner: done and passed, no issue to signal. The installed re
 **Build:** No test build is assigned yet.
 
 **Work affected:** No required milestone completion is blocked.
-
-<a id="wx1-network"></a>
-
-## Let Vento fetch forecasts before sign-in — WX1
-
-**State:** Passed from owner report · Required
-
-**What to do:**
-
-The owner reported: The owner accepts that Vento, once opened, asks Open-Meteo and LaMMA for forecasts before sign-in, also by itself while it stays open. Home still never connects. The rule is amended in the plan, 03 and DEPLOY.md when WX1 starts, with the code that needs it.
-
-**Expected:** With a yes, the rule is amended in the plan, 03 and DEPLOY.md together, and WX1 starts after B7's handoff. With another answer, Vento's design changes before it starts.
-
-**Build:** No test build is assigned yet.
-
-**Work affected:** The owner report is recorded.
 
 <a id="wx1-phone-vento"></a>
 
@@ -376,3 +116,20 @@ No phone-test build is ready. Wait until the item becomes READY before running t
 **Build:** No test build is assigned yet.
 
 **Work affected:** Completion of WX1 and the release gate wait for this result. Other agent work follows the plan's explicit dependency permissions.
+
+## Passed
+
+- <a id="b2-backend-setup"></a>Create the 0.5.0 development backend projects — B2, recorded 2026-10-25: report in `.evidence/B2/owner-setup.json`
+- <a id="b3-phone-signin"></a>Sign in to the online backup on Android and use it offline — B3, recorded 2026-10-26: report in `.evidence/B3/physical-device-review.json`
+- <a id="b4-phone-uploads"></a>Update to 0.5.3: the PC finishes its restore and follows the phone — B4, recorded 2026-11-09: report in `.evidence/B4/physical-device-review.json`
+- <a id="b5-minimum-read"></a>Let the app read the server's minimum app version — B5, recorded 2026-11-04: report in `.evidence/B5/physical-device-review.json`
+- <a id="b5-phone-restore"></a>Restore your course on an emptied phone, and see the question for another course — B5, recorded 2026-11-09: report in `.evidence/B5/physical-device-review.json`
+- <a id="b6-erase-rules"></a>Let the server keep an erased course erased — B6, recorded 2026-11-04: report in `.evidence/B6/physical-device-review.json`
+- <a id="b6-phone-erase"></a>Erase your course on the phone, once offline, and see it gone from the backup — B6, recorded 2026-11-11: report in `.evidence/B6/physical-device-review.json`
+- <a id="b7-keep-rule"></a>Let the server keep the one course you choose — B7, recorded 2026-11-09: report in `.evidence/B7/physical-device-review.json`
+- <a id="d3-phone-update"></a>Install CVC Helper Test and check Android updates — D3, recorded 2026-10-19: report in `.evidence/D3/physical-device-review.json`
+- <a id="d4-phone-transfer"></a>Check course files, persistent storage and full reset on Android — D4, recorded 2026-10-20: report in `.evidence/D4/physical-device-review.json`
+- <a id="ug3-final-build"></a>Confirm the final 0.4.0 build on your regular app — UG3, recorded 2026-10-24: report in `.evidence/UG3/physical-device-review.json`
+- <a id="ug3-phone-release"></a>Check the 0.4.0 release build on Android — UG3, recorded 2026-10-22: report in `.evidence/UG3/physical-device-review.json`
+- <a id="ug3-regular-update"></a>Update your regular CVC Helper from 0.3.0 to 0.4.0 — UG3, recorded 2026-10-22: report in `.evidence/UG3/physical-device-review.json`
+- <a id="wx1-network"></a>Let Vento fetch forecasts before sign-in — WX1, recorded 2026-11-05: report in `.evidence/WX1/owner-setup.json`

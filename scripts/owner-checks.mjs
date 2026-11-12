@@ -450,7 +450,12 @@ export function renderOwnerTodo(queue) {
     return `${lines.join("\n")}\n`
   }
 
-  for (const item of items) {
+  // CL-4: what is still open comes first and in full; a passed request is
+  // one line, keeping its anchor and naming where the report is.
+  const open = items.filter((item) => item.status !== "PASSED")
+  const passed = items.filter((item) => item.status === "PASSED")
+  if (open.length === 0) lines.push("", "Nothing is waiting for you.")
+  for (const item of open) {
     lines.push(
       "",
       `<a id="${anchorId(item.id)}"></a>`,
@@ -484,6 +489,14 @@ export function renderOwnerTodo(queue) {
       lines.push(
         "",
         `**Latest owner report:** ${markdownText(item.result.summary)}`,
+      )
+  }
+
+  if (passed.length > 0) {
+    lines.push("", "## Passed", "")
+    for (const item of passed)
+      lines.push(
+        `- <a id="${anchorId(item.id)}"></a>${markdownText(item.title)} — ${markdownText(item.milestone)}, recorded ${item.updatedAt ? markdownText(item.updatedAt.slice(0, 10)) : "on an unknown date"}: report in ${inlineCode(item.evidencePath)}`,
       )
   }
 
