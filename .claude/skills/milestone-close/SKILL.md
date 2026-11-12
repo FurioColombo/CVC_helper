@@ -28,7 +28,10 @@ keeps the milestone open while explicitly eligible work continues.
 
 - Focused specs and unit tests for what changed, then the scripts in the
   milestone's `verificationScripts` (`.milestones/manifest.json`), recorded with
-  `npm run evidence -- <ID>`. `verify:e2e:focus` runs the manifest's
+  `npm run evidence -- <ID> --from-ci` once the committed source's `[full-ci]`
+  push run is green: it takes what CI ran and runs only the backend specs
+  here. Plain `npm run evidence -- <ID>` runs everything here, the fallback
+  when CI is unavailable. `verify:e2e:focus` runs the manifest's
   `e2eSpecs`: list the milestone's own specs only; the full push CI on
   the checkpoint runs every other journey. That records the source digest: any later change
   to code (Markdown, evidence and manifest excepted) invalidates it.

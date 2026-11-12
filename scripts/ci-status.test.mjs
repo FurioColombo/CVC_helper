@@ -5,9 +5,12 @@ import { fileURLToPath } from "node:url"
 
 import {
   alreadyVerified,
+  CI_COVERED_SCRIPTS,
   ciStatus,
   failedDetails,
   githubClient,
+  greenFullRun,
+  isLiveSpec,
   isFullRun,
   latestPushRun,
   repositoryFromRemote,
@@ -393,5 +396,98 @@ describe("the workflow's two tier expressions (T1 review CQ-4)", () => {
     const tier = condition(/CI_TIER: \$\{\{ \((.+?)\) && 'full'/)
     expect(name).toBeTruthy()
     expect(tier).toBe(name)
+  })
+})
+
+describe("a recording from CI (CL-1a)", () => {
+  const job = (name, extra = {}) => ({
+    name,
+    conclusion: "success",
+    check_run_url: `https://api.github.com/repos/${repo}/check-runs/7`,
+    steps: [
+      { name: "Linux deterministic checks", conclusion: "success" },
+      { name: "Quick tier", conclusion: "skipped" },
+    ],
+    ...extra,
+  })
+  const client = ({
+    runs = [run()],
+    jobs = [job("verify (ubuntu)")],
+    annotations = [],
+  } = {}) => ({
+    runs: async () => runs,
+    jobs: async () => jobs,
+    annotations: async () => annotations,
+  })
+
+  it("takes the exact commit's green full run, the steps that ran and its flakes", async () => {
+    const result = await greenFullRun(
+      client({
+        annotations: [
+          {
+            annotation_level: "warning",
+            title: "FLAKY",
+            message: "a.spec.ts › opens [pixel-7-chrome]",
+          },
+          {
+            annotation_level: "warning",
+            title: "Deprecation",
+            message: "x.spec.ts › y [z]",
+          },
+          {
+            annotation_level: "failure",
+            title: "FLAKY",
+            message: "b.spec.ts › fails [pixel-7-chrome]",
+          },
+        ],
+      }),
+      repo,
+      sha,
+    )
+    expect(result.run.id).toBe(10)
+    expect(result.jobs).toEqual([
+      {
+        name: "verify (ubuntu)",
+        conclusion: "success",
+        ranSteps: ["Linux deterministic checks"],
+      },
+    ])
+    expect(result.flaky).toEqual([
+      { file: "a.spec.ts", title: "opens", project: "pixel-7-chrome" },
+    ])
+  })
+
+  it("refuses a missing, quick, running, red or jobless run, and unknown flakes", async () => {
+    const cases = [
+      [client({ runs: [] }), /no push run/],
+      [
+        client({ runs: [run({ display_title: "Quick verification · x" })] }),
+        /quick/,
+      ],
+      [
+        client({ runs: [run({ status: "in_progress", conclusion: null })] }),
+        /in_progress\/pending/,
+      ],
+      [
+        client({ runs: [run({ conclusion: "failure" })] }),
+        /completed\/failure/,
+      ],
+      [client({ jobs: [] }), /no jobs/],
+      [
+        client({ jobs: [job("verify", { check_run_url: undefined })] }),
+        /flakes unknown/,
+      ],
+    ]
+    for (const [subject, reason] of cases) {
+      await expect(greenFullRun(subject, repo, sha)).rejects.toThrow(reason)
+    }
+  })
+
+  it("names live specs and the scripts CI's full tier runs", () => {
+    expect(isLiveSpec("tests/e2e/b7-two-courses-live.spec.ts")).toBe(true)
+    expect(isLiveSpec("tests/e2e/weather.spec.ts")).toBe(false)
+    expect(isLiveSpec("tests/e2e/liveBackend.ts")).toBe(false)
+    expect(CI_COVERED_SCRIPTS.has("verify:e2e:focus")).toBe(true)
+    expect(CI_COVERED_SCRIPTS.has("check:live")).toBe(false)
   })
 })

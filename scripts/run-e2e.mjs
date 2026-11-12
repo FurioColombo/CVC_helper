@@ -3,7 +3,7 @@ import { existsSync, readFileSync, rmSync, writeFileSync } from "node:fs"
 import { createServer } from "node:net"
 import { resolve } from "node:path"
 
-import { flakyEntry, flakyTestsFrom } from "./e2e-report.mjs"
+import { flakyAnnotation, flakyEntry, flakyTestsFrom } from "./e2e-report.mjs"
 
 const root = resolve(import.meta.dirname, "..")
 const reportPath = resolve(root, "test-results/e2e-report.json")
@@ -93,6 +93,7 @@ const flaky = existsSync(reportPath)
 writeFileSync(flakyPath, `${JSON.stringify(flaky, null, 2)}\n`)
 for (const test of flaky) {
   console.log(`FLAKY: ${flakyEntry(test)} [${test.project}]`)
+  if (process.env.GITHUB_ACTIONS === "true") console.log(flakyAnnotation(test))
 }
 
 process.exitCode = status

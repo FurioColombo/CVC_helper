@@ -7,6 +7,27 @@ export function flakyEntry(test) {
 }
 
 /**
+ * In CI the same line is also a GitHub warning annotation titled FLAKY, which
+ * the public API returns without a token: `evidence --from-ci` reads a run's
+ * flaky tests from it (CL-1a). GitHub's workflow commands escape %, CR and LF.
+ */
+export const FLAKY_ANNOTATION_TITLE = "FLAKY"
+
+export function flakyAnnotation(test) {
+  const message = `${flakyEntry(test)} [${test.project}]`
+    .replaceAll("%", "%25")
+    .replaceAll("\r", "%0D")
+    .replaceAll("\n", "%0A")
+  return `::warning title=${FLAKY_ANNOTATION_TITLE}::${message}`
+}
+
+/** The test an annotation's message names, or null for any other message. */
+export function flakyFromAnnotation(message) {
+  const match = /^(.+?) › (.+) \[([\w-]+)\]$/s.exec(message ?? "")
+  return match ? { file: match[1], title: match[2], project: match[3] } : null
+}
+
+/**
  * Tests that failed first and passed on a retry, from Playwright's JSON report
  * (playwright.config.ts writes it to test-results/e2e-report.json).
  */

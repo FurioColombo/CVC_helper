@@ -500,7 +500,12 @@ Keep the existing harness and command surface:
 - `npm run milestone:start|check|complete -- <ID>`;
 - `npm run milestone:await-owner|resume -- <ID>`; `npm run owner:list|check`;
 - `npm run ci:status -- [--wait]`: the exact HEAD commit's push verification;
-- `npm run evidence -- <ID>`.
+- `npm run evidence -- <ID> [--from-ci]`: with `--from-ci`, the scripts the
+  full push tier runs come from the exact commit's green full run (its jobs
+  and the tests it annotated `FLAKY` are recorded), and the backend specs
+  (`*-live`), which CI cannot reach, run here; a recording where none of them
+  ran fails. Without it, every script runs here: the fallback when CI is
+  unavailable.
 
 The milestone manifest declares verification scripts, evidence and structured
 review files. Completion is refused when evidence is missing, verification is not

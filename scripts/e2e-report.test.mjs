@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest"
 
-import { flakyTestsFrom } from "./e2e-report.mjs"
+import {
+  flakyAnnotation,
+  flakyFromAnnotation,
+  flakyTestsFrom,
+} from "./e2e-report.mjs"
 
 describe("flakyTestsFrom", () => {
   it("lists only the tests that passed on a retry, from nested suites", () => {
@@ -52,5 +56,27 @@ describe("flakyTestsFrom", () => {
 
   it("is empty for a report without suites", () => {
     expect(flakyTestsFrom({})).toEqual([])
+  })
+})
+
+describe("the FLAKY annotation", () => {
+  it("names the test in a form its reader recovers exactly", () => {
+    const test = {
+      file: "weather.spec.ts",
+      title: "keeps 100% › of a copy\nacross lines",
+      project: "iphone-13-webkit-core",
+    }
+    const line = flakyAnnotation(test)
+    expect(line.startsWith("::warning title=FLAKY::")).toBe(true)
+    expect(line).not.toContain("\n")
+    const message = decodeURIComponent(
+      line.slice("::warning title=FLAKY::".length),
+    )
+    expect(flakyFromAnnotation(message)).toEqual(test)
+  })
+
+  it("ignores other warnings", () => {
+    expect(flakyFromAnnotation("Node.js 20 actions are deprecated")).toBeNull()
+    expect(flakyFromAnnotation(undefined)).toBeNull()
   })
 })

@@ -4,6 +4,8 @@ import { execFileSync } from "node:child_process"
 import { setTimeout as delay } from "node:timers/promises"
 import { pathToFileURL } from "node:url"
 
+import { FLAKY_ANNOTATION_TITLE, flakyFromAnnotation } from "./e2e-report.mjs"
+
 const WORKFLOW_PATH = ".github/workflows/ci.yml"
 const root = new URL("../", import.meta.url)
 
@@ -101,6 +103,76 @@ export async function alreadyVerified(client, repo, sha, env = process.env) {
   // A quick run never stands in for a full one.
   if (env.CI_TIER !== "quick" && !isFullRun(run)) return false
   return run?.status === "completed" && run.conclusion === "success"
+}
+
+/**
+ * The scripts a green full push run stands for on its exact commit (CL-1a):
+ * check-repository proves CI's full tier runs every step of verify:all and
+ * every browser project, and a full run that skipped the browser suite rests
+ * on the green full run of the commit it built on (ci-scope.mjs). The backend
+ * specs, `*-live`, skip in CI, which holds no backend secrets: the recorder
+ * runs those on this machine.
+ */
+export const CI_COVERED_SCRIPTS = new Set([
+  "verify",
+  "verify:quick",
+  "verify:domain",
+  "build",
+  "verify:e2e",
+  "verify:e2e:focus",
+  "verify:e2e:smoke",
+  "verify:e2e:v05",
+  "verify:all",
+])
+
+export const isLiveSpec = (spec) => /-live\.spec\.ts$/.test(spec)
+
+/**
+ * The exact commit's green full push run, its jobs and the flaky tests its
+ * browser runs annotated (scripts/run-e2e.mjs). Throws with the reason when
+ * there is none, so no recording rests on a missing, quick, running or red run.
+ */
+export async function greenFullRun(client, repo, sha) {
+  const run = latestPushRun(await client.runs(repo, sha), sha)
+  const short = sha.slice(0, 12)
+  if (!run) throw new Error(`CI has no push run of ${short}; push it first`)
+  if (!isFullRun(run)) {
+    throw new Error(`CI's run of ${short} is quick; commit with [full-ci]`)
+  }
+  if (run.status !== "completed" || run.conclusion !== "success") {
+    throw new Error(
+      `CI's run of ${short} is ${run.status}/${run.conclusion ?? "pending"}`,
+    )
+  }
+  const jobs = await client.jobs(repo, run)
+  if (jobs.length === 0) throw new Error(`CI's run of ${short} lists no jobs`)
+  const flaky = []
+  for (const job of jobs) {
+    const checkId = /\/check-runs\/(\d+)$/.exec(job.check_run_url ?? "")?.[1]
+    if (!checkId) {
+      throw new Error(`CI job ${job.name} has no check run: flakes unknown`)
+    }
+    for (const annotation of await client.annotations(repo, checkId)) {
+      if (
+        annotation.annotation_level !== "warning" ||
+        annotation.title !== FLAKY_ANNOTATION_TITLE
+      )
+        continue
+      const test = flakyFromAnnotation(annotation.message)
+      if (test) flaky.push(test)
+    }
+  }
+  return {
+    run,
+    jobs: jobs.map((job) => ({
+      name: job.name,
+      conclusion: job.conclusion,
+      ranSteps: (job.steps ?? [])
+        .filter((step) => step.conclusion === "success")
+        .map((step) => step.name),
+    })),
+    flaky,
+  }
 }
 
 export async function failedDetails(client, repo, run) {
