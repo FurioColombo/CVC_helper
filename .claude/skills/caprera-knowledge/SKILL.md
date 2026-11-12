@@ -97,8 +97,8 @@ The forecast areas and points (Derive and Cabinati) are in
 `src/domain/windConfig.ts` and `docs/working/WEATHER_PROPOSAL.md` on the
 unmerged branch `claude/weather-section`; they arrive with milestone WX1. The
 branch carries the owner's Derive points and the forecast's session hours
-(`sessionHours`: the CT guide's timetable, widened by the owner to 8–14 and
-14–19 on 2026-11-12); the Cabinati points are still open (`stillOpen`). A map of the places is owner-named future work (`BACKLOG.md`).
+(`sessionHours`: the CT guide's outings, 9–12:30 and 15–18, make the numbers;
+the owner asked on 2026-11-12 to see an hour each side, 8–14 and 14–19); the Cabinati points are still open (`stillOpen`). A map of the places is owner-named future work (`BACKLOG.md`).
 
 ## How to search
 

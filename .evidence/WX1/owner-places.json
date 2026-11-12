@@ -118,25 +118,37 @@
       "back": "18:00"
     },
     "forTheForecast": {
-      "AM": {
-        "start": 8,
-        "end": 14,
-        "label": "8–14"
+      "outing": {
+        "AM": {
+          "start": 9,
+          "end": 13,
+          "label": "9–12:30"
+        },
+        "PM": {
+          "start": 15,
+          "end": 18,
+          "label": "15–18"
+        }
       },
-      "PM": {
-        "start": 14,
-        "end": 19,
-        "label": "14–19"
+      "shownAround": {
+        "AM": {
+          "start": 8,
+          "end": 14
+        },
+        "PM": {
+          "start": 14,
+          "end": 19
+        }
       }
     },
-    "note": "The timetable is the whole school's, Deriva and Cabinati courses that stay at a base. Hours are whole hours, end excluded, so AM covers 8:00 to 13:59. Itinerant courses (C4, C5) keep their own rhythm.",
+    "note": "The timetable is the whole school's, Deriva and Cabinati courses that stay at a base. Hours are whole hours, end excluded: the morning outing counts 9:00 to 12:59 and is shown from 8:00 to 13:59. Itinerant courses (C4, C5) keep their own rhythm.",
     "ownerChoice": {
       "recordedAt": "2026-11-12",
       "said": "Afternoon 14 to 19; the morning too one hour longer than the real session, to get a better idea of the trend.",
-      "reading": "The morning outing runs 9:00 to 12:30; one hour more on each side read as 8 to 14 in whole hours, so the half-day ends where the afternoon starts. Logged in docs/working/OWNER_DECISIONS.md."
+      "reading": "Every number Vento says about an outing (wind, gust, sky, temperatures, thunder, 'In corso', and when the next outing becomes the answer) comes from the outing's own hours, 9:00 to 12:30 and 15:00 to 18:00. The hour row and the map show one hour more on each side, greyed, to read the trend: 8 to 14 and 14 to 19. A first build counted the whole window; review round four showed it moved the headlines to hours nobody sails, so the two were split on 2026-11-12. Logged in docs/working/OWNER_DECISIONS.md."
     }
   },
-  "toApplyAtWX1Start": "Applied on claude/weather-section on 2026-11-12 (not yet merged): the Derive points, centre and description in src/domain/windConfig.ts, and WIND_SESSION_HOURS AM 8 to 14, PM 14 to 19, with the e2e fixtures moved to match.",
+  "toApplyAtWX1Start": "Applied on claude/weather-section on 2026-11-12 (not yet merged): the Derive points, centre and description in src/domain/windConfig.ts; WIND_SESSION_HOURS as the outings (AM 9 to 13, PM 15 to 18) and WIND_TREND_HOURS AM 8 to 14, PM 14 to 19 for the hour row and the map, with the e2e fixtures moved to match.",
   "stillOpen": [
     "the six Cabinati points"
   ],

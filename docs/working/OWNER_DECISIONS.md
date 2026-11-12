@@ -176,9 +176,11 @@ tutti i dati locali` erases the course from the backup first; without
     mine).** After seeing the screens you asked for the afternoon as 14–19,
     the morning one hour longer than the real session as well, to read the
     trend; your Derive points; a map of the area as an alternative view; and
-    the sky and temperature in the forecast and on Home. My reading: the
-    morning outing runs 9:00–12:30, so an hour more on each side is 8–14 in
-    whole hours, and the half-day ends where the afternoon starts. The map is
+    the sky and temperature in the forecast and on Home. My reading: every
+    number about an outing comes from its real hours (9:00–12:30, 15:00–18:00);
+    the hour row and the map show an hour more on each side, greyed, 8–14 and
+    14–19. A first build counted the whole window, and a review showed it moved
+    the headlines to hours nobody sails, so the two were split. The map is
     recreated from OpenStreetMap's coastline (ODbL), not LaMMA's image: its
     CC BY-ND licence forbids drawing on it, and Porto Palma is a few pixels
     there. All of it is built on the unmerged `claude/weather-section`, so it
