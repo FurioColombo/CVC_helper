@@ -2,7 +2,10 @@ import { act, renderHook, waitFor } from "@testing-library/react"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 import { WIND_ZONES } from "@/domain/windConfig"
-import { useWindForecast } from "@/features/weather/useWindForecast"
+import {
+  REFRESH_AFTER_SECONDS,
+  useWindForecast,
+} from "@/features/weather/useWindForecast"
 import { appChannelConfig } from "@/runtimeConfig"
 
 const NOW = Date.UTC(2026, 10, 5, 8) / 1000
@@ -284,5 +287,37 @@ describe("useWindForecast", () => {
     })
     expect(fetch).toHaveBeenCalled()
     unmount()
+  })
+
+  // The floor that keeps the centre inside Open-Meteo's limits (windBudget.test.ts).
+  function wholeCopy(age: number) {
+    const copy = JSON.parse(stored(age)) as Record<string, unknown>
+    const column = (value: number) => [value, value]
+    return JSON.stringify({
+      ...copy,
+      ensemble: { low: column(8), mid: column(10), high: column(12) },
+      sky: { code: column(1), temperature: column(20), fetchedAt: NOW - age },
+    })
+  }
+
+  async function downloadsOnOpening(age: number) {
+    localStorage.setItem(key, wholeCopy(age))
+    const { result, unmount } = renderHook(() =>
+      useWindForecast("derive", "network"),
+    )
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 20))
+    })
+    expect(result.current.forecast?.sky).toBeDefined()
+    unmount()
+    return vi.mocked(fetch).mock.calls.length > 0
+  }
+
+  it("asks nothing when Vento reopens on a whole copy under 45 minutes old", async () => {
+    expect(await downloadsOnOpening(REFRESH_AFTER_SECONDS - 60)).toBe(false)
+  })
+
+  it("asks again once the whole copy is 45 minutes old", async () => {
+    expect(await downloadsOnOpening(REFRESH_AFTER_SECONDS + 60)).toBe(true)
   })
 })

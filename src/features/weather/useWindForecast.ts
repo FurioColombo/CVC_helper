@@ -9,8 +9,12 @@ import {
   writeCachedForecast,
 } from "@/features/weather/windData"
 
-/** How old a forecast may be before reopening Vento fetches a newer one. */
-const REFRESH_AFTER_SECONDS = 45 * 60
+/**
+ * How old a forecast may be before reopening Vento fetches a newer one. It
+ * keeps the centre well inside Open-Meteo's free limits (03, "Vento"); the
+ * budget test pins it.
+ */
+export const REFRESH_AFTER_SECONDS = 45 * 60
 /** After a failed attempt nothing retries by itself for a while. */
 const RETRY_AFTER_SECONDS = 5 * 60
 
