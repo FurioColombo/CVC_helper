@@ -4,7 +4,8 @@ CVC Helper is a mobile-first offline PWA for running one week of a CVC sailing
 course: students, boats and faults, Comandate, crews with boat assignment,
 evaluations and volunteers (ADV/IS/CT). The released app (0.4.0) keeps data on
 the device in a local PowerSync database, with no account or sync; 0.5.0, in
-progress on `claude/0.5.0-prep`, adds an online backup after sign-in. Italian
+progress on `claude/0.5.0-prep`, adds an online backup after sign-in and Vento,
+a wind forecast from public models (`docs/VENTO.md`). Italian
 OCR reads student sheets and Italian speech dictates notes. Releases are in
 `CHANGELOG.md`.
 
@@ -60,3 +61,10 @@ in that file; no icon dependency is added for them.
 
 Boat marks under `public/brand/boats/` were supplied by the club and authorised
 for use by the owner on 2026-09-18; see `02_MVP_SCOPE.md` section 3.
+
+Vento’s coastline map is drawn from OpenStreetMap data, © OpenStreetMap
+contributors, under the Open Database Licence (credited on the map). Its
+forecasts come from Open-Meteo (CC BY 4.0) and its maps from LaMMA (CC BY-ND,
+shown unaltered). Opening Vento sends the area’s fixed coordinates to both and
+nothing of the course; they see the phone’s network address and the hour
+(`03_TECHNICAL_DECISIONS.md` §3.4).

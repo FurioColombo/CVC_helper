@@ -88,6 +88,7 @@ import {
 import { StudentManagement } from "@/features/students/StudentManagement"
 import { VolunteerManagement } from "@/features/volunteers/VolunteerManagement"
 import { WeatherBoundary } from "@/features/weather/WeatherBoundary"
+import { WeatherDisclosure } from "@/features/weather/WeatherDisclosure"
 import { WeatherHomeCard } from "@/features/weather/WeatherHomeCard"
 import { WeatherScreen } from "@/features/weather/WeatherScreen"
 import {
@@ -592,6 +593,7 @@ function SettingsView({
       <UpdateCheckButton className="mt-4" />
       <StorageStatus />
       <OnlineBackup />
+      <WeatherDisclosure />
       <CourseFiles hasCourse />
       <fieldset className="mt-6 min-w-0 rounded-2xl border bg-card p-4">
         <legend className="max-w-full break-words px-1 text-sm font-bold text-primary [overflow-wrap:anywhere]">

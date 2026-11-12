@@ -47,8 +47,8 @@ identity uses family abbreviation, level, week and year on one line, for example
 `D2 - 35 | 2026`. Deriva uses `D`, Cabinato uses `C`; every value changes with the
 selected course and date and is never hard-coded in UI copy.
 
-Home shows the intact CVC symbol without the organization wording and exactly six
-functional cards:
+Home shows the intact CVC symbol without the organization wording, the Vento
+line (`docs/VENTO.md`, part of this specification) and exactly six cards:
 
 - Allievi;
 - Barche;

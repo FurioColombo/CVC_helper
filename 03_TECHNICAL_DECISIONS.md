@@ -416,9 +416,9 @@ refresh running here. A course erased from another phone or swapped by the
 backup, and sign-out, leave it until the next local erase: it holds no
 personal data.
 
-The blend's models, weights, areas and outing hours live in
-`src/domain/windConfig.ts`, its rules in `src/domain/wind.ts` with
-table-driven tests; the evidence behind them is in `.evidence/WX1/`.
+What Vento shows and the rules of its numbers: `docs/VENTO.md`. The models,
+weights, areas and outing hours live in `src/domain/windConfig.ts`, the rules in
+`src/domain/wind.ts` with table-driven tests.
 
 ## 4. Canonical domain implementation
 
