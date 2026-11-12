@@ -18,6 +18,22 @@ export function farMark(lead: number) {
   return lead >= TENDENCY_AFTER_HOURS ? "~" : ""
 }
 
+/**
+ * An hour as its outing reads it: inside one card every number takes the
+ * outing's reach, so the trend mark does not come and go (FUX-66).
+ */
+export function inReach<T extends { lead: number }>(
+  hour: T,
+  reach: WindSummary["reach"],
+): T {
+  const far = reach !== "near"
+  if (far === farMark(hour.lead).length > 0) return hour
+  return {
+    ...hour,
+    lead: far ? TENDENCY_AFTER_HOURS : TENDENCY_AFTER_HOURS - 1,
+  }
+}
+
 export function formatKnots(knots: number) {
   return String(Math.round(knots))
 }

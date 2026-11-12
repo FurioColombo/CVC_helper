@@ -1,0 +1,54 @@
+{
+  "reviewerRole": "field-ux",
+  "persona": "Il Nostromo",
+  "milestone": "WX1",
+  "round": 2,
+  "commit": "a08fa95",
+  "verdict": "FAIL",
+  "blockers": [
+    {
+      "id": "FUX-55",
+      "title": "Unresolved, now narrowed to the map: the markers on the area map still show far numbers without '~'",
+      "evidence": "Everything else in FUX-55 is fixed at a08fa95: farMark (windFormat.ts) puts the '~' on the week gust ('r~50'), the hour cells ('~24 | r ~50'), Cabinati's place rows, the map's place list ('~24 kn | r ~50'), the outing line ('Uscita 9–12:30: NW circa 24 nodi, raffiche circa 50'), the cell names and the hour announcement ('circa 24 nodi, raffica circa 50'). The markers still read '24 | 24 | 24' for Derive and '24' six times for Cabinati on Wednesday 11 AM, while the list under them reads '~24 kn' (src/features/weather/WindZoneMap.tsx:212-214 prints formatKnots(hour.mid) with no farMark). I hold this as a blocker. aria-hidden only takes the map away from screen readers. For a sighted reader the markers are the largest, most legible numbers on the map, the picture held up to a crew, and they are numbers beyond 3 days without the trend mark. The fix is one prefix, farMark(hour.lead), on the marker's number. expectMapClear (tests/e2e/weather.spec.ts) then re-checks name placement with the wider pill.",
+      "reproduction": "My scratchpad's n2/r2-b.spec.ts, 'FUX-55 re-test, far Wednesday: Deriva' and '... Cabinato' (pixel-7). Clock Sat 7 Nov 09:00, open Vento, tap 'Mercoledì 11 AM', choose Mappa. Expected: the markers show '~24', like the list under them. Observed: '24'.",
+      "specRef": "docs/VENTO.md:72 ('Beyond 3 days a number wears `~` and is called a trend')"
+    }
+  ],
+  "importantFindings": [
+    {
+      "id": "FUX-65",
+      "title": "Regression from the FUX-54 fix: the status text now breaks words in the middle, at every width with large text",
+      "evidence": "`[overflow-wrap:anywhere]` on StatusLine's text column (WeatherScreen.tsx:156) lets words break anywhere. The column is narrow because the 88 px Aggiorna button and the rem-scaled padding share the row: the button's left edge is at 196 px of 320 at 200%. The layout audit's brokenWords, same results on the pixel-7 and iphone-13 viewports: 'Aggiornamento' is broken at 320, 344, 360, 390 and 412 px at 200%, and at 320/150 and 360/175. 'riuscito,' and 'riprova' are also broken at 360/200. 'potrebbero' (offline, stale copy) is broken at every 200% width up to 412, and 'superati' at 320 and 360. Cabinati's place description breaks too: 'Maddalena,' and 'Cannigione,', with each comma starting the next line (', Spargi,'). The screenshot at 320/200 shows 'Aggior / nament...'. The warning I most need to read now needs three lines and a second look. No rule in 06 forbids a broken word, so this is not a blocker. Wrapping the button below the text at large text (flex-wrap) instead of breaking words would keep both the fix and the words.",
+      "reproduction": "My scratchpad's n2/r2-a.spec.ts, 'FUX-54 re-test: Deriva' and '... Cabinato' (pixel-7, and Deriva on iphone-13-chromium); screenshot r2-failedOnline-Cabinato.png in my scratchpad.",
+      "specRef": "docs/VENTO.md 'What it answers' (read on the dock, in a hurry); rulebook R18 intent"
+    },
+    {
+      "id": "FUX-66",
+      "title": "A half-day that crosses 72 hours shows a firm headline over hours marked as a trend",
+      "evidence": "Since FUX-55, each hour cell takes its '~' from its own lead, while the headline and the week cell take theirs from the first hour's lead (summariseHours, src/domain/wind.ts:485-487). With a download at Sat 10:30, Tuesday AM reads '10kn | Raffiche 22' with no '~' in the hero and the week cell. The hour cells under the headline read '10, 10' for 9 and 10, then '~10 | r ~22' for 11, 12 and 13. The headline's gust may come from an hour beyond 72 hours and is printed without the mark. Each number follows its own rule, but in one card the trend mark comes and goes. Use the summary's reach for the hero's hours, or tell the reader.",
+      "reproduction": "My scratchpad's n2/r2-b.spec.ts, 'FUX-55 straddle ...' (pixel-7).",
+      "specRef": "docs/VENTO.md:72; lens 12 (the same concept looks the same)"
+    }
+  ],
+  "qolFindings": [],
+  "evidenceInspected": [
+    "Diff aa944b6..a08fa95: src/domain/windConfig.ts (backAt), src/domain/wind.ts (romeClock minute, slotEnded, slotInProgress, the hand-over, FM-1 gust), src/features/weather/windFormat.ts (farMark, readingInWords, summaryInWords), WeatherScreen.tsx (header track, StatusLine overflow-wrap, HourCell, PlaceRows, PlaceList, SlotCell, MapBoundary now 'Ricarica l'app'), useWindForecast.ts, tests/e2e/weather.spec.ts. No src/ or tests/ change after a08fa95 (HEAD moved to 45d56a0 during the review, with scripts and docs only).",
+    "FUX-54 RESOLVED for its blocker: no sideways scroll and Aggiorna fully on the screen, after a failed refresh with signal and after a failed refresh offline with a 30-hour-old copy, at 320/344/360/390/412 px at 200%, 320/150, 360/175 and 320/100, in both areas. On pixel-7 (both areas) and iphone-13-chromium (Deriva): scrollWidth equals clientWidth everywhere, and the button spans 196-284 at 320/200 and 260-348 at 412/200. A retry tapped at 320/200 recovers ('Aggiornato alle'). This covers the offline variant (WifiOff icon, 'Senza rete'), which the repository journey does not reach: it aborts the route with navigator.onLine still true. Regression: FUX-65.",
+    "FUX-56 RESOLVED: walked Sunday 8 Nov at 08:55, 09:05, 11:25, 11:35, 12:25, 12:31, 12:59, 14:55, 15:05, 16:55, 17:05, 17:59 and 18:00. 'In corso' only from 9:00 to 12:29 and from 15:00 to 17:59. A morning picked at 12:25 is 'In corso' (boats still out) and is gone from the week at 12:31; the afternoon is gone at 18:00. Home and the hero hand over at 11:30 and 17:00, the last hour of each outing, as docs/VENTO.md says; 'Dopo · ...' appears only while an outing is under way.",
+    "FUX-55: see the blocker for what is fixed and what is left; the straddle case is FUX-66.",
+    "Regression run: npm run verify:e2e -- tests/e2e/weather.spec.ts --project=pixel-7-chrome at a08fa95: 23 passed, 1 flaky ('no sideways scroll at 320 px and 100% text ...', line 928). Its first attempt failed at line 977 after an unexplained page navigation ('navigated to /') mid-test, which happened while other agents committed to the checkout. Re-run alone with --repeat-each=5 --retries=0: 5 of 5 passed. I could not tie it to the fixes."
+  ],
+  "anglesTried": {
+    "seed": null,
+    "lenses": [
+      "Round 2, restricted scope per the protocol, no entropy draw: FUX-54, FUX-55 and FUX-56 and the fix diff aa944b6..a08fa95, plus regressions from those fixes",
+      "Within that: every width and text size where the failed and offline status line can widen the page; every surface that prints a far number; the clock walked across both outings' 'back at' minutes and the hand-over"
+    ],
+    "wildcard": "Not drawn (follow-up round). Checking the fixes' own assumptions gave FUX-65 (a word-wrapping fix measured for sideways scroll but not for broken words) and FUX-66 (per-hour tildes against the half-day's first-hour reach)."
+  },
+  "notTested": [
+    "WebKit (iphone-13-webkit-core): local WebKit on this Windows PC is flaky on reopen. The iPhone 13 checks ran on its viewport in Chromium.",
+    "The MapBoundary change to 'Ricarica l'app' (A11Y-36) is outside my three blockers; only the repository journey exercised it, and it passed.",
+    "Physical phones, sunlight and the production build with its service worker."
+  ]
+}

@@ -75,6 +75,7 @@ import {
   formatKnots,
   formatRange,
   formatTemperature,
+  inReach,
   hourSkyInWords,
   isWetWeather,
   periodHours,
@@ -149,11 +150,12 @@ function StatusLine({
     <div
       className={
         marked
-          ? "flex items-center justify-between gap-2 rounded-xl bg-[#fff4ee] px-3 py-1 text-sm text-[#7f2f17]"
-          : "flex items-center justify-between gap-2 px-1 py-1 text-sm text-muted-foreground"
+          ? "flex flex-wrap items-center justify-between gap-2 rounded-xl bg-[#fff4ee] px-3 py-1 text-sm text-[#7f2f17]"
+          : "flex flex-wrap items-center justify-between gap-2 px-1 py-1 text-sm text-muted-foreground"
       }
     >
-      <div className="min-w-0 [overflow-wrap:anywhere]">
+      {/* With large text Aggiorna drops below, so no word breaks (FUX-65). */}
+      <div className="min-w-0 flex-[1_1_12rem] [overflow-wrap:break-word]">
         <p className="m-0">{description}</p>
         <p className="m-0 flex items-start gap-1.5 font-semibold" role="status">
           {failed && offline && (
@@ -549,15 +551,18 @@ function SlotHero({
   onView: (view: HeroView) => void
 }) {
   const inSlot = hoursInSlot(hours, slot)
+  const summary = summariseHours(inSlot)
   // The outing with an hour each side: the extra hours show the trend only.
-  const around = hoursAroundSlot(hours, slot)
+  // Every hour in the card reads as near or far as the outing does.
+  const around = hoursAroundSlot(hours, slot).map((hour) =>
+    summary ? inReach(hour, summary.reach) : hour,
+  )
   const asideOf = (hour: BlendedHour) =>
     !outsideOuting(hour, slot)
       ? undefined
       : hour.time < (inSlot[0]?.time ?? Infinity)
         ? "prima dell'uscita"
         : "dopo l'uscita"
-  const summary = summariseHours(inSlot)
   // A chosen hour belongs to its half-day; another one opens on its own.
   const [mapChoice, setMapChoice] = useState<{
     slot: string
@@ -570,11 +575,16 @@ function SlotHero({
   const shownHour = around.find((hour) => hour.time === shownTime)
   const mapHour = view === "map" ? shownHour : undefined
   const onMap = mapHour !== undefined
-  const places = useMemo(
+  const allPlaces = useMemo(
     () => (view === "map" ? placeHours(forecast, now, zone) : []),
     [forecast, now, view, zone],
   )
-  // A failed download leaves a component that fails for ever: a retry makes a new one.
+  const places = allPlaces.map((place) => ({
+    ...place,
+    hours: summary
+      ? place.hours.map((hour) => inReach(hour, summary.reach))
+      : place.hours,
+  }))
   const row = useRef<HTMLUListElement>(null)
   const focusedHour = useRef<number | null>(null)
 

@@ -1,0 +1,48 @@
+{
+  "reviewerRole": "security-privacy",
+  "persona": "Il Garante",
+  "milestone": "WX1",
+  "round": 2,
+  "commit": "a08fa95",
+  "verdict": "PASS_WITH_FINDINGS",
+  "blockers": [],
+  "importantFindings": [],
+  "qolFindings": [
+    {
+      "id": "SP-WX1-R2-Q1",
+      "title": "The SP-WX1-1 fix has no browser test; only unit tests pin it",
+      "evidence": "aa944b6..a08fa95 adds two cases to src/features/weather/useWindForecast.test.ts that drive watchLocalData directly. tests/e2e/weather.spec.ts still has no two-tab journey. Round 1 showed how a unit test can pass while a real browser behaves differently: a synthetic StorageEvent that no browser would fire. A BroadcastChannel round trip between two real pages is the part a unit test cannot prove.",
+      "reproduction": "My throwaway two-tab spec (below) passes on pixel-7 and Desktop Chrome. It is not in the repository.",
+      "specRef": "04_IMPLEMENTATION_PLAN.md WX1 adversarial checklist ('the course erased in another tab')",
+      "recommendedFix": "Add the two cases to weather.spec.ts: the first download held, and a refresh held over an existing copy. Then erase in a second page of the same context, and assert no weather key and the 'Il corso è cambiato' screen in the first page."
+    },
+    {
+      "id": "SP-WX1-R2-Q2",
+      "title": "The 45-minute floor for a copy whose extras failed is kept in memory and lost on reload",
+      "evidence": "useWindForecast.ts: extrasFailed is a module-level Map, keyed by zone and fetch time. After a reload, a stored copy without an ensemble falls back to the 5-minute floor once, until the next download sets it again. This adds at most one extra refresh per reload. It is not a blocker and does not reopen SP-WX1-3 in substance.",
+      "reproduction": "Code reading of the fix diff.",
+      "specRef": "03_TECHNICAL_DECISIONS.md §3.4 Refresh (as amended in a08fa95)",
+      "recommendedFix": "Optional: store a marker in the copy itself, for example extrasFailedAt, instead of keeping it in memory."
+    }
+  ],
+  "evidenceInspected": [
+    "Re-test of SP-WX1-1 (blocker): git diff aa944b6..a08fa95 for src/persistence/courses.ts (announceCourseReplacement at the end of eraseAllCourseData) and src/features/weather/useWindForecast.ts (watchLocalData subscription in network mode: sets removedElsewhere, aborts synchronously, removes this zone's key, goes idle; unsubscribed in cleanup). Also read src/persistence/localDataOperations.ts (the BroadcastChannel 'changed' handling, the sticky module state, closeCourse), src/App.tsx:971-1012 (any notice puts the app in 'closed' and unmounts Vento), and src/persistence/serverErasures.ts:56-64 (a synced erase already announced before disconnecting, so a synced erase now announces twice, which is harmless)",
+    "Throwaway Playwright spec, deleted afterwards: same context, two pages, synthetic Deriva course, weather hosts mocked with tests/e2e/weatherFixtures.ts. Case A: first download held, erase in tab B, release. Weather keys [], tab A shows 'Il corso è cambiato ... Riapri l'app' with no Vento heading, and a later visibilitychange makes no request (1 → 1). Case B: a whole copy exists, Aggiorna held, erase in tab B, release. Keys [], tab A closed, no request after visibilitychange (4 → 4). Same results on pixel-7 and Desktop Chrome. In round 1, case A left cvc-helper.weather.v3.derive behind and tab A stayed on Vento. SP-WX1-1 is resolved.",
+    "Regression from the fix: a local erase now closes other tabs of the same app on the 'Il corso è cambiato' screen, the one an import and a synced erase already used. I judge this an improvement, not a regression: before, tab A stayed on an erased course whose screens could no longer save. In case C (tab A on Home, erase in tab B), tab B goes on to create a new course normally, the erasing tab does not receive its own message (BroadcastChannel does not echo to the sender), tab A reopens on the new course after Riapri or reload, and no weather request is made. The sticky module state in watchLocalData cannot leave a later Vento silenced, because any notice puts the whole app in 'closed' until a reload resets the module.",
+    "npx vitest run src/features/weather src/persistence: 37 files, 544 passed, 1 expected fail",
+    "npm run verify:e2e on weather, d3-startup-multitab, b6-erase, d4-local-reset and d4-course-files, projects pixel-7-chrome, desktop-chrome-storage and desktop-chrome-backup: 65 passed, 2 skipped by their own conditions (d4-course-files:486 and d4-local-reset:649 on desktop-chrome-storage), no retries",
+    "Checked the fixes to the non-blocking round-1 findings: 03 §3.4 now says Open-Meteo gets no cookies and LaMMA's image carries LaMMA's cookies (SP-WX1-2). 03 §3.4 Refresh describes the 45-minute wait after failed extras, with a unit test (SP-WX1-3). docs/DEPLOY.md names Whisper, Vento and the backup hosts, and the CSP list includes huggingface.co and the backup hosts (SP-WX1-4). The courses.test.ts comment is fixed (SP-WX1-Q4). SP-WX1-Q1, Q2, Q3 and Q5 were moved to the backlog, as the coordinator stated."
+  ],
+  "anglesTried": {
+    "seed": null,
+    "lenses": [
+      "Round 2, restricted scope with no draw: re-tested blocker SP-WX1-1 in a real browser (both round-1 cases plus a Home-only case), and looked for regressions from the fix (other tabs closing on a local erase, the erasing tab itself, the sticky notice state, a synced erase announcing twice)"
+    ],
+    "wildcard": "Not drawn in a follow-up round."
+  },
+  "notTested": [
+    "WebKit for the two-tab cases: Chromium only (pixel-7 and Desktop Chrome)",
+    "A browser without BroadcastChannel: watchLocalData then creates no channel, so the erase would not reach other tabs. All target browsers support it, so I did not test it",
+    "A physical phone with two PWA windows"
+  ]
+}

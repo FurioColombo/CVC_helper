@@ -3,7 +3,7 @@ import { useLayoutEffect, useMemo, useRef, useState } from "react"
 import { CENTRE_PLACE, type WindZoneId } from "@/domain/windConfig"
 import { COASTLINES } from "@/features/weather/coastline"
 import { WindArrow } from "@/features/weather/WindArrow"
-import { formatKnots, tintFor } from "@/features/weather/windFormat"
+import { farMark, formatKnots, tintFor } from "@/features/weather/windFormat"
 import {
   placeMarks,
   placeNames,
@@ -210,7 +210,7 @@ export function WindZoneMap({
                   />
                 </span>
                 <span className="leading-none font-black tabular-nums">
-                  {hour ? formatKnots(hour.mid) : "–"}
+                  {hour ? `${farMark(hour.lead)}${formatKnots(hour.mid)}` : "–"}
                 </span>
               </span>
             )

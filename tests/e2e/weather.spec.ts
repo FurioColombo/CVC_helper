@@ -327,6 +327,67 @@ test("an answer arriving after a local reset does not bring the forecast back", 
   expect(await storedForecasts(page)).toEqual([])
 })
 
+for (const withCopy of [false, true]) {
+  test(`a course erased in another tab stops Vento here and keeps no forecast (${withCopy ? "a refresh over a copy" : "the first download"})`, async ({
+    page,
+    context,
+  }) => {
+    const weather = await routeWeather(page)
+    await createCourse(page, "Deriva")
+    if (withCopy) {
+      await openVento(page)
+      await expectKnownHero(page)
+      await expect.poll(() => storedForecasts(page)).toHaveLength(1)
+    }
+    let release: () => void = () => undefined
+    weather.hold = new Promise((resolve) => {
+      release = resolve
+    })
+    const before = windRequests(weather).length
+    if (withCopy) {
+      await page.getByRole("button", { name: "Aggiorna le previsioni" }).click()
+    } else {
+      await openVento(page)
+    }
+    await expect.poll(() => windRequests(weather).length).toBe(before + 1)
+
+    // Without a copy there is no key to remove, so no storage event: the
+    // erase's own notice must reach this tab (SP-WX1-1).
+    const other = await context.newPage()
+    await other.clock.setFixedTime(WEATHER_NOW)
+    await other.goto("/")
+    await expect(home(other)).toBeVisible()
+    await other
+      .getByRole("button", { name: "Impostazioni", exact: true })
+      .click()
+    await other
+      .getByRole("button", { name: "Elimina il corso e inizia un nuovo corso" })
+      .click()
+    await other
+      .getByRole("checkbox", {
+        name: "Ho capito: i dati non si possono recuperare",
+      })
+      .check()
+    await other.getByRole("button", { name: "Elimina tutto" }).click()
+    await expect(
+      other.getByRole("heading", { name: "Crea il corso" }),
+    ).toBeVisible()
+
+    await expect(
+      page.getByRole("heading", { name: "Il corso è cambiato" }),
+    ).toBeVisible()
+    release()
+    await settle(page)
+    expect(await storedForecasts(page)).toEqual([])
+    const after = windRequests(weather).length
+    await page.evaluate(() =>
+      document.dispatchEvent(new Event("visibilitychange")),
+    )
+    await settle(page)
+    expect(windRequests(weather)).toHaveLength(after)
+  })
+}
+
 test("hours that are not hours cannot lock the app, from the network or from storage", async ({
   page,
 }) => {
@@ -789,6 +850,14 @@ test("Home does not quote a far forecast as firmly as tomorrow's", async ({
   await expect(hours.getByText(/^~\d+$/).first()).toBeAttached()
   await expect(hours.getByRole("listitem").first()).toContainText(
     /circa \d+ nodi/,
+  )
+  // The map's markers too, the numbers held up to a crew (FUX-55, round 2).
+  await hero(page)
+    .getByRole("group", { name: "Vista" })
+    .getByRole("button", { name: "Mappa" })
+    .click()
+  await expect(hero(page).locator("[data-zone-map=derive]")).toContainText(
+    /~\d+/,
   )
   await backHome(page)
   await expect(strip(page)).toContainText("solo tendenza")
