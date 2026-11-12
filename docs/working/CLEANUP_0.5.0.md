@@ -11,11 +11,6 @@ evidence. An item leaves when it is scheduled in the plan or dropped.
 
 ## After B7's handoff
 
-- **CL-2: macOS CI runs WebKit only.** `.github/workflows/ci.yml`, the 03 §6
-  paragraph. The macOS full tier runs `iphone-13-webkit-core` plus the update
-  and isolation checks, dropping the three Chromium projects and `verify`,
-  which Linux runs. Evidence: run `ddedbd6`, macOS 76 min against Linux 29;
-  every macOS-only failure on record is WebKit.
 - **CL-9: one verification per test build** (lower priority).
   `scripts/milestone.mjs`, `docs/OWNER_WORKFLOW.md`: milestones shipped in one
   test build share one evidence run on that commit. Needs controller

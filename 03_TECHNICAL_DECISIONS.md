@@ -562,10 +562,11 @@ says `[full-ci]`; milestone handoffs, closures and test-site publication
 require a full green run of their exact commit, so those commits say
 `[full-ci]`. Other pushes run the quick tier: `verify` and
 `verify:e2e:smoke` (Pixel on Linux, Pixel and WebKit on macOS). The run's
-name records its tier, and a quick run never stands in for a full one. In the full tier the complete suite runs on macOS 15, including
-all four browser projects; Linux also runs deterministic checks, the offline
-PWA proof and all three Chromium projects, preserving its font and geometry coverage.
-Both jobs must pass. This follows the immutable D2/D3 comparison in
+name records its tier, and a quick run never stands in for a full one. In the full tier, Linux runs `verify`, the full week, the offline
+PWA proof and the four Chromium projects, preserving its font and geometry
+coverage; macOS 15 runs the WebKit project and the update and isolation
+journeys, all it adds (every macOS-only failure on record was WebKit).
+Together they cover `verify:all`. Both jobs must pass. This follows the immutable D2/D3 comparison in
 `.evidence/D3/ci-adapter-initialization.json`: Linux WebKit recompilation also
 exceeds the inherited five-second bound on D2. macOS provides the
 [closest Playwright WebKit coverage to Safari](https://playwright.dev/docs/browsers).

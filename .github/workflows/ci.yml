@@ -78,9 +78,15 @@ jobs:
         run: npx playwright install --with-deps chromium webkit
       - if: steps.verified.outputs.verified != 'true' && steps.scope.outputs.browser != 'false' && matrix.os == 'ubuntu-latest'
         run: npx playwright install --with-deps chromium
-      - name: Complete deterministic suite, including all browser projects
+      # macOS adds what only it can: WebKit, closest to Safari, and the update
+      # and isolation journeys. Linux runs verify, the other checks and Chromium.
+      - name: macOS WebKit project and the update and isolation journeys
         if: steps.verified.outputs.verified != 'true' && steps.scope.outputs.browser != 'false' && matrix.os == 'macos-15' && env.CI_TIER == 'full'
-        run: npm run verify:all
+        run: |
+          npm run check:update
+          npm run check:update:test
+          npm run check:test-isolation -- --full-reset
+          npm run verify:e2e -- --project=iphone-13-webkit-core
       - name: Linux deterministic checks and Chromium layout and storage projects
         if: steps.verified.outputs.verified != 'true' && steps.scope.outputs.browser != 'false' && matrix.os == 'ubuntu-latest' && env.CI_TIER == 'full'
         run: |

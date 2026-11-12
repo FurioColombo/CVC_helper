@@ -281,7 +281,27 @@ assert.deepEqual(
 )
 
 const workflow = readFileSync(resolve(root, ".github/workflows/ci.yml"), "utf8")
-assert.match(workflow, /npm run verify:all/, "CI must run verify:all")
+// The full tier splits verify:all between Linux and macOS (03 §6.1): every
+// step of it, and every browser project, must still run somewhere.
+const verifyAllSteps = packageJson.scripts["verify:all"]
+  .split("&&")
+  .map((step) => step.trim())
+for (const step of verifyAllSteps) {
+  if (step === "npm run verify:e2e") continue
+  assert.ok(workflow.includes(step), `CI's full tier must run ${step}`)
+}
+const browserProjects = [
+  ...readFileSync(resolve(root, "playwright.config.ts"), "utf8").matchAll(
+    /^\s+name: "([\w-]+)",$/gm,
+  ),
+].map(([, name]) => name)
+assert.ok(browserProjects.length > 0, "No Playwright projects found")
+for (const project of browserProjects) {
+  assert.ok(
+    workflow.includes(`--project=${project}`),
+    `CI's full tier must run the ${project} project`,
+  )
+}
 assert.match(
   workflow,
   /fetch-depth: 0/,
