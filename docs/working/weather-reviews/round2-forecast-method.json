@@ -1,0 +1,198 @@
+{
+  "reviewerRole": "forecast method reviewer",
+  "persona": "Operational meteorologist who sails",
+  "milestone": "Vento proposal (unregistered, would be WX1), follow-up to the report at de89666",
+  "commit": "01e1ca0",
+  "verdict": "FAIL",
+  "verdictNote": "The second build is much better than the first. Sea cells and capes, the dressed range, the new gust rule, continuous weights and the retractions are all real. §4's numbers match the JSON, and the JSON rebuilds byte for byte from the shipped code. It fails on two points. (1) The on-screen averages '7 ore su 10' and '6 uscite su 10' hide a strong dependence on wind strength: from 16 kn expected, the range holds about 5 hours in 10 and the gust is passed in about 9 sessions in 10, by 4.5-4.7 kn on average. That is where the number matters to an instructor. (2) 135 of the 306 '+1 d' sessions were scored without AROME HD and ARPEGE, because the 'like with like' filter does nothing there, so that row is not the shipped blend. A strength-aware rule tested in-sample fixes (1) on the capes (see WX-9); the sample fix for (2) is one line.",
+  "dispositions": [
+    {
+      "id": "WX-1",
+      "status": "FIXED on average; still open in strong wind, carried as WX-9",
+      "check": "src/domain/wind.ts:232-233 and :302-305 implement max(model gusts, band top x 1.5). No gust beyond 120 h: code and test agree. The backtest now scores gusts. Average passed: 64% short range, 70% at +1 d on the true 7-model blend (WX-10), against 82-86% before. 'Non e un tetto' sits only in a closed <details> (WeatherScreen.tsx:692-730). The always-visible note at :767-770 says the real wind can exceed the values shown, so 'the screen says so' is fair in general terms. 1.5 x band top, not a model, sets the number in 101 and 98 of the 171 7-model +1 d sessions (PERT, CHIA). The proposal's 'highest model's' undersells that."
+    },
+    {
+      "id": "WX-2",
+      "status": "FIXED on average; still open in strong wind, carried as WX-9",
+      "check": "Dressing to at least +-3 kn is in wind.ts:298-300. The headline is now the expected wind, with 'Probabile' as a secondary line. The alta/media/bassa label is gone. Range coverage on the true blend: 74-75% short, 72% PERT and 67% CHIA at +1 d. The hourly band on the chart scores about the same (69-76%), so the chart is not worse than the summary line."
+    },
+    {
+      "id": "WX-3",
+      "status": "FIXED",
+      "check": "cell_selection=sea, capes as primary, airports as control: scripts/weather-backtest.mjs:23-52 and :168. IFS 40 over GFS 25 at 144 h, with a test. Conclusions rewritten. Every number in both §4 tables and the '14-23%' sentence matches the JSON. I reran the script from cached archive into scratch: output is byte-identical to the committed JSON. The file count in the copied cache stayed at its inputs plus the bundle, so nothing was downloaded."
+    },
+    {
+      "id": "WX-4",
+      "status": "FIXED",
+      "check": "Grep finds no westerly note or constant in src/domain/wind*, src/features/weather or tests/e2e/weather*; only the retraction in the proposal. The retraction blames 'airports' alone (:111, :149). The other half of the cause, conditioning on the observed wind, is not stated. Wording only."
+    },
+    {
+      "id": "WX-5",
+      "status": "FIXED, with a small remainder at run time (WX-Q10)",
+      "check": "AROME 2.5 removed. The test at wind.test.ts:96-112 now counts the ensemble and passes to 72 h. Beyond that the proposal says plainly it is mostly ECMWF. The cap is still only a check on the static table, not enforced in wind.ts."
+    },
+    {
+      "id": "WX-6",
+      "status": "FIXED",
+      "check": "windConfig.ts:129-136 now says judgement informed by scores. scoreLead uses a common sample. Recomputed: the table sits close to the 1/MAE squared shares once AROME 2.5 and UKMO are removed, apart from named-by-comment judgement such as AROME HD 30 against 24.5. WX-Q9 notes one reversal."
+    },
+    {
+      "id": "WX-7",
+      "status": "FIXED in practice; the claim is slightly too strong (WX-14)",
+      "check": "weightAtLead is piecewise linear and widening fades from 48 to 72 h. Same data, lead 35.99 vs 36.01 with a proxy ensemble (mean of the models), 342 sessions: |d mid| mean 0.07, p99 0.74, max 1.59 kn; |d high| mean 0.05, max 2.72. The old +48 h step was mean +4.3 on the band top. The edge tests compare edge-1 with edge+1 on evenly spread synthetic models, with tolerances of 1.5-2.5 kn."
+    },
+    {
+      "id": "WX-8",
+      "status": "FIXED",
+      "check": "No '1,5 km' left. The map says 'MOLOCH (LaMMA), da ...' and the proposal asks LaMMA for the grid size."
+    },
+    {
+      "id": "WX-Q1 to WX-Q7",
+      "status": "Q1 fixed (link and wording). Q2 point moved, position not re-verified. Q3 reworded. Q4 deliberately left (proposal §5). Q5 moot as worded, but the same gap remains: splitOf(13.9, 28, 0) stays silent across Force 6-8. Q6 not re-checked. Q7 done on screen, see WX-Q7b."
+    }
+  ],
+  "blockers": [
+    {
+      "id": "WX-9",
+      "title": "'Circa 7 ore su 10' and 'circa 6 uscite su 10' are averages dominated by light wind. From 16 kn expected, the range holds about 5 hours in 10 and the gust is passed about 9 sessions in 10, by 4.5-4.7 kn on average.",
+      "evidence": "Shipped blendForecast and summariseHours, sea cells, true 7-model blend, both capes pooled, conditioned on the forecast mid (what the reader sees). Short range (612 sessions): mid under 12 kn: 82% of hours inside, gust passed 57%, bias 0.0; 12-16 kn (112): 62%, 74%, -2.0; 16 kn and up (71, 12% of sessions): 50% inside, 34% above the top, gust passed 89%, bias -4.5. +1 d (342 sessions): under 12 kn: 75%, 66%, -1.1; 12-16 kn (66): 64%, 65%, -1.1; 16 kn and up (46, 13%): 50% inside, 34% above, gust passed 93%, bias -4.7. For 16 kn and up, mean mid 19, mean gust shown 34-35, mean observed session peak 39-40. By site: PERT 16 kn and up, gust passed 90-100% in 82 sessions across both leads. CHIA 12-20 kn at +1 d, 37-39% of hours inside and 50% above the top. CHIA ranges by month: 80-82% in June, 57-59% in October. A flat +-3 kn (windConfig.ts:218) and a flat 1.5 factor (:225) cannot follow an error that grows with the wind. The JSON and §4 report no breakdown by strength, so the proposal could not see it. Limit 1's caveat that errors do not transfer does not rescue this: the screen quotes these same capes as its evidence. Headland peak gusts may overstate open water, but no evidence shows the shape reverses.",
+      "reproduction": "a.mjs and b.mjs in my scratchpad's wx/review2/, using lib.mjs: same loading and session loop as scripts/weather-backtest.mjs, importing the bundle that script built from src/domain/wind.ts. Strata are on summary.mid.",
+      "specRef": "src/features/weather/WeatherScreen.tsx:727-730; docs/working/WEATHER_PROPOSAL.md:87-94, :133-142; proposal §1 purpose",
+      "fix": "Minimum: add strength rows to the backtest and JSON, and say it on screen, for example 'Da 16 nodi in su: dentro circa 5 ore su 10, raffiche superate quasi sempre', visible beside the numbers at that strength, not only in the fold. Better: let both rules scale. Tested in-sample: half-width max(3, 0.3 x mid) and gust floor 2 x mid give 16 kn and up 68-70% inside (width about 12 kn), gust passed 28-41%; under 12 kn stays 76-82% inside. Treat 2 x mid with care: it comes from headland FXI, and over water it may read high. Either way, state that it was tuned in-sample."
+    },
+    {
+      "id": "WX-10",
+      "title": "The '+1 d' evidence row is not the shipped blend: 135 of 306 sessions (44%) ran without AROME HD and ARPEGE, because the 'like with like' filter does nothing. The true figures differ, and the gust sentence on screen depends on them.",
+      "evidence": "scripts/weather-backtest.mjs:383-384 keeps a session when models.length is at least 5. Before 7 August the +1 d archive has 5 of the 7 models, so it passes. JSON shows sessions = 306 at +1 d, every half-day of the period, while the common sample for d1 is n = 855 hours, about 171 sessions. Recomputed, 7-model sessions only, 7 Aug PM to 31 Oct, n = 171 per site. PERT: 72% inside (table says 67), session error 1.90 (2.20), gust bias -1.4 (-1.4), passed 70% (65), division mae 3.73 vs 1.75 (3.73 vs 2.07). CHIA: 67% (71), 2.48 (2.37), -1.8 (-1.5), 69% (64), 3.29 vs 2.27 (3.35 vs 2.12). The 5-model sessions: PERT 60.7%, 2.59, 59%; CHIA 76.5%, 2.23, 59%. So the row averages two different blends over two different periods, against §4's 'one common sample per comparison' and 'computed by the app's own domain code'. The '7 in 10' survives (67-72%). 'About 64%' and '6 uscite su 10' hold at short range only; at +1 d, the lead most used to plan tomorrow, it is 7 in 10. Short range is clean: all 306 sessions have 7 models.",
+      "reproduction": "a.mjs, lines '+1d by nMin', '+1d 7-model only' and '+1d <7 models', in my scratchpad's wx/review2/. Rerun of the unmodified script reproduces the JSON, confirming the filter passed these sessions.",
+      "specRef": "scripts/weather-backtest.mjs:383-384; docs/working/WEATHER_PROPOSAL.md:121, :131-139, :91-94; src/features/weather/WeatherScreen.tsx:728-730",
+      "fix": "Require all 7 models at +1 d (for example hour.models.length < 7), regenerate, and correct §3, §4 and the screen. The split sentence becomes 3.2-3.7 against 1.7-2.3. State that +1 d covers August to October only. The screen's 'giugno-ottobre' is then true only of the short-range row."
+    }
+  ],
+  "importantFindings": [
+    {
+      "id": "WX-11",
+      "title": "The 'for scale' line compares different metrics and implies an improvement in the centre value that does not exist.",
+      "evidence": "Proposal :141 sets the first build's 2.45 and 3.04 against the table's 2.20 and 2.37. The first pair is hourly MAE; the second is session-mean error (backtest:399), which is smaller by construction. Same metric, same 171 sessions: session error first build 1.90 / 2.43, second build 1.90 / 2.48; hourly first 2.45 / 3.05, second 2.44 / 3.07. The second build's centre is unchanged, which agrees with the code comment that weights barely move the median. The improvement is in range and gust, not the number. The same mismatch sits between §4's two tables: AROME's 2.67 hourly beside the blend's 2.20 session error. On one metric, 171 sessions, session error is AROME 2.07 / 2.61 vs blend 1.90 / 2.48, and hourly is AROME 2.70 / 3.27 vs blend 2.44 / 3.07. So the blend does beat AROME, by less than the page suggests.",
+      "reproduction": "a.mjs lines '7-model sessions, both metrics' and 'single models, same metric'. First build is the de89666 bundle from my earlier review.",
+      "specRef": "docs/working/WEATHER_PROPOSAL.md:141-142, :126-139",
+      "fix": "Delete the comparison or give both metrics. Add the blend's hourly MAE beside the model table. Say plainly the new weights did not improve the centre."
+    },
+    {
+      "id": "WX-12",
+      "title": "The '7 ore su 10' text carries no lead limit, but the evidence stops at about +33 h.",
+      "evidence": "The text at WeatherScreen.tsx:727-730 shows for any picked half-day, including day 7. The backtest runs only leads 6 and 30 (:454-455). Same domain code on previous_dayN speeds, without the ensemble because it has no archive: PERT +2/+3/+5/+7 d 63/62/58/56% inside; CHIA 71/69/64/60%. The ensemble's 20-80 widening would help beyond +48 h by an unmeasured amount, so these are lower bounds, not estimates. Gust is unmeasured beyond +1 d, though a number is printed to +120 h from the max of the runs still alive.",
+      "reproduction": "a.mjs lines '+2d no-ensemble' to '+7d no-ensemble'.",
+      "specRef": "docs/working/WEATHER_PROPOSAL.md:87-90, :158-161; src/features/weather/WeatherScreen.tsx:727-730",
+      "fix": "Add 'fino a un giorno prima' to the sentence, and add these leads to the JSON with the no-ensemble caveat."
+    },
+    {
+      "id": "WX-13",
+      "title": "'Preparati per X' names as the thing to prepare for a value the wind passed in about two thirds or more of those sessions. Below that, silence from the division flag says little in stronger wind at La Chiappa.",
+      "evidence": "windFormat.ts:122 uses summary.high. Speed-split sessions with at least one hour above X: PERT 2 of 3 short, 71% of 7 at +1 d; CHIA 83% of 12 short, 67% of 15 at +1 d. Hours above X: 17%, 32%, 46%, 42%. Small samples, but all the same way. The proposal's split claim matches the JSON but does not survive stratifying at CHIA: with mid 12 kn or more, error when shown vs not is 3.74 vs 4.00 short and 4.09 vs 4.79 at +1 d, the wrong way round. PERT +1 d does hold, 3.31 vs 2.06. Most of the flag's lift comes from light wind (CHIA under 12 kn: 3.00 vs 1.23). The rate of 'Modelli divisi' at 48-72 h, where the ensemble's spread starts counting towards the flag, was never measured.",
+      "reproduction": "a.mjs lines 'speed-split, top passed' and 'split MAE mid'.",
+      "specRef": "src/features/weather/windFormat.ts:122; docs/working/WEATHER_PROPOSAL.md:95-98",
+      "fix": "Say 'può superare X', or point to the gust instead. Report the split's skill by strength. Do not read silence as agreement in the proposal's wording."
+    },
+    {
+      "id": "WX-14",
+      "title": "'Nothing jumps when AROME ends' is false for the gust, the number printed second largest on the screen.",
+      "evidence": "wind.ts:232-233 lets any model with weight above zero set the max, so the taper that protects the speed never touches the gust. Last AROME HD hour against the next, other models unchanged, 342 sessions: gust step mean 0.54, p90 1.7, p99 7.8, max 16.9 kn, 6% of hours at 3 kn or more. ICON-2I end: p99 4.2, max 10.0. The speed is well behaved: |d mid| mean 0.13, p99 0.9. wind.test.ts:424-456 checks mid and weight only. Separately, weightedQuantile is discontinuous as a weight approaches zero: q50 of 10 and 20 is 15, and adding a 12 at weight 0.001 makes it 12. In real data this is small (see WX-7).",
+      "reproduction": "b.mjs sections 'run end' and 'constructed: one tiny sample'.",
+      "specRef": "docs/working/WEATHER_PROPOSAL.md:104-105; src/domain/wind.ts:232-233",
+      "fix": "Blend a run's gust towards the rest with the same taper, or exclude a run in its last hours from the max. Add a gust assertion to the test. Soften the sentence."
+    },
+    {
+      "id": "WX-15",
+      "title": "The screen says the heaviest model is the one that erred least, but at long range the heaviest has never been scored.",
+      "evidence": "WeatherScreen.tsx:694-696: 'Conta di piu chi ha sbagliato meno vicino a Caprera a questa distanza di tempo'. At 144 h the list is sorted by weight and headed by the ensemble at 45/130 = 35%, which the proposal itself calls a prior (:158-159, windConfig.ts:206-207). 'Vicino a Caprera' also stretches it: the capes are 33 km (PERT) and 47 km (CHIA) from Cala Fico by my calculation; the proposal says 'about 30 km' at :156.",
+      "reproduction": "weightAtLead(ENSEMBLE_WEIGHTS, 144) against the table; distances computed from the coordinates in the script and windConfig.ts.",
+      "specRef": "src/features/weather/WeatherScreen.tsx:694-696",
+      "fix": "Say 'Pesi scelti guardando gli errori su capi esposti; l'ensemble e una scelta a priori'. Correct the distance."
+    },
+    {
+      "id": "WX-16",
+      "title": "The in-sample statement is incomplete: limit 3 names only the range's scale.",
+      "evidence": "Proposal :160-161. The 1.5 gust factor, the 120 h gust cut and the weights were also chosen on this same season, and then scored on it. The gust factor came from my own test in the earlier report, on +1 d data, so §4's gust column is not an independent check of it. Nothing held out. The monthly spread gives a feel for the true variation: CHIA range 57-82% by month, gust passed 53-80% across both capes.",
+      "reproduction": "a.mjs lines 'short month' and '+1d month'; earlier report WX-1 fix text.",
+      "specRef": "docs/working/WEATHER_PROPOSAL.md:160-161",
+      "fix": "Extend limit 3 to every tuned number. A simple August-holdout check on the next rule change would give an honest figure."
+    }
+  ],
+  "qolFindings": [
+    {
+      "id": "WX-Q7b",
+      "title": "'Guarda la direzione, non il numero' has no evidence behind it, and it was my suggestion.",
+      "evidence": "WeatherScreen.tsx:284-285. The script requests direction at previous_day1 only (:175-178), so direction skill at days 5-7 is unscored. My WX-Q7 proposed this without testing it.",
+      "reproduction": "Read the query in scripts/weather-backtest.mjs:172-179.",
+      "specRef": "src/features/weather/WeatherScreen.tsx:284-285",
+      "fix": "Add wind_direction_10m_previous_day5 and day7 to the backtest, or drop the advice."
+    },
+    {
+      "id": "WX-Q8",
+      "title": "'Each model counts once' is not true of direction, so places can still read as models divided.",
+      "evidence": "wind.ts:229 pools per-point directions. Constructed: three identical models, three points at 230 and three at 340, gives modelSpread 0 and split 'direction', with no options, so the screen prints 'Modelli divisi sulla direzione'. Live forecast of 2026-11-05 at 72 h or less, Cabinati: 21 flagged hours, of which 2 agree on per-model direction; Derive: 17, of which 0. So real but rare. The test at wind.test.ts:395-407 checks speed only, and the backtest uses one point, so it cannot see this.",
+      "reproduction": "b.mjs sections 'pooled direction spread' and 'the same on the live forecast'.",
+      "specRef": "docs/working/WEATHER_PROPOSAL.md:84-86",
+      "fix": "Compute directionSpread over per-model circular means."
+    },
+    {
+      "id": "WX-Q9",
+      "title": "GFS outweighs AIFS at 144 h, against the scores at the only lead near that anchor.",
+      "evidence": "windConfig 25 vs 20. d7: AIFS 5.68 vs GFS 6.10 at PERT, 4.95 vs 5.80 at CHIA, shares 34.0 vs 27.2. Defensible as judgement, since AIFS reads low (bias -4.1 and -1.9) and MAE flatters smooth forecasts. The comment does not say so. Practical effect small.",
+      "reproduction": "docs/working/weather-backtest.json scores.*.leads.d7 and modelShares.d7.",
+      "specRef": "src/domain/windConfig.ts:174-186",
+      "fix": "Name the reason in the comment."
+    },
+    {
+      "id": "WX-Q10",
+      "title": "'Capped at half' is a table check, not a run-time rule.",
+      "evidence": "If both ICON runs are missing at 12 h or less, Meteo-France holds 45/75 = 60%. No code enforces FAMILY_MAX_SHARE; the test reads the static table.",
+      "reproduction": "Arithmetic from windConfig.ts:137-186.",
+      "specRef": "docs/working/WEATHER_PROPOSAL.md:106-108",
+      "fix": "Say 'by design, when all models are present'."
+    },
+    {
+      "id": "WX-Q11",
+      "title": "Two unreproducible or unsupported statements.",
+      "evidence": "'Days 5-7 scored about the same as climatology' (proposal :100-101) and 'do little better than the season's average (backtest)' (windConfig.ts:239): neither the script nor the JSON computes climatology. The source is my earlier report. Also, 'La Chiappa, the site nearest in kind to the Bocche's gaps' (:150-151) and the screen's 'capi esposti delle Bocche' have no support for La Chiappa: it is on Corsica's east coast about 25 km north-east of Cap Pertusato by the script's coordinates.",
+      "reproduction": "Search for 'climat' in scripts/weather-backtest.mjs and the JSON: no match.",
+      "specRef": "docs/working/WEATHER_PROPOSAL.md:100-101, :150-151",
+      "fix": "Add a climatology row to the script. Drop the 'nearest in kind' clause and write 'capi esposti della Corsica del sud'."
+    },
+    {
+      "id": "WX-Q12",
+      "title": "The app's gust differs from the tested gust by zone.",
+      "evidence": "The app takes the max over all points; the backtest has one. One live forecast, 48 h or less: Cabinati zone gust is 3.6 kn above the mean single-point gust (max 11.1), Derive 0.6 (max 2.7). So Cabinati's real passed rate is probably lower than quoted and Derive's about the same. Not scored: there are no observations for those points. One frontal day only.",
+      "reproduction": "b.mjs last section.",
+      "specRef": "src/domain/wind.ts:232-233",
+      "fix": "Note it in §4."
+    }
+  ],
+  "evidenceInspected": [
+    "Read: docs/agents/REVIEW_PROTOCOL.md, docs/working/weather-reviews/forecast-method.json, docs/working/WEATHER_PROPOSAL.md in full, src/domain/windConfig.ts, src/domain/wind.ts and scripts/weather-backtest.mjs in full; docs/working/weather-backtest.json via a scripted dump; test names and relevant bodies in src/domain/wind.test.ts; relevant parts of src/features/weather/WeatherScreen.tsx, windFormat.ts and windData.ts.",
+    "Number check: every cell in both §4 tables, the 14-23% sentence, 5.41 vs 6.10 and 4.55 vs 5.80, the split ranges and the land row match the JSON. '64% and -1.2' is the mean of the four JSON rows.",
+    "Rerun: scripts/weather-backtest.mjs against a copy of the archive my earlier review cached, output to scratch. Result is byte-identical to the committed JSON, so the JSON does come from the shipped domain code at this commit. No re-download: I used only files already in my scratch space, which goes beyond 'the JSON alone' and stays within the brief's no-download rule. git status stayed clean and HEAD stayed 01e1ca0.",
+    "Does the backtest exercise the app's code: yes. It bundles @/domain/wind and calls blendForecast and summariseHours, the same calls as SlotHero. Differences from the app: one point rather than three or six, no ensemble, leads 6 and 30 only, and the 5-model sessions in WX-10.",
+    "Recomputation with the same bundle: by forecast strength, by month, 7-model vs 5-model, longer leads, split detail, same-metric comparison with the first-build bundle, run-end and ensemble-entry steps, pooled direction, zone vs point gust, candidate fix. Live data from my earlier review's 2026-11-05 grid file.",
+    "Withdrawn claims: grep of src/domain/wind*, src/features/weather, tests/e2e/weather* and the proposal. Only the retractions remain.",
+    "Attacks that failed, so these stand: gust at light wind is not a false-alarm problem on average (mid under 8 kn: bias +0.2 short and -0.9 at +1 d, 2-3% of sessions over by 8 kn or more, though single cases reach +13 to +19). The blend still beats each single model on one metric. Ensemble entry and run-end barely move the speed. Hourly band coverage matches the session range."
+  ],
+  "anglesTried": {
+    "seed": 0,
+    "lenses": [
+      "Follow-up scope: re-check of WX-1 to WX-8, plus the new-flaw hunt the brief asked for",
+      "Calibration conditioned on what the reader sees: forecast strength, month, lead"
+    ],
+    "wildcard": "Count the models actually present in each scored session, and compare build-to-build claims on one metric. No entropy draw: this is a follow-up round."
+  },
+  "notTested": [
+    "Actual wind over water at Cala Fico or in the archipelago: no record. Capes at 57 and 107 m remain proxies, and FXI is a headland instantaneous peak, so the strong-wind gust gap may differ over water.",
+    "Ensemble skill and its effect on coverage beyond +48 h: no archive. The long-lead coverages in WX-12 exclude it and are lower bounds.",
+    "Gust and direction beyond +1 d: not in the archived query.",
+    "Strong-wind strata are small: 71 and 46 sessions from 16 kn pooled, one season, and hours within a session are correlated. 20 kn and up has 13 sessions in each pooled lead. The direction of the effect is consistent at both capes; the exact percentages are not precise.",
+    "April, May and winter: no data.",
+    "The candidate fix in WX-9 is in-sample and post-processed from hourly outputs, not a code change.",
+    "The app was not run in a browser. WX-Q6 (LaMMA labels) and the new position of Liscia di Vacca were not re-checked."
+  ]
+}

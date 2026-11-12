@@ -1,6 +1,7 @@
 import {
   EVALUATION_VALUES,
   SESSION_SEQUENCE,
+  sessionDayOffset,
   type EvaluationSymbol,
   type SessionId,
 } from "@/domain/config"
@@ -11,7 +12,7 @@ const EVALUATION_SCORES = new Map<EvaluationSymbol, number>(
 
 const SESSION_ENDS = SESSION_SEQUENCE.map(({ id, period }, index) => ({
   id,
-  dayOffset: Math.floor((index + 1) / 2),
+  dayOffset: sessionDayOffset(index),
   hour: period === "AM" ? 13 : 18,
 }))
 

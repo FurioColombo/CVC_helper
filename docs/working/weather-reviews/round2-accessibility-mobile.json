@@ -1,0 +1,330 @@
+{
+  "reviewerRole": "accessibility/mobile",
+  "persona": "La Maestra",
+  "milestone": "none: side branch claude/weather-section, Vento screen and Home strip; confirmation round 2",
+  "commit": "01e1ca0",
+  "verdict": "PASS_WITH_FINDINGS",
+  "summary": "All four earlier blockers are fixed in the code and hold when measured. No new finding blocks a real user, so there are no blockers. Of the 16 earlier important findings, 11 are fixed, 1 is knowingly deferred (A11Y-20) and 4 are partly fixed (A11Y-6, A11Y-9, A11Y-13, A11Y-16). The rework added new defects. I recommend fixing two before adoption: A11Y-21 (thunder mark at 1.02:1 on the darkest cells) and A11Y-22 (a wind number split as '~1' over '0'). The spec passes 17 of 17 but tests neither.",
+  "blockers": [],
+  "dispositions": [
+    {
+      "id": "A11Y-1",
+      "was": "blocker",
+      "status": "FIXED",
+      "evidence": "Measured with the map working and all details open, for Deriva and Cabinato, in both Settimana and 7 giorni, at 320, 390 and 412 px at 100% and 200%, plus 320@105, 320@150, 390@125 and 412@135. documentElement scrollWidth equals clientWidth in every case, and no text run lies outside its control. The only inner containers with scrollWidth above clientWidth are the map's intentional full-bleed wrapper (308/296 at 320), which stops at the viewport edge and does not scroll. The week grid collapses to day blocks under its 17.5rem container query (src/styles.css:247)."
+    },
+    {
+      "id": "A11Y-2",
+      "was": "blocker",
+      "status": "FIXED",
+      "evidence": "Cell name measured: 'Domenica 8 PM: NW 10 nodi, raffiche 16. Temporali possibili.' (src/features/weather/WeatherScreen.tsx:542-546). The legend has the icon and the word (:663-669). Home name and visible text both say 'Temporali possibili' (src/features/weather/WeatherHomeCard.tsx:79, :108-116). Two related gaps are new findings: A11Y-21 (the icon cannot be seen on the darkest tint) and A11Y-26 (the chart's name omits thunder)."
+    },
+    {
+      "id": "A11Y-3",
+      "was": "blocker",
+      "status": "FIXED",
+      "evidence": "The fallback uses an aria-hidden Wind icon and a button name without a direction (WeatherHomeCard.tsx:53-59). Computed names: 'Vento. Tocca per scaricare, serve la rete' on a fresh course and 'Vento. Dati vecchi: tocca per aggiornare' at 30 and 50 hours."
+    },
+    {
+      "id": "A11Y-4",
+      "was": "blocker",
+      "status": "FIXED",
+      "evidence": "Measured in role=status after a failed refresh: 'Dati di 8 ore fa, delle 09:00', 'Dati di ieri alle 09:00', and at 30 hours 'Dati di ieri alle 09:00: potrebbero essere superati', with an icon present. src/features/weather/windFormat.ts:91-102 words the age; WeatherScreen.tsx:110-115 adds a warning icon when stale and not failed, and :107-109 a WifiOff icon when failed. Home says 'dati delle 09:00' in both name and text."
+    },
+    {
+      "id": "A11Y-5",
+      "was": "important",
+      "status": "FIXED by a different means",
+      "evidence": "Focus stays on the cell, as proposal §5 chose, and an always-mounted aria-live region speaks the result (WeatherScreen.tsx:830-834, :880-882). Measured: live 'Lunedì AM: NW 10 nodi, raffiche 16'; at 412 x 915 the hero heading sits at top 141 and the focused cell at top 655, both in view. At 200% the page scrolls to the hero while focus stays on the cell below it, and a same-slot tap is silent. Both are acceptable. The announcement's content is short of the cell's name: see A11Y-28."
+    },
+    {
+      "id": "A11Y-6",
+      "was": "important",
+      "status": "PARTLY FIXED",
+      "evidence": "Fixed, measured: 'Torna alla prossima uscita' moves focus to h2#wind-hero; refresh keeps focus through loading, success and failure (aria-disabled); the stepper keeps focus at both ends; a successful Riprova ends on the heading. Still falling to BODY: Riprova while loading and when it fails again, and 'Torna a Derive'. These, with the new 'Dopo' case, are A11Y-24."
+    },
+    {
+      "id": "A11Y-7",
+      "was": "important",
+      "status": "FIXED",
+      "evidence": "The button is outside the live region (measured: closest role=status is null). Live log during a refresh: 'Aggiorno le previsioni…', then 'Aggiornato alle 09:00'. A success in the same minute is now spoken, because the text changes twice."
+    },
+    {
+      "id": "A11Y-8",
+      "was": "important",
+      "status": "FIXED",
+      "evidence": "WeatherScreen.tsx:95 chooses 'Senza rete.' only when navigator.onLine is false, otherwise 'Aggiornamento non riuscito.'. First run: 'Il servizio meteo non ha risposto: riprova tra poco.' (:889-891). Spec cases cover both. See A11Y-Q11 for the remaining wording."
+    },
+    {
+      "id": "A11Y-9",
+      "was": "important",
+      "status": "PARTLY FIXED",
+      "evidence": "src/features/weather/WindLammaMap.tsx:84-88 gives the message role=status, but the node is inserted at the moment of failure, already holding its text. MutationObserver: 'changed: circa sab 17:00' then 'inserted: Mappa non caricata…'. My fix asked for a region mounted beforehand, because a live region inserted with its content is often not spoken. The map's time span is an always-mounted live region, so the failure text could join it. Not verifiable without TalkBack, so this stays open and does not block."
+    },
+    {
+      "id": "A11Y-10",
+      "was": "important",
+      "status": "FIXED",
+      "evidence": "The SVG is drawn in real pixels from the measured width (src/features/weather/WindChart.tsx:16-38). Computed font 12 px at 100% and 24 px at 200%; svg width equals container width (296, 332, 372); 'kn' on the axis; gust dots replaced by a stepped line at 13.14:1. The list holds the same data. Residuals at 200% are A11Y-27."
+    },
+    {
+      "id": "A11Y-11",
+      "was": "important",
+      "status": "FIXED",
+      "evidence": "Smallest computed font outside the chart SVG, across every viewport and scale measured: 14 px at 100%, and scaling with root (28 px at 200%). VAR is now the text 'var' in text-sm."
+    },
+    {
+      "id": "A11Y-12",
+      "was": "important",
+      "status": "FIXED",
+      "evidence": "Measured name: 'Vento, Sab PM: NW 30 nodi, raffiche 45. Temporali possibili.' No run-together words and no double direction. See A11Y-Q10 for visible words missing from the name."
+    },
+    {
+      "id": "A11Y-13",
+      "was": "important",
+      "status": "PARTLY FIXED",
+      "evidence": "Overflow is gone: no word leaves its box at 320 or 412, including with WCAG text spacing, where the only overrun is a harmless sr-only span. Segment labels fit. The defect returned in another form: the cell's overflow-wrap:anywhere now breaks numbers inside the cell. See A11Y-22."
+    },
+    {
+      "id": "A11Y-14",
+      "was": "important",
+      "status": "FIXED",
+      "evidence": "The second option I offered was taken. Headers are aria-hidden (WeatherScreen.tsx:625, :638), the date is in each name ('Sabato 7 PM: …'), and a cell beyond the data reads '… troppo lontano'. Half-days already past are aria-hidden empty cells. That silence is acceptable, because the week starts at the first remaining half-day."
+    },
+    {
+      "id": "A11Y-15",
+      "was": "important",
+      "status": "FIXED",
+      "evidence": "CDP tree: 'listitem: Ore 14: da NW, 16 nodi, raffica 30'. Visible text is 'r 25', and the legend says r = raffica. See A11Y-Q12 for the risk in this technique."
+    },
+    {
+      "id": "A11Y-16",
+      "was": "important",
+      "status": "PARTLY FIXED, remainder minor and not mentioned in the proposal",
+      "evidence": "Selected segment now uses aria-pressed:bg-primary, 5.51:1 against the track. AM/PM shading and force lines are gone; session bars at 5.43:1. Selected cell has a 3 px border at 13.14:1. The chart band stays at opacity 0.28 and computes to 1.51:1 against the background (WindChart.tsx:190), with no edge lines. The range is also given as text in 'Probabile' and in 'Ora per ora', so it does not block."
+    },
+    {
+      "id": "A11Y-17",
+      "was": "important",
+      "status": "FIXED on this screen",
+      "evidence": "With reducedMotion 'reduce', picking a cell gave only two scroll positions per frame sample, 458 then 112. The spinner has motion-reduce:animate-none and the chevrons motion-reduce:transition-none. html scroll-behavior is auto. CrewManagement and StudentScan, named in round 1, are outside this re-check."
+    },
+    {
+      "id": "A11Y-18",
+      "was": "important",
+      "status": "FIXED",
+      "evidence": "aria-hidden rotating chevrons on every summary (WeatherScreen.tsx:208-211, :461-464), visible in vento-320-100.png."
+    },
+    {
+      "id": "A11Y-19",
+      "was": "important",
+      "status": "FIXED, small residual",
+      "evidence": "CDP names: 'Mappa LaMMA di vento sulle Bocche di Bonifacio, circa sab 16:00: apri l'immagine, nuova scheda', 'Meteomar, Bollettino ufficiale: nuova scheda'. The img alt is empty, so the map is named once. The two credit links are the residual: A11Y-Q14."
+    },
+    {
+      "id": "A11Y-20",
+      "was": "important",
+      "status": "KNOWINGLY DEFERRED",
+      "evidence": "Proposal §8 lists it as shell behaviour for the backlog. Still measured: after Back, activeElement is MAIN. A search of docs/working/BACKLOG.md for 'Vento', 'weather' and focus-on-Home wording finds no entry, so the deferral is recorded only in the proposal. It should be added to the backlog at adoption."
+    }
+  ],
+  "importantFindings": [
+    {
+      "id": "A11Y-21",
+      "title": "The thunder mark is invisible on the darkest week cells, the windiest half-days",
+      "evidence": "src/features/weather/WeatherScreen.tsx:572 hardcodes #b42318, and src/domain/windConfig.ts:251 gives cells of 28 kn and above the background #2f5fa0. Computed contrast 1.02:1. Other tints: #a9c4e6 3.67, #cfdff2 4.85, #e8eef6 5.63. The screen-reader name is correct, so only sighted users lose it. Not classed as a blocker: one tap shows 'Temporali possibili' in the hero, the Home strip says it in words for the next session, and a 30 kn cell is already alarming. It is still a thunder warning that vanishes where it matters most.",
+      "reproduction": "Wrap fetch so a half-day returns 30 kn and weather_code 95 (I used Sat PM and Mon AM), open Vento at 412 px, and look at those cells. Expected: a visible mark. Observed: the mark is present in the DOM (5 .wind-cell-marks) and barely distinguishable in my capture.",
+      "specRef": "docs/design/06_DESIGN_RULEBOOK.md R06, R20",
+      "fix": "On the dark tint use currentColor (white, 6.43:1), or put the icon on a small white chip. Recommended before adoption. Add a test across WIND_TINTS."
+    },
+    {
+      "id": "A11Y-22",
+      "title": "Week-cell values break inside the number: '~10' is drawn as '~1' over '0'",
+      "evidence": "src/styles.css:218 sets overflow-wrap:anywhere on .wind-cell, and :233 adds a 3 px selected border that takes width from the content. Measured line breaks: 320@100 on the selected '~10' cell (row also grows); 320@105 on all six unselected '~10' cells and 'NW' on the selected cell; 390@115 and 412@120 on the selected '~10' cell. No breaks at 344, 360, 375, 390 or 412 at 100%. With WCAG text spacing at 320, the tilde cells and the selected 'NW' break too (captured). tests/e2e/layout-audit.ts calls a label broken in two a defect. The accessible name is unaffected.",
+      "reproduction": "At 320 x 900 and 100% text open Vento and tap 'Martedì 10 PM'. Expected: '~10' on one line. Observed: '~1' then '0'.",
+      "specRef": "docs/design/06_DESIGN_RULEBOOK.md R05, R18; follow-up of A11Y-13",
+      "fix": "Put whitespace-nowrap on the value spans and remove overflow-wrap from the cell, draw the selected border with an inset box-shadow or outline so it takes no content width, and raise the container threshold if values no longer fit. Recommended before adoption."
+    },
+    {
+      "id": "A11Y-23",
+      "title": "Week cells fall below the 40 px dense minimum at 320 px, a regression from the earlier layout",
+      "evidence": "Measured clickable rectangle: 35.8 x 84 at 320 and 35.5 x 88.2 at 320@105, with a 3 px gap (0.1875rem). 43.6 x 84 at 390 and 46.7 x 84 at 412. By computation, a 360 px phone gets about 39.2 px; not measured. The previous build measured 108-146 x 48. Not a blocker: the height is generous, a wrong tap only shows another half-day, the hero names it, and it is undone with one tap. weather.spec.ts asserts no target size.",
+      "reproduction": "Read getBoundingClientRect of button.wind-cell at 320 px.",
+      "specRef": "docs/design/06_DESIGN_RULEBOOK.md R04",
+      "fix": "Drop the 1.5rem period column at the narrowest widths and show AM/PM inside the cell, or raise the 17.5rem threshold so 320-360 px use day blocks. Run auditLayout with minDenseControl 40 on this screen."
+    },
+    {
+      "id": "A11Y-24",
+      "title": "Focus still falls to BODY when a control removes itself, including the new 'Dopo' button",
+      "evidence": "Measured activeElement BODY after each of: 'Dopo · Dom AM…' during a session (WeatherScreen.tsx:410-418; the picked hero is no longer in progress, so the button unmounts); Riprova while loading and after it fails again, when a new Riprova button exists but focus is not on it (:884, :893-899); 'Torna a Derive' (:903-907). The spec checks only Riprova's success. Also, retried.current stays true after a failed retry (:896), so a later automatic recovery pulls focus to the heading from wherever the user has gone. Measured from BODY, by code from elsewhere.",
+      "reproduction": "Focus each control, press Enter, read document.activeElement. For Dopo, set the clock to 2026-11-07T15:00+01:00.",
+      "specRef": "docs/design/06_DESIGN_RULEBOOK.md R12; WCAG 2.4.3; remainder of A11Y-6",
+      "fix": "After Dopo and 'Torna a…', focus the hero heading. For Riprova, keep the section mounted and the button aria-disabled while loading, so focus survives both results. Clear retried on failure."
+    },
+    {
+      "id": "A11Y-25",
+      "title": "'Mappa LaMMA ↓' moves the page but not focus, so keyboard, switch and screen-reader users do not arrive",
+      "evidence": "src/features/weather/WeatherScreen.tsx:243-248, :419-425. Measured: scroll 0 to 1189, focus stays on the button, nothing announced. The next Tab goes to 'Settimana' at top 397 and scrolls back up. The computed name includes the arrow character, as 'Mappa LaMMA ↓'.",
+      "reproduction": "Focus the button, press Enter, wait, read activeElement, press Tab.",
+      "specRef": "docs/design/06_DESIGN_RULEBOOK.md R12, R20; WCAG 2.4.3",
+      "fix": "Add tabIndex={-1} to h2#wind-lamma and focus it with preventScroll after the jump, or use a real anchor link. Replace ↓ with an aria-hidden vector icon."
+    },
+    {
+      "id": "A11Y-26",
+      "title": "The chart draws thunder that its accessible name does not mention",
+      "evidence": "src/features/weather/WindChart.tsx:132-138 builds the name without thunder, while :219-227 draws red bolts with no legend entry. Measured with thunder in the next 24 hours: 'Vento nelle prossime 24 ore: da 10 a 30 nodi, massimo alle 14. Raffica massima 45. Direzione NW.' with bolts visible. The word 'temporali' exists in the 'Ora per ora' list, closed by default, and the week cell's name covers it per half-day.",
+      "reproduction": "Set weather_code 95 for hours inside the next 24, and read the svg[role=img] aria-label.",
+      "specRef": "docs/design/06_DESIGN_RULEBOOK.md R06, R20; same class as A11Y-2",
+      "fix": "Append 'Temporali possibili alle HH' to the description, and add the bolt to a visible key near the chart."
+    },
+    {
+      "id": "A11Y-27",
+      "title": "At 200% the chart clips its gust label and loses every session name",
+      "evidence": "WindChart.tsx:211 anchors the label by a fixed position test (x above 70% of width), not by its width. Measured 'raffiche 36' spans 182-303 in a 296 px svg at 320@200, cutting the last digit (captured), and 190-311 in 310 px at 390@200. The label is 121 px wide, so by computation a peak near 00:00 loses about 27 px, the whole number. :242 hides labels that do not fit; at 200% 'Sab AM' and 'Sab PM' are both gone, leaving bars distinguished only by colour and thickness. The comment at :50 says every session is named. The number survives in the name and list.",
+      "reproduction": "At 320 px and root 200%, give 22:00-02:00 a gust of 36 and capture the chart.",
+      "specRef": "docs/design/06_DESIGN_RULEBOOK.md R05, R06",
+      "fix": "Choose the anchor from the label's estimated width and clamp it to the plot. Stack session labels on separate lines at large text, or use short labels."
+    },
+    {
+      "id": "A11Y-28",
+      "title": "The pick announcement omits thunder and model division",
+      "evidence": "WeatherScreen.tsx:830-834. Live log 'Domenica PM: NW 10 nodi, raffiche 16' while the hero says 'Temporali possibili'; 'Domenica AM: Variabile 16 nodi, raffiche 31' while it says 'Modelli divisi sulla direzione: NW o SE'. From a cell the name has already said these. From 'Dopo' focus falls to BODY, so the announcement is the only feedback, and the thunder is not in it.",
+      "reproduction": "Pick the thunder half-day and read the aria-live region. For the Dopo path, follow A11Y-24.",
+      "specRef": "docs/design/06_DESIGN_RULEBOOK.md R14, R06",
+      "fix": "Build cell name, Home name and announcement from one function that includes thunder and division."
+    }
+  ],
+  "qolFindings": [
+    {
+      "id": "A11Y-Q10",
+      "title": "Visible words missing from the Home name",
+      "evidence": "Visible 'incerto' and 'kn', name 'Modelli divisi' and 'nodi' (WeatherHomeCard.tsx:77-81, :118-122). A voice-control user saying what they see may miss. Remainder of A11Y-Q4; week cells show 'r25' against 'raffiche 25'."
+    },
+    {
+      "id": "A11Y-Q11",
+      "title": "A failed refresh with cached data gives no remedy, and shows a Wi-Fi icon for a service failure",
+      "evidence": "Status: 'Aggiornamento non riuscito. Aggiornato alle 09:00'. The two sentences read oddly together, and nothing says to try again. WifiOff is drawn for every failure (WeatherScreen.tsx:107-109). Suggested: 'Aggiornamento non riuscito, riprova tra poco. Dati delle 09:00'."
+    },
+    {
+      "id": "A11Y-Q12",
+      "title": "Hour cells rely on aria-label on li with all children aria-hidden",
+      "evidence": "WeatherScreen.tsx:152-173. Chromium exposes the name correctly. Some screen-reader and browser pairs handle aria-label on a non-interactive li poorly, and then the item would read as empty. Check on the owner's TalkBack and VoiceOver devices, or use sr-only text in place of aria-label."
+    },
+    {
+      "id": "A11Y-Q13",
+      "title": "Place rows read in fragments",
+      "evidence": "CDP tree: 'Spargi', 'Vento da NW', '18', ' kn', 'r ', '30' in WeatherScreen.tsx:217-235. Unlike cells and hours they have no whole-sentence name. Remainder of A11Y-Q7."
+    },
+    {
+      "id": "A11Y-Q14",
+      "title": "Credit links do not say they open a new tab",
+      "evidence": "'Open-Meteo.com' and 'CC BY 4.0' have target=_blank with no cue (WeatherScreen.tsx:742-758). Remainder of A11Y-19."
+    }
+  ],
+  "earlierQolStatus": {
+    "fixed": ["A11Y-Q1", "A11Y-Q2", "A11Y-Q3", "A11Y-Q6", "A11Y-Q9"],
+    "improved": ["A11Y-Q4", "A11Y-Q7"],
+    "deliberatelyLeft": ["A11Y-Q5 (proposal §8)"],
+    "open": [
+      "A11Y-Q8 (segments remain 40 px tall at 100%, allowed only as dense)"
+    ]
+  },
+  "screenReaderScript": {
+    "note": "Utterances are Chromium's computed names, roles and live-region changes with synthetic data, not a TalkBack recording.",
+    "steps": [
+      {
+        "step": "Home, no forecast",
+        "sighted": "Wind icon, 'Vento', 'Tocca per scaricare, serve la rete'",
+        "announced": "'Vento. Tocca per scaricare, serve la rete, button'. Matches."
+      },
+      {
+        "step": "Home, forecast with thunder",
+        "sighted": "'Vento · Sab PM', 'NW 30 kn raffiche 45', 'Temporali possibili'",
+        "announced": "'Vento, Sab PM: NW 30 nodi, raffiche 45. Temporali possibili., button'. Matches."
+      },
+      {
+        "step": "Open Vento, status",
+        "sighted": "'Aggiornato alle 09:00', or at 8 hours a warning fill, icon and 'Dati di 8 ore fa, delle 09:00'",
+        "announced": "The same words. Age is now in the speech."
+      },
+      {
+        "step": "Hero",
+        "sighted": "Dial, '16 kn', 'Raffiche 30', 'NW · Maestrale · Forza 4', 'Probabile 13–19 kn'",
+        "announced": "Heading, '14–18', 'Vento da NW', '16', 'kn', 'Raffiche 30', 'NW · Maestrale · Forza 4', 'Probabile 13–19 kn · Onda al largo 0,5 m'. Complete and in order."
+      },
+      {
+        "step": "Hours",
+        "sighted": "Columns: 14, arrow, 16, r 30",
+        "announced": "'Ora per ora, Sabato PM, list'; 'Ore 14: da NW, 16 nodi, raffica 30'. Good in Chromium (A11Y-Q12)."
+      },
+      {
+        "step": "'Mappa LaMMA ↓'",
+        "sighted": "The page moves down to the map",
+        "announced": "Button name only. Focus stays behind, and the next stop is 'Settimana' (A11Y-25)."
+      },
+      {
+        "step": "Week cell",
+        "sighted": "NW, 10, r16, red cloud; on a 30 kn cell the cloud cannot be seen (A11Y-21)",
+        "announced": "'Domenica 8 PM: NW 10 nodi, raffiche 16. Temporali possibili., button, not pressed'. Here the ear gets more than the eye."
+      },
+      {
+        "step": "Choose that cell",
+        "sighted": "Hero becomes 'Scelta · Domenica PM', with 'Temporali possibili'",
+        "announced": "Polite: 'Domenica PM: NW 10 nodi, raffiche 16'. Focus stays on the cell, now pressed. Thunder omitted (A11Y-28)."
+      },
+      {
+        "step": "'Torna alla prossima uscita'",
+        "sighted": "Hero returns",
+        "announced": "Focus on 'Prossima uscita · Sabato PM, heading'. Fixed."
+      },
+      {
+        "step": "During a session, 'Dopo · Dom AM'",
+        "sighted": "Hero changes, the button disappears",
+        "announced": "Polite summary, then focus on BODY (A11Y-24)."
+      },
+      {
+        "step": "Refresh",
+        "sighted": "Spinner, then the time",
+        "announced": "'Aggiorno le previsioni…', then 'Aggiornato alle 09:00' or 'Aggiornamento non riuscito. Aggiornato alle 09:00'. Focus stays on the button. Fixed."
+      },
+      {
+        "step": "Chart",
+        "sighted": "24 hours, red bolts when thunder is forecast",
+        "announced": "'Vento nelle prossime 24 ore: da 10 a 30 nodi, massimo alle 14. Raffica massima 45. Direzione NW.' No thunder (A11Y-26)."
+      },
+      {
+        "step": "Map stepping, image fails",
+        "sighted": "Message 'Mappa non caricata…'",
+        "announced": "'circa sab 17:00'; the message arrives in a role=status inserted at that moment, which may not be spoken (A11Y-9)."
+      }
+    ]
+  },
+  "evidenceInspected": [
+    "Read: docs/agents/REVIEW_PROTOCOL.md; docs/working/weather-reviews/accessibility-mobile.json; docs/working/WEATHER_PROPOSAL.md in full, including §5, §8, §10; src/features/weather/WeatherScreen.tsx, WeatherHomeCard.tsx, WindChart.tsx, WindLammaMap.tsx, Segmented.tsx, WindArrow.tsx, windFormat.ts, useWindForecast.ts, WeatherBoundary.tsx; WIND_TINTS in src/domain/windConfig.ts; .wind-* and .home-wind in src/styles.css; tests/e2e/weather.spec.ts, weatherFixtures.ts; rulebook R04-R20.",
+    "Looked at docs/working/weather-screens/vento-320-200.png, vento-320-100.png, vento-modelli-divisi.png, and my own captures of the storm week, chart at 200%, picked '~10' at 320 and text spacing at 320.",
+    "Re-tested blockers A11Y-1, A11Y-2, A11Y-3 and A11Y-4 and every important finding by measurement, unless the disposition cites only code.",
+    "Ran npx playwright test tests/e2e/weather.spec.ts: 17 passed on pixel-7-chrome.",
+    "Ran throwaway Playwright scripts in my scratchpad's maestra2/ against a dedicated Vite server on port 4199, now stopped. They reuse the synthetic tests/e2e/weatherFixtures.ts and a fetch wrapper for storm and late-peak scenarios. No real network or roster data. git status is clean at 01e1ca0.",
+    "Layout: both families, Settimana and 7 giorni, details open, at 320, 390 and 412 at 100% and 200%, plus 320@105, 320@150, 390@125, 412@135. Line breaks in cells at 320, 344, 360, 375, 390, 412, 390@115, 412@120. WCAG text spacing at 320 and 412. 844 x 390 landscape: no sideways scroll, chart 213 px tall.",
+    "Targets, passing R04 except week cells at 320: back, refresh and stepper use size-11 (44 x 44 by class, not re-measured); segments 40 tall at 100%, 80 at 200%; 'Mappa LaMMA ↓' 111.4 x 44.",
+    "Tab order at 412x915@100, 320x700@200 and 844x390@100: 32 stops, in visual order, none found covered by the bottom bar by hit test at each stop's upper part. Accessibility tree via CDP for hero, status, week, map, links and chart. html lang=it.",
+    "Live regions by MutationObserver during pick, thunder pick, division pick, same-slot tap, refresh success, refresh failure, Riprova, stepper and map failure. Reduced motion emulated with scroll sampled per frame.",
+    "Contrast computed from tokens: thunder on each tint, white on #2f5fa0 6.43, foreground on #a9c4e6 7.96, band 1.51, line on band 3.93, gust line 13.14, muted-foreground on background 5.43."
+  ],
+  "anglesTried": {
+    "seed": null,
+    "lenses": [
+      "Restricted scope under the protocol's follow-up rule, no entropy draw: re-check of A11Y-1 to A11Y-20 and regressions from the rework, on the brief's names, focus, live regions, targets, text at 200% and reduced motion."
+    ],
+    "wildcard": "The brief's confirmation also asked for new blockers, so I drove the rework's new surfaces into their extreme states: a storm cell on the darkest tint, a selected tilde value at 320, a late gust peak at 200%, and self-removing new buttons."
+  },
+  "notTested": [
+    "Real TalkBack, VoiceOver and physical devices: none here. Spoken output is inferred from Chromium's tree and live-region mutations, so A11Y-9 and A11Y-Q12 need the owner's devices.",
+    "WebKit and Firefox: only Chromium was run.",
+    "Android or iOS system font scaling: 200% was simulated by root font-size, the repo's convention.",
+    "Real LaMMA images: stubbed. Map legibility was not assessed, and layout shift was checked only from the aspect-square class in code.",
+    "On-screen keyboard: this screen has no inputs.",
+    "The worst-case chart clip near 00:00 and the 39.2 px cell at 360 px are computed from measured values, not measured themselves.",
+    "No milestone exists for this branch, so there is no success predicate to check. Findings are judged against the rulebook."
+  ]
+}

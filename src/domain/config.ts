@@ -103,6 +103,11 @@ export const SESSION_SEQUENCE = [
 ] as const
 export type SessionId = (typeof SESSION_SEQUENCE)[number]["id"]
 
+/** Days after the course's Saturday: Sat PM is 0, Sun AM and PM are 1. */
+export function sessionDayOffset(sequenceIndex: number) {
+  return Math.floor((sequenceIndex + 1) / 2)
+}
+
 export const DUTY_DAYS = [
   { id: "saturday", label: "Sabato", short: "Sab" },
   { id: "sunday", label: "Domenica", short: "Dom" },

@@ -1,0 +1,283 @@
+{
+  "reviewerRole": "independent senior UI designer",
+  "persona": "none; design critique brief, no persona file",
+  "milestone": "Vento proposal (no milestone registered), branch claude/weather-section",
+  "commit": "de89666",
+  "verdict": "FAIL",
+  "verdictNote": "The typography and tokens are native, but the surfaces, the week grammar and the warning language are not. Two findings make the reader take away a wrong wind fact, and the rulebook puts data correctness first (06 §1), so I class them as blockers. Each fix is small. UI-I1, UI-I2 and UI-I3 are what would make the screen feel native. Classification caveat: the protocol defines a blocker against spec or acceptance and Vento has neither yet, so I applied 06 §1 and proposal §5. The orchestrator may reclassify.",
+  "blockers": [
+    {
+      "id": "UI-B1",
+      "title": "The chart's unnamed AM/PM columns read as the session in the hero, and they show a different day and a different wind",
+      "evidence": "live-top.png: the hero says Sabato PM, 14-18, 5-14 kn, expected 8, gust 17, with hours 14-17 all at 8. Directly below, a column labelled only PM spans hours 14-17. Measured against the axis (34 at y=1316, 11 at y=1462, so 6.35 device px per kn), that column's line reads about 18 kn and its gust dots about 28 kn. That column is today, Thursday: the chart starts from now and receives allSlots. Code: WeatherScreen.tsx:884 passes allSlots, WindChart.tsx:81-103 draws period only with no day, and no day boundary is drawn at midnight. The chart also ignores a picked session: pick() at WeatherScreen.tsx:801-804 changes only the hero.",
+      "reproduction": "Open Vento on a course whose next session is not today, or tap Mer PM in the week grid. The hero shows that session while the column labelled PM just below shows another day, with no day named anywhere in the chart.",
+      "specRef": "06_DESIGN_RULEBOOK.md §1 (data correctness first), R13; WEATHER_PROPOSAL.md §1",
+      "proposedChange": "Name the day on the chart. Label columns 'Gio AM', 'Gio PM'. Draw a 1px var(--foreground) tick at hour 0 with the new day's short name ('Ven') in the hour row. Change the title to 'Prossime 24 ore, da gio 9:00'. If the hero session falls inside the 24 h, mark it stronger than the others. If it falls outside, add a 14 px muted line under the title: 'Sabato PM è oltre queste 24 ore'."
+    },
+    {
+      "id": "UI-B2",
+      "title": "Home's no-data state draws a real wind arrow pointing as a fixed NW wind",
+      "evidence": "WeatherScreen.tsx:992-996 renders WindArrow degrees={315}, whose accessible name is 'Vento da NW' (WindArrow.tsx:51). This branch runs before the first forecast and whenever the forecast is older than 24 h (line 952-953), which is exactly when the app has declared it has no usable reading.",
+      "reproduction": "Clear the forecast from localStorage, or set fetchedAt to more than 24 h ago, then open Home. A blue arrow pointing SE appears beside 'Vento', and a screen reader says 'Vento da NW'.",
+      "specRef": "06_DESIGN_RULEBOOK.md §1; WEATHER_PROPOSAL.md §5 (a silent old forecast is dangerous)",
+      "proposedChange": "Replace it with lucide Wind, aria-hidden, size-6, colour #71849b, the same treatment as .home-card svg (styles.css:208). A symbol that cannot be read as a direction carries no false fact."
+    }
+  ],
+  "importantFindings": [
+    {
+      "id": "UI-I1",
+      "rank": 1,
+      "title": "A red warning triangle on 'models disagree' works as the traffic light the proposal rejected",
+      "evidence": "WeatherScreen.tsx:510 and :987 use #b42318 and :331/:336 use #7f2f17: two colours for one concept. live-home.png shows a red triangle on Home beside a mild 5-14 kn. live-full.png shows it on 5 of the 12 half days with data. Elsewhere in the app #b42318 with a triangle means a rule-derived severe warning (06 §3 Avviso; CrewManagement.tsx:382 separates red from yellow #8a5a00 on #fff3cd). Proposal §5 says no go/no-go, yet a hurried reader on the dock reads a red triangle as 'do not go'. Thunder, the one real hazard, gets the same red at a smaller size (:506), so it no longer stands out.",
+      "reproduction": "live-home.png and live-full.png.",
+      "specRef": "R13; 06 §3; WEATHER_PROPOSAL.md §5",
+      "proposedChange": "Keep red for thunder only. Give uncertainty its own neutral vector mark: lucide CircleHelp in text-foreground, size-3 (12 px) in week cells and size-4 in the hero line. Set the hero line to text-sm font-semibold text-foreground, with no brown. On Home, drop the icon and write 'incerto' in text-sm text-muted-foreground after the gust. Update the grid legend to match."
+    },
+    {
+      "id": "UI-I2",
+      "rank": 2,
+      "title": "The week view has to be read number by number, shows no pattern, and uses grey tiles inside a white card instead of the app's own week grammar",
+      "evidence": "WeatherScreen.tsx:484 gives each slot bg-muted/50 rounded-lg inside a rounded-2xl card (:537), which is the nested-card layout R16 names, with 14 identical tiles (R17). The grid is about 370 css px tall (live-full.png, y 1134-1548 at the 459 px display scale). Windy days do not stand out, so the 'grasp of what is coming' promised in proposal §1 needs twelve separate readings. Blank Sab AM looks disabled, and 'Non ancora' repeats twice on Ven. The app already has a week grammar: seven day columns with AM over PM (WeeklyEvaluationGrid.tsx:228; 06 §7 says the same grid is reused). This screen's day rows are a second grammar for the same 13 sessions. 'r' needs a legend line.",
+      "reproduction": "live-full.png, cab-full.png, narrow-full.png.",
+      "specRef": "R01, R13, R16, R17, 06 §7; SKILL.md anti-template pass",
+      "proposedChange": "Use conceptProposals.weekGrid: seven columns, AM over PM, about 150 css px tall, cells tinted in one blue by force. If that is rejected, keep day rows but remove the tile fills (bg-transparent, border-t per row), put arrow, range and 'r 17' on one line at min-h-11, and merge a row with no data into one col-span-2 line: 'I modelli non arrivano ancora'."
+    },
+    {
+      "id": "UI-I3",
+      "rank": 3,
+      "title": "The rarest controls take the first 228 css px, and two identical segmented controls read as one four-way switch",
+      "evidence": "live-top.png: the hero starts at y=456 device px (228 css). Above it are title, two switches, a place line and a 44 px status row. Area defaults from the course family and horizon defaults from the date, so both are rarely changed. Side by side they show four options and two white pills with unrelated meanings. They also reimplement a control the app already has: EvaluationManagement.tsx:691-697 uses flex flex-wrap gap-[4px], min-h-[40px], font-black, aria-pressed:text-primary, while WeatherScreen.tsx:81-87 uses a grid, font-bold, aria-pressed:text-foreground. The header also duplicates BoatManagement.tsx:93-107 and misses its action slot and its max-[380px] rules.",
+      "reproduction": "live-top.png, cab-top.png, narrow-top.png.",
+      "specRef": "R02, R13; 07 P14/P17 (title and context side by side)",
+      "proposedChange": "Put Area in the shared header's action slot, as in P14/P17. Move horizon into the week section, where the control replaces the title 'Questa settimana di corso'. Merge place list and update time into one 14 px line with the refresh button (size-11, negative block margin, so the line stays about 24 px). The hero then starts near 96 css px, about 130 px higher. Reuse the Evaluations tab classes. Decision for the orchestrator: horizon also changes the hero today (WeatherScreen.tsx:798, nextSlot = slots[0]). Moving the control needs the hero decoupled, taking its slot from defaultHorizon() and ignoring the toggle."
+    },
+    {
+      "id": "UI-I4",
+      "rank": 4,
+      "title": "The hero arrow reads as a GPS cursor or paper plane, and it points SE next to the text 'NW'",
+      "evidence": "WindArrow.tsx:23: path 'M0 -12 L6 11 L0 6 L-6 11 Z' is half as wide as it is long, with a deep notch. At 48 px (WeatherScreen.tsx:283) and 32 px (:970) it is a blue mass with two wide fins, so finding the tip takes a beat on a diagonal. The convention itself is defensible (proposal §5, matches LaMMA), but 'NW' beside an arrow aimed at the lower right is a first-read conflict with nothing to resolve it, and the only explanation is below the chart. It is blue here and ink everywhere else. At 15-18 px the dart is fine.",
+      "reproduction": "live-top.png, live-home.png.",
+      "specRef": "R06, R13, R20; brief item on arrow direction",
+      "proposedChange": "In the hero only, draw a compass dial at 72 px: 1.5px var(--border) ring, cardinal ticks, 'N' at 11-12 px, and a long slim arrow crossing the ring from the source side to the lee side, for example 'M0 -30 L7 -14 L1.5 -14 L1.5 30 L-1.5 30 L-1.5 -14 L-7 -14 Z' in a 72 box, in var(--foreground). The tail sits on the NW of the ring and the head on the SE, so 'from NW, going SE' is readable with no legend. Keep the dart for sizes below 24 px, narrowed slightly to 'M0 -12 L5 11 L0 6 L-5 11 Z'. Home uses the small dart at 24-28 px in ink."
+    },
+    {
+      "id": "UI-I5",
+      "rank": 5,
+      "title": "The hero stacks six layers that restate one number, while its right side stays empty",
+      "evidence": "WeatherScreen.tsx:279-370 stacks range, direction, expected, a 3-column stat row, status text, and an hour row. In the capture, F2-4 restates 5-14 in another unit, and 8 appears as 'Attesi 8 kn' and again four times in the hour row. The right 40% beside the range is blank at 412 px. The relation between low, expected, high and gust is left for the reader to work out. Hour row columns have no labels: nothing says the 17 under the 8 is a gust (the meaning is only in aria-label, :361).",
+      "reproduction": "live-top.png.",
+      "specRef": "R01, R02, R16",
+      "proposedChange": "Use conceptProposals.hero, whose wind bar puts low, expected, high and gust on one scale. Replace the 3-column dl with one line. Add a 3rem row-label column to the hour row ('ora', 'kn', 'raff.', 12 px muted)."
+    },
+    {
+      "id": "UI-I6",
+      "rank": 6,
+      "title": "Stacked identical white cards, in a surface recipe the rest of the app does not use",
+      "evidence": "WeatherScreen.tsx has six 'rounded-2xl bg-card p-4 shadow-sm' (:262, :413, :537, :615, :720, :858) plus four more link cards (:917). Other screens use 'rounded-2xl border bg-card' with no shadow for content (EvaluationOverview.tsx:151, WeeklyEvaluationGrid.tsx:192, DutyManagement.tsx:373). Remove the cards and the sections still read, so they fail the R16 test. They also take 32 px of width from the chart and the map.",
+      "reproduction": "live-full.png, cab-full.png.",
+      "specRef": "R16, R17; SKILL.md anti-template pass",
+      "proposedChange": "Keep one surface, the hero, as 'rounded-2xl border bg-card p-4' with no shadow. Chart, week, map and models sit on the page as 'border-t pt-3', with gap-5 on the outer grid. The 24 px gap between sections then differs clearly from the 8-12 px gaps inside them."
+    },
+    {
+      "id": "UI-I7",
+      "rank": 7,
+      "title": "The Y axis labels 11, 17, 22, 28, 34 look arbitrary, and there is no zero",
+      "evidence": "WindChart.tsx:13 places lines on Beaufort boundaries but labels them in knots (proposal §5), so the reason for the numbers is invisible. Unequal steps make the reader's interpolation unreliable. No baseline is drawn, so the area floats. Dashed lines also compete with the gust dots, which sit on them at 28 and 34.",
+      "reproduction": "live-top.png.",
+      "specRef": "R05; WEATHER_PROPOSAL.md §5 (the mixed-units fix went only halfway)",
+      "proposedChange": "Use FORCE_LINES-free ticks at 10, 20, 30, 40 in solid 1px var(--border), plus a solid 1px baseline at 0 in var(--muted-foreground). Force stays in the hero line."
+    },
+    {
+      "id": "UI-I8",
+      "rank": 8,
+      "title": "Chart text scales below the rulebook sizes because the SVG scales with its box",
+      "evidence": "WindChart.tsx:6 has a 360-unit viewBox with fontSize 10.5-11 (:93, :117, :163). Card inner width is 340 css px at 412 and 264 at 320, so labels render at about 10 px and about 7.7-8 px. narrow-top.png shows them. R05 sets 12-13 px as the floor for short labels. This is a screen for outdoor use.",
+      "reproduction": "narrow-top.png; compute 264/360 x 11.",
+      "specRef": "R05; 06 §5 (320 px stress)",
+      "proposedChange": "Measure the width with a ResizeObserver and set viewBox to the real px width, keeping fontSize at 12 and recomputing x(). A cheaper version: remove the card (UI-I6) and use a 320-unit viewBox with fontSize 12, giving about 13.9 px at 412 and about 11 px at 320."
+    },
+    {
+      "id": "UI-I9",
+      "rank": 9,
+      "title": "Gust dots read as noise, and a two-line legend carries what direct labels could",
+      "evidence": "WindChart.tsx:135-145: unconnected r=1.8 dots in the darkest ink on the chart, sitting along the dashed lines, so they look like another dotted grid. Their series is not obvious until the legend (WeatherScreen.tsx:421-424), which live-top.png shows cut by the navigation on first view. Nothing on the chart states a value: the reader must interpolate the peak.",
+      "reproduction": "live-top.png.",
+      "specRef": "R02, R16",
+      "proposedChange": "Join gusts with a 1px polyline in var(--foreground) at 45% opacity, keep r=2 dots, and draw grid lines solid (UI-I7). Label directly at 12 px: 'raffiche 34' at the gust maximum and '20' at the mid maximum, with a thin 'modelli' label beside the band at its widest point. Add a swatch key above the plot only if direct labels do not fit. Move the arrow convention to one line next to the arrow row: 'dove va il vento'."
+    },
+    {
+      "id": "UI-I10",
+      "rank": 10,
+      "title": "Session shading ends an hour early, leaves a stray sliver, and is the third pale blue on the chart",
+      "evidence": "WindChart.tsx:86 sets the width to x(last)-x(first), and hoursInSlot excludes the end hour (wind.ts:547), so PM stops at 17 while the hero says 14-18. In live-top.png the column ends at x=327 and tick 18 is at x=354. Math.max(4, ...) produces a thin bar at the right edge next morning, which looks like a rendering fault. var(--muted) shading, the blue band at 22% (:127) and the page tint are close in hue: inside a column the band nearly disappears, and pale tints are the first thing lost in sun.",
+      "reproduction": "live-top.png, right edge and PM column.",
+      "specRef": "R06; 07 P11 (no ambiguity)",
+      "proposedChange": "Keep the plot white and mark sessions with a 4 px var(--foreground) bar just under the baseline, from x(first) to x(last+1), clipped to the plot, labelled 'Gio PM' above it at 12 px. Skip a session with fewer than 2 visible hours. Raise band fillOpacity to 0.3, with a 1px top edge at 50% accent blue, since the proposal tells readers to watch the high value."
+    },
+    {
+      "id": "UI-I11",
+      "rank": 11,
+      "title": "The arrow row and hour labels are out of step, and the arrows outweigh the data",
+      "evidence": "WindChart.tsx:148 draws an arrow every 2 h, and :160 a label every 3 h, so they align only every 6 h. 13 solid ink darts form a heavy band that looks like a decorative border. Line :166 also clamps the last label 6 units off its tick.",
+      "reproduction": "live-top.png, row at y about 1565 against y about 1608.",
+      "specRef": "R16, R17, R19",
+      "proposedChange": "Draw an arrow every 3 h, directly above its hour label (9 arrows, size 14), and set textAnchor='end' on the last label instead of moving it."
+    },
+    {
+      "id": "UI-I12",
+      "rank": 12,
+      "title": "Folded sections have no affordance: 'Modelli e pesi' looks like an empty white card",
+      "evidence": "WeatherScreen.tsx:426 and :721 put 'flex' on summary, which removes the disclosure marker in Chromium-based browsers. live-full.png shows a large card holding only a title, and 'Ora per ora' as plain bold text (cab-full.png). The app already solves this at DutyManagement.tsx:483, with list-none and justify-between. The proposal's promise that the blend 'can be checked, not trusted' depends on this being found.",
+      "reproduction": "live-full.png, 'Modelli e pesi'.",
+      "specRef": "R09, SKILL.md (buttons look actionable)",
+      "proposedChange": "Use 'flex min-h-11 list-none items-center justify-between' with a lucide ChevronDown, size-5, rotated by group-open:rotate-180, as a plain divided row and not a card."
+    },
+    {
+      "id": "UI-I13",
+      "rank": 13,
+      "title": "The 320 px layout breaks in five visible places",
+      "evidence": "narrow-top.png: 'Settimana' spills past its pressed pill (text to x about 485, pill to about 468 at 2x), and '7 giorni' wraps to two lines. 'Prossima uscita · Sabato / PM' leaves an orphan (:265). 'Onda al largo' wraps and pushes 0.7 m a line below 17 kn and F2-4 (:299-323), breaking R19's aligned starts. narrow-full.png: the legend orphans the triangle at the end of a line, away from 'modelli divisi' (:542).",
+      "reproduction": "narrow-top.png, narrow-full.png.",
+      "specRef": "R05, R18, R19; 06 §5",
+      "proposedChange": "UI-I3 and UI-I5 remove the switches pair and the dl. If they stay: flex-wrap on the group as in EvaluationManagement.tsx:691, whitespace-nowrap on labels, 'Onda' as dt with 'al largo' moved to dd, and grid-rows-subgrid or items-end so values share a baseline. Wrap icon and words in one 'inline-flex whitespace-nowrap' span in the legend. Put the session name on its own line in the heading."
+    },
+    {
+      "id": "UI-I14",
+      "rank": 14,
+      "title": "For cruiser courses, the place list inside the hero fills the viewport and pushes the chart off screen",
+      "evidence": "cab-top.png: the hero runs to the navigation bar. WeatherScreen.tsx:372-384 nests the list in the hero. Six rows repeat 'kn' and 'r' and, in the capture, differ by at most 2 kn (9, 8, 8, 8, 8, 7). A row pattern at 36 px for six non-interactive lines is heavier than the difference it reports.",
+      "reproduction": "cab-top.png.",
+      "specRef": "R01, R02, R16",
+      "proposedChange": "Make it a block of its own directly after the hero, with a column header row ('Attesi', 'Raffica', 12 px muted) so the cells show only numbers, no 'kn' or 'r'. Reduce rows to min-h-8. Keep spatial order. Bold a value only when it differs from the zone's expected value by 2 kn or more, which makes the real differences visible."
+    },
+    {
+      "id": "UI-I15",
+      "rank": 15,
+      "title": "LaMMA map: the owner's preferred source is presented small, under three lines of caption, with three exits to the same site",
+      "evidence": "live-full.png: map labels are tiny at 340 css px. Controls take two rows (full-width 2-option segmented :631, stepper :643) before the image. The caption holds usage, time warning, model and licence in 12 px (:696-700). 'Apri' (:621), tapping the map (:678) and the 'LaMMA' link (windConfig.ts:284) all leave for LaMMA, though the map tap goes to the image and the others to the page. rounded-lg clips the map's own printed header corners (:687). The saturated palette is rightly unaltered (CC BY-ND), but that makes it a foreign object, so its frame should be plain.",
+      "reproduction": "live-full.png, cab-full.png.",
+      "specRef": "R02, R16; WEATHER_PROPOSAL.md §8",
+      "proposedChange": "Show the image edge to edge, with no card and with -mx-5 max-[350px]:-mx-3 to use full viewport width (412 instead of 340, 21% larger), and no radius. Use one control row: title on the left, small Vento/Onda segmented on the right. Below the title, the stepper at size-11 with the time between. Reduce the caption to two parts: 'L'ora esatta è quella sulla mappa, in UTC' (14 px, above the map, since it changes how the map is read) and '© Consorzio LaMMA, MOLOCH 1,5 km, CC BY-ND' (12 px, below, linked to the page). Remove 'Apri' and the LaMMA item in Altre fonti."
+    },
+    {
+      "id": "UI-I16",
+      "rank": 16,
+      "title": "The Home strip is a half-copy of the six cards: same surface and shadow, no accent, not a destination in the same sense",
+      "evidence": "styles.css:156-170 copies .home-card's radius, background and shadow without its 3px blue top (:183), which 07 P01 assigns to every menu card. In live-home.png it therefore reads as a seventh card that lost its accent. It should not look like them: the cards are destinations, the strip is a condition of the course. It also has no :hover or :active state (:195-201), and its label-value weight competes with the card labels. Separately, 07 P01 says 'Nessun nuovo dashboard widget', and this strip is one: adoption must amend that line explicitly, not only add a page (proposal §9).",
+      "reproduction": "live-home.png.",
+      "specRef": "07 P01, R13, R16",
+      "proposedChange": "Make it a flat row belonging to the course identity: '.home-wind { background: transparent; box-shadow: none; border-radius: 0; border-block: 1px solid var(--border); padding: 0.5rem 0.1rem; margin-bottom: 0.875rem; min-height: 64px }', left-aligned with the identity (.home-course padding 0.1rem), with an :active background of var(--muted). Lead with the same value order as the hero: small dart at 24-28 px in ink, then 'NW 5–14 kn' at 18-20 px font-black, gust at 14 px, session in muted text. Home has about 280 css px of free space below the cards, so if the owner prefers a stronger statement, grow the type, not the surface. Record the P01 amendment in proposal §9."
+    }
+  ],
+  "qolFindings": [
+    {
+      "id": "UI-Q1",
+      "title": "Empty anchor div doubles one gap",
+      "evidence": "WeatherScreen.tsx:855 is an empty grid child, so the status row to hero gap is 24 px while all others are 12 px (live-top.png).",
+      "proposedChange": "Remove the div and put ref and scroll-mt-3 on the hero section."
+    },
+    {
+      "id": "UI-Q2",
+      "title": "'VAR' breaks the arrow column and falls below the type floor",
+      "evidence": "WindArrow.tsx:43 uses size*0.6, so 10.8 px at size 18. In live-full.png Gio AM starts its range further right than every other cell (R19).",
+      "proposedChange": "Draw a vector glyph of the same box, a dashed 1.5px circle with aria-label 'Direzione variabile'. Use the word 'variabile' only in the hero."
+    },
+    {
+      "id": "UI-Q3",
+      "title": "Decimal point in an Italian interface",
+      "evidence": "WeatherScreen.tsx:321 uses toFixed(1), giving '0.7 m', while the caption at :698 writes '1,5 km'.",
+      "proposedChange": "Format with Intl.NumberFormat('it-IT', { maximumFractionDigits: 1, minimumFractionDigits: 1 })."
+    },
+    {
+      "id": "UI-Q4",
+      "title": "Altre fonti: four more identical cards, and the official bulletin comes last",
+      "evidence": "WeatherScreen.tsx:914-931, windConfig.ts:282-303. The closing sentence at :935-938 sends the instructor to the official bulletin, but Meteomar is the fourth card.",
+      "proposedChange": "Use a divided list of min-h-11 rows, name on the left and detail in muted text on the right, with a size-4 ExternalLink at the end. Put Meteomar first, directly under the disclaimer sentence."
+    },
+    {
+      "id": "UI-Q5",
+      "title": "'circa sab 16:00' is lower-case and hedged in the main map control",
+      "evidence": "WeatherScreen.tsx:657.",
+      "proposedChange": "Write 'Sab 16:00' tabular and bold, and leave 'circa' to the caption line in UI-I15."
+    },
+    {
+      "id": "UI-Q6",
+      "title": "Hero heading uses a middle dot to join two facts",
+      "evidence": "WeatherScreen.tsx:266; SKILL.md lists middle-dot metadata in the anti-template pass.",
+      "proposedChange": "Use the two-part heading in conceptProposals.hero."
+    },
+    {
+      "id": "UI-Q7",
+      "title": "'Torna alla prossima uscita' is a full-width button after everything else in the hero",
+      "evidence": "WeatherScreen.tsx:388-396: with places or hours above it, it can sit below the fold.",
+      "proposedChange": "Place a text-primary, min-h-11 action at the end of the heading row, in the spot occupied by 'prossima uscita' when nothing is picked."
+    }
+  ],
+  "conceptProposals": {
+    "firstScreenGoal": "Hero and whole week in one view at 412x915, so a tap on a half day updates the hero in place and needs no scrollIntoView. This meets R01. It reorders proposal §1 to hero, week, 24-hour chart, map: the owner's brief lists 24 h before the days, so this is the owner's call.",
+    "hero": [
+      "Sabato PM  14–18                     prossima uscita    20px/900, 14px muted, 14px muted",
+      "",
+      "  ,-N-.      5–14 kn                                    3rem/900, kn 18px/700",
+      " / \\   \\     NW Maestrale · F2–4                        16px/600",
+      " \\  \\  /     raffiche 17 · onda 0,7 m                   16px/700 values, 14px labels",
+      "  `---'                                                 dial 72px, top-aligned with range",
+      "",
+      "0 |    [=====|===========]     o                 35     wind bar, full width, 10px tall",
+      "       5     8           14    17                       12px tabular labels under marks",
+      "",
+      "Modelli divisi: previsione incerta                      14px/600, neutral mark",
+      "",
+      "ora     14   15   16   17                               hour table, 3rem label column",
+      "        dart x4                                         16px",
+      "kn       8    8    8    7                               16px/900",
+      "raff.   17   16   16   14                               12-14px muted"
+    ],
+    "windBarSpec": "A one-mark summary used in the hero. Scale 0 to max(35, high + 5) kn. Band low to high: accent blue at 30%, rounded 2px. Expected: 2px wide, 16 px tall, in ink. Gust: 8 px ink dot. Add an aria-hidden note and keep the numbers in text, so the bar never carries data alone (R06). It is distinctive because it comes from the subject, and it shows at once that the gust is far above the range or close to it.",
+    "weekGrid": [
+      "Settimana | 7 giorni                     (control replaces the title; one line, 40px)",
+      "      Sab   Dom   Lun   Mar   Mer   Gio   Ven           day 12px/700, date 12px muted",
+      "       7     8     9    10    11    12    13",
+      "AM         [dart][dart][dart][dart][VAR ]  –            arrow 16px",
+      "           3–11  4–8   3–9   3–10  5–15                 range 13px/800 tabular",
+      "           r 8   r16   r13   r30   r20                  gust 12px",
+      "PM   [sel] ...                                          selected: inset 2px primary",
+      "Nodi, r = raffica. (?) modelli divisi. Tocca per i dettagli.     12px, one line"
+    ],
+    "weekGridSpec": "CSS grid with a 1.25rem period column plus seven minmax(0,1fr) columns, gap 2px. Each cell is a button at least 40 px wide (R04) and about 56 px tall, radius 6px, like P18's cells. The uncertainty mark is 12 px, absolutely placed at the top right, the same position as the note mark at WeeklyEvaluationGrid.tsx:96. Thunder replaces it in the same corner, in #b42318. Cell fill in a single blue, stepped on the high value at the existing force limits: below 11 none; 11-16 #e8eef6; 17-21 #cfdff2; 22-27 #a9c4e6; 28 and above #2f5fa0 with white text. One hue states how much wind and passes no judgement, so it is not a traffic light, and it is close to what sailors already read on Windguru-style tables. Text stays on every cell (R06). Computed contrast: #172b47 on #a9c4e6 is about 8:1; white on #2f5fa0 about 6.4:1. Muted #53667d fails on the tints (about 3.3:1 on #a9c4e6, about 4.35:1 on #cfdff2), so gust text must use foreground. Height about 150 css px against about 370 today. Risk to measure: at 320 px each column is about 37-39 px and '13–24' at 12 px bold is close to that width. Use the existing container-query fallback from WeeklyEvaluationGrid.tsx:228 (four and three columns) for narrow widths and 200% text."
+  },
+  "whatWorks": [
+    "Heading weights and tabular numerals match the rest of the app.",
+    "One-blue palette with no sky icons or temperature: the restraint is right and should stay.",
+    "No sideways scroll anywhere in the renders (R18).",
+    "The range as headline: keep it; only the layers beneath need merging.",
+    "Offering a stale state with its age rather than a blank screen."
+  ],
+  "evidenceInspected": [
+    ".claude/skills/field-operations-ui/SKILL.md",
+    "docs/design/06_DESIGN_RULEBOOK.md",
+    "docs/design/07_PAGE_CHANGELOG.md",
+    "docs/working/WEATHER_PROPOSAL.md (read whole, §1 and §5 in focus)",
+    "docs/agents/REVIEW_PROTOCOL.md",
+    "src/features/weather/WeatherScreen.tsx, WindChart.tsx, WindArrow.tsx, windFormat.ts",
+    "src/styles.css lines 1-254",
+    "src/domain/wind.ts hoursInSlot; src/domain/windConfig.ts session hours, LaMMA and links",
+    "Comparison code: WeeklyEvaluationGrid.tsx, EvaluationManagement.tsx tabs, BoatManagement.tsx header, DutyManagement.tsx summary and cards, CrewManagement.tsx warning colours, EvaluationOverview.tsx, App.tsx Home",
+    "Renders in my scratchpad's wx/: live-home, live-top, live-full, cab-top, cab-full, narrow-top, narrow-full"
+  ],
+  "anglesTried": {
+    "seed": null,
+    "lenses": [
+      "No persona file or lens list applies, so no draw. Lenses were the brief's: nativeness against other screens' code, hero hierarchy, arrow glyph, chart ink and labels, week grid, R16/R17 card audit, controls, rhythm, map, links, Home strip"
+    ],
+    "wildcard": "Read the chart numerically against the hero, measuring pixel position to knots from the axis labels, as a reader glancing between them would. This found UI-B1."
+  },
+  "notTested": [
+    "No app run and no real device: findings come from the supplied captures and the code, so sunlight behaviour is judgement, not measurement.",
+    "No narrow Home capture was supplied, so the strip's fit at 320 px is unverified.",
+    "The missing summary marker is seen in the captured browser; Safari on iPhone was not checked.",
+    "The 7-column grid and all proposed sizes are unbuilt; the two-digit range fit at 320 px and 200% text must be measured.",
+    "The mock gallery in docs/design/mockups/ was consulted only through its README; comparison with other screens rests on their code, with no screenshots of them.",
+    "The picked-session state, thunder state, stale state and failed state were read in code only, with no render."
+  ]
+}

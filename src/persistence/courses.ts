@@ -91,7 +91,11 @@ export const COURSE_DATA_TABLES = [
   "uploadRefusals",
 ]
 
-const COURSE_PREFERENCE_PREFIXES = [appChannelConfig.scanNameOrderPrefix]
+const COURSE_PREFERENCE_PREFIXES = [
+  appChannelConfig.scanNameOrderPrefix,
+  // A new course starts with no forecast shown for the old one's area.
+  appChannelConfig.weatherCachePrefix,
+]
 
 export async function eraseAllCourseData() {
   await prepareDatabase(db)

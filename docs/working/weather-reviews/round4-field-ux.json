@@ -1,0 +1,183 @@
+{
+  "reviewerRole": "field-ux",
+  "persona": "Il Nostromo",
+  "milestone": "none: proposed WX1, side branch claude/weather-section (owner requests of 2026-11-12: windows 8-14/14-19, map view, sky and temperature)",
+  "commit": "27d3554 plus the uncommitted working tree of 2026-11-12 (map, sky, temperature, widened windows)",
+  "verdict": "FAIL",
+  "pierMorning": [
+    "1. Sunday 08:40, 360 px Android in a splash pouch. The app cold-starts on Vento (measured: a reload lands on Vento in 1.7 s on the Chrome dev server and 4.8 s on the WebKit dev server; not production figures). The hero reads 'In corso · Domenica AM 8–14'. Read twice: it says 'in progress' before the boats leave, and 8–14 is not the outing (9:00–12:30).",
+    "2. I want to show the crew where the wind sits against Isola del Porco. Thumb up to 'Mappa' at y=177 of 780, the top quarter of the screen: tap 1. The cold start had put the switch back on Numeri.",
+    "3. The map opens on 8:00, before the boats go, because the current hour wins (firstMapHour). Tap '10': tap 2.",
+    "4. Three markers: 15, 15, 15, r42. The numbers are 13.6 px and the gusts and names 11 px. Held up to twelve kids at arm's length, nobody can read them. Read twice. Tap 'Numeri' to get the 40 px number back: tap 3.",
+    "5. 12:40, boats in since 12:30, lunch on the pier. I glance at Home for the afternoon and get 'Vento · Dom AM' with the morning's numbers. Read twice. Tap the Vento line (tap 4), one swipe to the week, tap 'Domenica PM' (tap 5). The previous build had switched to PM at 12:00: zero taps.",
+    "6. 13:05 on Home: 'NW 10 kn raffiche 22', then a thermometer and '17 °C', then 'Temporali possibili' in third place. Read twice.",
+    "7. 18:05, setting tomorrow's crews: 'Lun AM … Pioggia · 17 °C'. One glance and zero taps, but 'Pioggia' may come from the 8:00 or the 13:00 hour, when nobody is on the water.",
+    "Count: 5 taps and 1 swipe, against 0 for the same information in the previous build (the map did not exist then); 6 moments read twice; about 40 s of screen time, which is an estimate, not a measurement."
+  ],
+  "blockers": [
+    {
+      "id": "FUX-36",
+      "title": "The six-hour morning row: at 320 px and 200 % text the hour numbers run together ('2015152015 15', '17°17°17°…') and the map's hour buttons overlap; at 360 px and 150 % the buttons are 37 px wide",
+      "evidence": "WIND_SESSION_HOURS.AM went from four hours to six (src/domain/windConfig.ts:114-117), and HourCell gained an icon and a temperature (src/features/weather/WeatherScreen.tsx:220-230). The row is repeat(n, minmax(0, 1fr)) with no wrap (WeatherScreen.tsx:557). Measured on pixel-7 and on iphone-13 WebKit, with the same figures. At 320 px/200 % each cell is 32 px wide, and every knot, gust and temperature span is 34-41 px wide and reaches into the next cell. In Mappa the buttons are 41 px wide in 32 px columns. The layout audit (tests/e2e/layout-audit.ts) reports 'li is wider inside (41) than outside (32)' for all six, '\"17°\" overlaps \"17°\"' and '\"17°\" is under button[Ore 8 …]'. At 360 px/150 % the buttons are 37×183 px, under the rulebook's 40 px floor for dense groups. The ink gap between temperatures is 1.3 px at 390 px/200 % and 4.2 px at 360 px/175 %. The suite's 320/200 journey (tests/e2e/weather.spec.ts:776-) checks only Saturday PM (five hours) and only sideways scroll, so it stays green. Screens: test-results/nostromo/pixel-7-am-320-200-numeri.png, iphone-13-am-320-200-numeri.png, pixel-7-am-320-200-mappa.png.",
+      "reproduction": "test-results/nostromo/nostromo.spec.ts, tests 'field: six AM hours at 320 px 200%' and 'second: AM numbers run together …' (config test-results/nostromo/pw.config.ts, projects pixel-7 and iphone-13). By hand: viewport 320×780, html font-size 200 %, Deriva course, clock Sat 7 Nov 09:00, open Vento, tap the week cell 'Domenica 8 AM'. Expected: six separate numbers, as at 360 px/100 %. Observed: '2015152015 15' with no gaps; in Mappa the hour buttons overlap their neighbours.",
+      "specRef": "docs/design/06_DESIGN_RULEBOOK.md §1 (data correctness first), R04 (active areas must not overlap; 40 px floor for dense groups), R05, §5 (320 px at 200 %: content preserved); precedent FUX-19, a round-2 blocker for a number broken in a week cell",
+      "proposedChange": "When a cell is narrower than about 40 px, put the hour row on two lines of three, or drop the per-hour icon and temperature (the 'Ora per ora' list has them). Extend the 320/200 journey to Sunday AM, with an ink-gap check per number and the audit's overlap check."
+    }
+  ],
+  "importantFindings": [
+    {
+      "id": "FUX-37",
+      "title": "FUX-16 has come back: from 12:00 to 12:59 Home and the hero show the finished morning, and the test that guarded the fix was rewritten",
+      "evidence": "nextDecisionSlot moves on in the window's last hour (src/domain/wind.ts:686-695). That hour is now 13:00, because AM ends at 14, while the outing ends at 12:30 (windConfig.ts:108-113). Measured on both engines with the fixture: on Sunday at 12:10 and 12:40, Home shows 'Vento · Dom AM · incerto Variabile 17 kn raffiche 42' and the hero 'In corso · Domenica AM'; at 13:05 both show 'Dom PM'. In the src/domain/wind.test.ts diff, the case 'in its last hour: the afternoon' moved from 12:50 to 13:50 Rome, and the 13:30 'at lunch' case became a 14:30 'during the afternoon' case (wind.test.ts:962-970). The old 12:50 assertion would now fail, and nothing tests that moment any more. Before this change the switch came at 12:00.",
+      "reproduction": "test-results/nostromo/nostromo.spec.ts, test 'field: Home through the Sunday lunch and evening' (pixel-7 and iphone-13): clock Sun 8 Nov 12:40 Rome, reload, open Vento, back to Home. Expected: 'Vento · Dom PM', the decision of the moment, as between 12:00 and 12:59 in the previous build. Observed: 'Vento · Dom AM'.",
+      "specRef": "docs/working/WEATHER_PROPOSAL.md §2 ('The answer without a tap', 'The decision of the moment'); round-1 FUX-16",
+      "proposedChange": "Keep the outing's times (9:00-12:30, 15:00-18:00) separate from the display window (8-14, 14-19). Base the decision slot on the outing's end, and use the window only for the hour row and the map. Put a 12:40 case back in the table."
+    },
+    {
+      "id": "FUX-38",
+      "title": "The trend hours count in every headline: Home, the hero, the week cell and the thunder line now describe 8-14 and 14-19, not the outing",
+      "evidence": "summariseHours runs over hoursInSlot (src/domain/wind.ts:452-522, 697-706). The mean wind, highest gust, worst wet sky, thunder flag and temperature range all include 8:00 and 13:00 (AM) and 14:00 and 18:00 (PM): 2 of 6 and 2 of 5 hours with no boat on the water. The comment on WEATHER_KINDS justifies 'worst wet' with 'an hour of rain matters on the water' (windConfig.ts:261-266). I overrode the sky and measured on pixel-7. Clear skies from 8 to 12, rain only at 13:00 and 9 °C only at 8:00 give the week cell 'Domenica 8 AM: … Pioggia, da 9 a 17 gradi' and the hero 'Pioggia · 9–17 °C', for an outing forecast dry at 17 °C. Thunder only at 18:00 on Saturday gives Home 'Temporali possibili' for Sat PM; the old 14-18 window left 18:00 out. Thunder only at 8:00 on Sunday gives the hero 'Temporali possibili' for an outing that is clear from 9 to 12. The owner asked to see the trend. Proposal §6 item 7 records the window, but not that it changes what the headline numbers mean.",
+      "reproduction": "test-results/nostromo/nostromo.spec.ts, tests 'second: rain at 13:00 only, the outing dry' and 'field: a storm at 8:00 …'. Each routes the api.open-meteo.com weather_code request itself, on top of routeWeather.",
+      "specRef": "AGENTS.md §14 (a choice that changes UX or domain semantics goes to the owner); docs/working/WEATHER_PROPOSAL.md §6 item 7",
+      "proposedChange": "Summarise only the outing's hours and show the extra hours muted in the row. Otherwise, ask the owner which meaning he intended and record the answer."
+    },
+    {
+      "id": "FUX-39",
+      "title": "On Home and in the hero the temperature now comes before the thunder warning, and the sky line outweighs the likely range",
+      "evidence": "WeatherHomeCard.tsx:115-135 renders the sky line before the thunder line. At 360 px on Sunday at 13:05 the rows are y=184 'NW 10 kn raffiche 22', y=207 '17 °C' and y=227 'Temporali possibili' (test-results/nostromo/pixel-7-home-thunder-360.png). At 320 px/200 % in a 700 px viewport, '17 °C' is on the first screen and the thunder line is under the bottom bar (pixel-7-home-thunder-320-200.png). In the hero, the sky line (16 px semibold with a 20 px icon, WeatherScreen.tsx:533-546) sits between the wind block and the thunder line in HeroLines (547). It is heavier than 'Probabile 11–20 kn', which is 14 px and muted.",
+      "reproduction": "test-results/nostromo/nostromo.spec.ts, test 'third: Home page shot on a thunder afternoon …' (pixel-7): the fixture's thunder on Sun PM, clock Sun 13:05.",
+      "specRef": "docs/design/06_DESIGN_RULEBOOK.md §1 and R08; WEATHER_PROPOSAL.md §2 (Home line)",
+      "proposedChange": "Put the thunder line directly under the wind on Home and in the hero, and the sky line after it at text-sm, the same weight as 'Probabile'."
+    },
+    {
+      "id": "FUX-40",
+      "title": "At 360 px the map's wind numbers are 13.6 px and its gusts and names 11 px; for Derive these numbers appear nowhere else, so the code comment's justification does not hold",
+      "evidence": "Computed sizes at 360 px, the same on both engines: knots 13.63 px, gust 'r32' 11 px, place names 11 px, clock badge 11.6 px. At 320 px: 12.5 px and 11 px. WindZoneMap.tsx:26-32 says 'the same numbers are … larger, in the Numeri view'. But PlaceRows renders only for Cabinati (WeatherScreen.tsx:574), with half-day values, not hourly ones, so Derive's hourly numbers per place exist only at these sizes. The Derive points are 0.72 km (Isola del Porco to Punta Rossa) to 2.14 km apart. Five of the seven models have grids of 7 km or more (gridKm in windConfig), so the three markers mostly repeat one number, as proposal §8 admits. Held up to a crew, the 40 px number in Numeri is readable and the map's numbers are not.",
+      "reproduction": "test-results/nostromo/nostromo.spec.ts, test 'field: Derive and Cabinati map at 360 px …'. Its mapAudit logs each span's computed font-size. Screen: test-results/nostromo/pixel-7-map-360-derive.png.",
+      "specRef": "docs/design/06_DESIGN_RULEBOOK.md R05 (12-13 px badges only when they do not carry essential information alone)",
+      "proposedChange": "Set a floor of 16 px for the map's knots and 13 px for gusts and names. On Derive, keep the zone's large number above the map, or show a single marker when the points do not differ."
+    },
+    {
+      "id": "FUX-41",
+      "title": "Cabinati at 320 and 360 px: a place name lies over a neighbour's marker, so a number reads under the wrong name",
+      "evidence": "Measured overlaps at 360 px: the 'Caprera sud' name over Liscia di Vacca's marker, 22.7×11.2 px; the 'Liscia di Vacca' name and Cannigione's marker, 11.4×6.9 px; the 'La Maddalena nord' name and Spargi's marker, 20.4×4.1 px. At 320 px the same three overlaps are 25.3×11.4, 17.9×7.5 and 24.8×4.9 px. Names are drawn last (WindZoneMap.tsx:186), so 'Caprera sud' covers Liscia di Vacca's arrow and sits on the same line as its '15 r32' (test-results/nostromo/pixel-7-map-320-cabinati.png). WebKit gives the same figures. The fixture gives these places equal values, so the misreading cannot be seen in the suite. With real values that differ, 'Caprera sud 15 r32' would be Liscia di Vacca's wind.",
+      "reproduction": "test-results/nostromo/nostromo.spec.ts, test 'fifth: Cabinati map at 320 px' and the 360 px map test: open Vento, choose Cabinati, choose Mappa.",
+      "specRef": "docs/design/06_DESIGN_RULEBOOK.md §1 (data correctness), R05",
+      "proposedChange": "Give each point a label side in windConfig, or run a simple collision pass. Assert in the map journey that no marker overlaps a name at 320 and 360 px."
+    },
+    {
+      "id": "FUX-42",
+      "title": "Mappa removes the wave height, the likely range and Cabinati's place rows without saying so",
+      "evidence": "At 360 px on Cabinati, the hero text matches /Onda/ 0 times in Mappa and once in Numeri, and /Probabile/ 0 times in Mappa. The Mappa branch shows only summaryInWords (WeatherScreen.tsx:483-503), and '!onMap' hides PlaceRows (574). For the cruising course, the sea state is part of the go/no-go decision.",
+      "reproduction": "test-results/nostromo/nostromo.spec.ts, test 'field: Derive and Cabinati map at 360 px …': the logs 'cabinati map view mentions Onda/Probabile'.",
+      "specRef": "docs/working/WEATHER_PROPOSAL.md §2 (Next session shows the likely range; Cabinati shows waves)",
+      "proposedChange": "Keep the 'Probabile … kn · Onda al largo … m' line under the map's summary line."
+    },
+    {
+      "id": "FUX-43",
+      "title": "Two controls named 'Mappa' in one card, and the wrong one throws the page 1.5k px down",
+      "evidence": "Buttons in the hero named /Mappa/: ['Mappa', 'Mappa LaMMA']. At 360 px with the map open, 'Mappa LaMMA ↓' is a 121×44 button at y=762, where the thumb rests, while the switch is a 64×40 segment at y=177. Tapping 'Mappa LaMMA' moved scrollY from 126 to 1654 and left the hero heading at -1505 px. The only way back is to swipe.",
+      "reproduction": "test-results/nostromo/nostromo.spec.ts, test 'fourth: wrong taps near the switch, and the LaMMA jump'.",
+      "specRef": "docs/design/06_DESIGN_RULEBOOK.md R13 (one name per concept)",
+      "proposedChange": "Rename the jump 'LaMMA ↓', or rename the switch's option 'Luoghi'."
+    },
+    {
+      "id": "FUX-44",
+      "title": "In the week every cell now has an icon, so the thunder mark is one of thirteen; on 28 kn cells it is white like the rest; and every row grew by about two lines",
+      "evidence": "SlotCell shows WeatherIcon for every known sky (WeatherScreen.tsx:761-787). thunderColor returns white on the 28 kn tint (windFormat.ts:221-223), and the other icons inherit the same white. On the windiest days only a 16 px bolt shape tells thunder from sun or rain. Before this change the marks row appeared only for thunder or a model split. Cells are 116-131 px tall at 360 px (test-results/nostromo/pixel-7-week-360.png). On the 412×915 first screen the PM row is now under the bottom bar (docs/working/weather-screens/vento-derive-primo-schermo.png). The legend explains only the bolt and the question mark.",
+      "reproduction": "Open Vento at 360 px with the fixture and look at the week; read thunderColor and SlotCell.",
+      "specRef": "docs/design/06_DESIGN_RULEBOOK.md R06 (meaning never by colour alone; here not by presence either), R02; round-2 FUX-27",
+      "proposedChange": "In the week, show a sky icon only for the wet kinds (rain, storm, fog), and keep the bolt as the only red mark. If the temperature must stay, put it on the gust's line."
+    }
+  ],
+  "qolFindings": [
+    {
+      "id": "FUX-45",
+      "title": "The view choice is not remembered: it is back on Numeri after a trip Home and after a cold start, and the first open of the map shows no wind number while the map loads",
+      "evidence": "aria-pressed of 'Mappa' was 'false' after Home → Vento and after a reload, on both engines: heroView is screen state (WeatherScreen.tsx:1004). The lazy map's fallback 'Carico la mappa…' (488) replaced the dial and the numbers for 741 ms on the Chrome dev server and 1307 ms on the WebKit dev server. Production precaches js files (vite.config.ts:241), so it should be shorter there; not measured.",
+      "reproduction": "test-results/nostromo/nostromo.spec.ts, test 'field: view choice after a trip Home and after a cold start'.",
+      "specRef": "docs/design/06_DESIGN_RULEBOOK.md R07"
+    },
+    {
+      "id": "FUX-46",
+      "title": "The OpenStreetMap credit is a 98×19 px link just under the map, and it opens a new tab",
+      "evidence": "Layout audit at 360 px/100 %: 'a[OpenStreetMap…] is 98x19'. In an installed PWA, a wet tap just below the map leaves the app. A plain-text credit on the map is enough for ODbL attribution.",
+      "reproduction": "The layout audit logs of test 'field: six AM hours at 360 px 100%'.",
+      "specRef": "docs/design/06_DESIGN_RULEBOOK.md R04"
+    },
+    {
+      "id": "FUX-47",
+      "title": "Sea and land fills differ by 1.10:1, and the coast is a 1.2 px line at 3.14:1 against the sea",
+      "evidence": "WindZoneMap.tsx:21-23: fills #d6e6f2 and #f3eee2, stroke #6f8193; ratios computed with the WCAG formula. In glare the islands are a hairline.",
+      "reproduction": "Contrast computed in node from the three hex values.",
+      "specRef": "docs/design/06_DESIGN_RULEBOOK.md R06"
+    },
+    {
+      "id": "FUX-48",
+      "title": "During the extra hours the map opens on 8:00 or 14:00, when nobody is out",
+      "evidence": "firstMapHour prefers the current hour (WeatherScreen.tsx:255-260). At 8:40 the map shows 8:00, not 9:00.",
+      "reproduction": "Read firstMapHour, then open Mappa on a half-day in progress at 8:xx or 14:xx.",
+      "specRef": "The brief: 'default the outing's first real hour'"
+    },
+    {
+      "id": "FUX-49",
+      "title": "When a half-day is picked, 'Torna' sits 16 px from 'Mappa' on the same row; a missed tap drops the pick",
+      "evidence": "At 360 px, 'Mappa' spans x 154-218 at y 57, and 'Torna' is a 44×44 px button at x 234, y 55. A missed tap returns the hero to the next outing, and the week is a scroll away.",
+      "reproduction": "test-results/nostromo/nostromo.spec.ts, test 'fourth: …'.",
+      "specRef": "docs/design/06_DESIGN_RULEBOOK.md R04"
+    },
+    {
+      "id": "FUX-50",
+      "title": "Every hour cell repeats the same sky icon and a temperature",
+      "evidence": "Five identical cloud icons and 19, 19, 18, 17 and 16 ° add about 40 px to the hero (docs/working/weather-screens/vento-derive-primo-schermo.png). The hero's sky line already gives the range, and the 'Ora per ora' list gives the detail.",
+      "reproduction": "The screen named above.",
+      "specRef": "docs/design/06_DESIGN_RULEBOOK.md R02"
+    },
+    {
+      "id": "FUX-51",
+      "title": "The header's '14–19' and '8–14' read as the outing's times",
+      "evidence": "periodHours prints the window (windFormat.ts:41-44) beside the heading 'Prossima uscita'. The outings are 9:00-12:30 and 15:00-18:00.",
+      "reproduction": "Any Vento screen.",
+      "specRef": "docs/design/06_DESIGN_RULEBOOK.md R13"
+    },
+    {
+      "id": "FUX-52",
+      "title": "In Mappa there are three different numbers for 'the wind at 15'",
+      "evidence": "On Cabinati at 15:00, most markers show '15 r32', the hour cell under them shows '16 r 38' (a blend that includes Spargi), and the summary line says 'NW 16 nodi, raffiche 38' (the whole half-day). See docs/working/weather-screens/vento-mappa-cabinati.png.",
+      "reproduction": "Open Vento, choose Cabinati, choose Mappa.",
+      "specRef": "WEATHER_PROPOSAL.md (one blend, the same numbers everywhere)"
+    },
+    {
+      "id": "FUX-53",
+      "title": "At 320 px and 200 % the stacked switch adds about 180 px above the wind number",
+      "evidence": "In docs/working/weather-screens/vento-320-200.png, Numeri and Mappa stack as two full-width rows, and the 40 px number now sits about 1.5 screens down. The contract allows scrolling, so this is a note only. Separately, vento-mappa-320-200.png shows the bottom bar in the middle of the image. That is an element screenshot taller than the viewport, not a layout defect.",
+      "reproduction": "The screens named above.",
+      "specRef": "docs/design/06_DESIGN_RULEBOOK.md §5"
+    }
+  ],
+  "evidenceInspected": [
+    "docs/agents/REVIEW_PROTOCOL.md; the persona brief; docs/design/06_DESIGN_RULEBOOK.md; docs/LOCAL_DEVELOPMENT.md (ports); playwright.config.ts",
+    "git diff and status of the worktree (claude/weather-section on 27d3554): windConfig.ts, wind.ts, windFormat.ts, windData.ts, WeatherScreen.tsx, WeatherHomeCard.tsx, the new WindZoneMap.tsx and WeatherIcon.tsx, scripts/build-coastline.mjs (head only), coastline.ts (header only), the diffs of wind.test.ts, tests/e2e/weather.spec.ts, weatherFixtures.ts, WEATHER_PROPOSAL.md and WEATHER_EVIDENCE.md",
+    "Earlier field-ux reports in docs/working/weather-reviews/ (field-ux, round2-field-ux, round3-field-ux): their anglesTried and findings FUX-14, 16, 19 and 27",
+    "The screens named in the brief: vento-mappa-derive.png, vento-mappa-cabinati.png, vento-mappa-320-200.png, vento-320-200.png, vento-derive-primo-schermo.png, home.png",
+    "Ran npx vitest run src/domain/wind.test.ts src/features/weather: 5 files, 226 tests passed",
+    "Wrote and ran a throwaway spec, test-results/nostromo/nostromo.spec.ts, with its own config, starting Vite on port 4391 and leaving the busy port 4174 alone. All checks ran on pixel-7. On iphone-13 WebKit I ran the map at 360 px, the morning row at 320/200, the view memory and the Sunday clock walk. The spec uses the suite's fixtures, with sky overrides through page.route. Its screens are in test-results/nostromo/, which git ignores. No tracked file was changed, and WEATHER_SCREENS was not set, so the brief's screens were not overwritten.",
+    "Computed the distances between the Derive points, read the model grid sizes in windConfig, and computed WCAG contrast ratios for the new map and text colours"
+  ],
+  "anglesTried": {
+    "seed": 543835389,
+    "lenses": [
+      "index 9: time to the first useful screen after a cold start (view memory, the lazy map's fallback, where the app lands)",
+      "index 8: recovering from a wrong tap (Numeri/Mappa, Torna beside Mappa, the 'Mappa LaMMA' jump, the OSM link). The draw gave index 7, reading at arm's length, which round 1 had already tried, so I took the next untried lens."
+    ],
+    "wildcard": "I walked the widened window through every code path that reads WIND_SESSION_HOURS (the decision slot, the summaries, the worst-wet sky rule, the hour grid), with skies placed only in the extra hours, and diffed the guard tests that changed with it. This found FUX-36, FUX-37 and FUX-38. The other 40 % of the effort went to the brief's claims: the map markers and text sizes at 320 and 360 px, the two 'Mappa' controls, the Home line, the week cell and the weight of the sky line."
+  },
+  "notTested": [
+    "A real phone in real sun: emulation only, as in every earlier round",
+    "An offline cold start of a production build with the service worker. The lazy coastline chunk is a js file under the precache glob (vite.config.ts:241), so it should be cached, but I did not run a build.",
+    "Whether real Open-Meteo data ever gives the three Derive points different numbers. I made no network calls; the judgement rests on the grid sizes and the proposal's own statement.",
+    "WebKit for the sky-override, ink-gap, Home-thunder, wrong-tap and 320 px Cabinati checks: these ran on Chromium only",
+    "Screen readers, landscape, and interruptions (a call, the screen locking, an app swap) beyond the cold-start reload",
+    "The new icon and temperature column in the 24-hour 'Ora per ora' list at 320/200, beyond the suite's own sideways-scroll test"
+  ]
+}

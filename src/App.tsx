@@ -87,6 +87,9 @@ import {
 } from "@/persistence/localDataOperations"
 import { StudentManagement } from "@/features/students/StudentManagement"
 import { VolunteerManagement } from "@/features/volunteers/VolunteerManagement"
+import { WeatherBoundary } from "@/features/weather/WeatherBoundary"
+import { WeatherHomeCard } from "@/features/weather/WeatherHomeCard"
+import { WeatherScreen } from "@/features/weather/WeatherScreen"
 import {
   getActiveCourses,
   saveActiveCourse,
@@ -110,6 +113,7 @@ type ShellView =
   | "sessions"
   | "evaluations"
   | "volunteers"
+  | "weather"
   | "settings"
 
 const SHELL_HISTORY_KEY = "__cvcHelperShell"
@@ -134,6 +138,7 @@ function isShellView(value: unknown): value is ShellView {
     value === "sessions" ||
     value === "evaluations" ||
     value === "volunteers" ||
+    value === "weather" ||
     value === "settings"
   )
 }
@@ -513,6 +518,10 @@ function Home({
         </h1>
       </section>
 
+      <WeatherBoundary fallback={null}>
+        <WeatherHomeCard course={course} onOpen={() => onNavigate("weather")} />
+      </WeatherBoundary>
+
       <section aria-label="Aree del corso">
         <div className="grid grid-cols-2 gap-2.5">
           {HOME_CARDS.map(({ id, label, icon: Icon }) => (
@@ -848,6 +857,26 @@ function AppShell({
             courseId={course.id}
             onHome={() => goBack("home")}
           />
+        )}
+        {view === "weather" && (
+          <WeatherBoundary
+            fallback={
+              <section className="rounded-2xl border bg-card p-4" role="alert">
+                <p className="m-0 text-base">
+                  Le previsioni non si sono aperte e sono state tolte dal
+                  telefono. Il corso non è toccato.
+                </p>
+                <Button
+                  className="mt-3 min-h-11 w-full"
+                  onClick={() => goBack("home")}
+                >
+                  Torna alla Home
+                </Button>
+              </section>
+            }
+          >
+            <WeatherScreen course={course} onHome={() => goBack("home")} />
+          </WeatherBoundary>
         )}
         {view === "boats" && (
           <BoatManagement course={course} onHome={() => goBack("home")} />

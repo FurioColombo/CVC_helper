@@ -242,10 +242,12 @@ describe("browser storage helpers", () => {
       local.setItem(selected.installedVersionKey, "0.4.0")
       local.setItem(selected.syncModeKey, "synced")
       local.setItem(`${selected.scanNameOrderPrefix}first`, "surname-first")
+      local.setItem(`${selected.weatherCachePrefix}derive`, "{}")
       local.setItem(other.crewDisplayColumnsKey, "2")
       local.setItem(other.installedVersionKey, "0.4.0")
       local.setItem(other.syncModeKey, "synced")
       local.setItem(`${other.scanNameOrderPrefix}first`, "given-first")
+      local.setItem(`${other.weatherCachePrefix}derive`, "{}")
       local.setItem("unrelated.preference", "keep")
 
       const scopeCacheName = `${selected.workboxCacheId ?? "workbox"}-precache-v2-${scope}`
@@ -297,6 +299,7 @@ describe("browser storage helpers", () => {
           [other.installedVersionKey, "0.4.0"],
           [other.syncModeKey, "synced"],
           [`${other.scanNameOrderPrefix}first`, "given-first"],
+          [`${other.weatherCachePrefix}derive`, "{}"],
           ["unrelated.preference", "keep"],
         ]),
       )

@@ -1,0 +1,163 @@
+{
+  "reviewerRole": "operational-meteorologist (ad hoc, no persona file)",
+  "persona": "Operational meteorologist who sails",
+  "milestone": "Vento proposal (unregistered, would be WX1)",
+  "commit": "de89666",
+  "verdict": "FAIL",
+  "verdictNote": "No Vento spec or milestone exists, so I judged blockers against the proposal's own stated purpose: 'what will the wind be when we go out, and how sure is that?'. The core method survives: the weighted median beats every single model at +1 d on sea cells at the two exposed coastal stations, the agreement label carries real signal, sea cells are the right choice, and no bias correction is the right call. What fails is what the instructor reads first: the gust number and the headline range. Both fixes are small. Transfer caveat for all coastal evidence: Cap Pertusato stands at 107 m and La Chiappa at 57 m on headlands, so they are proxies for the water, not the water.",
+  "blockers": [
+    {
+      "id": "WX-1",
+      "title": "The gust number is low in about 85% of sessions at exposed coastal stations, and was never verified. At long range it swings the other way.",
+      "evidence": "src/domain/wind.ts:270 takes the weighted q75 of model gusts; docs/working/WEATHER_PROPOSAL.md:89-90 gives the reason. scripts/weather-backtest.mjs:137-145 never requests gusts, so no evidence supports it. I ran the real blendForecast and summariseHours on archived sea cells and compared with observed session-maximum gust (Meteo-France FXI, hourly instantaneous maximum). +1 d: Cap Pertusato bias -3.9 kn, exceeded in 84% of 171 sessions; La Chiappa -3.7 kn, 86% of 171. Short range: -3.3 kn and 82% at Pertusato; -3.1 kn and 85-86% at La Chiappa. Land control at Figari, short range: -0.8 kn, 59%. Every individual model also under-reads hourly gusts on sea cells: -2.0 to -7.0 kn. Long range: AIFS has no gust and UKMO ends near +147 h, so q75 collapses to the top of 2-3 values. Live run of 2026-11-05, Derive, session 11 Nov AM: range 2.9-10.2 kn, gust 29.7 kn, from GFS speed 6.2 and gust 29.7. Blended gust/mid ratio has median 1.78 at 0-48 h, 3.22 at 120-148 h and 2.83 beyond 148 h; observed FXI/FF median is 1.68 at Pertusato and 1.64 at La Chiappa. I do not claim the GFS gust is wrong in itself: its few archived cases with ratio above 3 were mixed (forecast 17.3 vs observed 16.7 at Pertusato, 11.6 vs 17.9 at La Chiappa). The fault is the summary method, not that model.",
+      "reproduction": "Scripts analyse2.mjs, analyse3.mjs, gustk.mjs, edge.mjs and edge2.mjs in my scratchpad's wx/review-method/. Inputs: Open-Meteo previous-runs and historical-forecast with cell_selection=sea; Meteo-France H_20_latest-2025-2026.csv.gz, June-October 2026.",
+      "specRef": "docs/working/WEATHER_PROPOSAL.md:15-17, :21, :89-90",
+      "fix": "Tested at +1 d: max(highest model gust, band top x 1.5) gives bias -1.3 kn and 67% exceeded at Pertusato, -0.4 kn and 60% at La Chiappa, against q75's -3.9/84% and -3.7/86%. Plain model max gives -2.2/73% and -0.9/61%. Label it 'raffiche fino a', and add a gust row to the backtest. Beyond about +120 h, drop the number or show a gust factor on the mid, because 2-3 samples cannot make a quartile. Even the best variant is still exceeded in 60-67% of sessions, so the screen should not imply a ceiling."
+    },
+    {
+      "id": "WX-2",
+      "title": "The headline range reads as where the wind will be, but holds only about half of the hourly readings, including under 'Modelli concordi'.",
+      "evidence": "src/domain/wind.ts:244-246 and :353-354 define it; the proposal makes it the headline at docs/working/WEATHER_PROPOSAL.md:21 and :148. It is the 20-80 spread of correlated models, not a forecast interval. Session range against hourly observations, +1 d, sea cells: Pertusato 51% of hours inside, La Chiappa 49%, with at least one hour above the top in 60% of sessions at both. Mean width 4.4-4.7 kn, while the actual error of mid spans 7.7 kn (Pertusato) to 10.4 kn (La Chiappa) between its p10 and p90. Hourly band on the same data: 50% inside and 31% above at Pertusato; 45% inside and 37-38% above at La Chiappa. Under the 'alta' label ('Modelli concordi', src/features/weather/windFormat.ts:32): 46% of hours inside at Pertusato, 50% at La Chiappa. A 10-minute mean is noisier than a grid cell, which explains part of this but not the reader's impression of '5-14 kn'.",
+      "reproduction": "analyse.mjs, analyse2.mjs and analyse3.mjs in my scratchpad's wx/review-method/, using the session hours 07-10 and 12-15 UTC.",
+      "specRef": "docs/working/WEATHER_PROPOSAL.md:15-17, :21, :82-84, :148",
+      "fix": "Dress the range with observed error. Tested hourly at +1 d: band union mid+-3 kn gives 73% and 67% inside at widths 6.5-6.7; mid+-4 kn gives 81% and 73% at width 8.0. Refit the dressing from the coastal rerun in WX-3. If the owner prefers the raw spread, label it as the models' range and print beside it how often the real wind exceeded the top. Keep the agreement label: it does carry signal (session-mean MAE alta/media/bassa is 1.46/2.24/2.91 at Pertusato and 1.58/3.22/2.88 at La Chiappa), but it should describe model agreement, not sit beside the range as a confidence statement."
+    }
+  ],
+  "importantFindings": [
+    {
+      "id": "WX-3",
+      "title": "The weights and several written conclusions are scored on land cells at airports, while the app reads sea cells. Some conclusions reverse on sea cells at coastal stations.",
+      "evidence": "scripts/weather-backtest.mjs:134 omits cell_selection, so it uses the default land cell; src/features/weather/windData.ts:60 uses sea. The airport score is largely bias and local circulation: on land cells at +1 d, IFS is no better than an in-sample month-and-hour climatology (Olbia 3.06 vs 2.63, Figari 3.63 vs 3.62), while at Pertusato on sea cells it clearly is (3.09 vs 4.69). +1 d on a common sample, sea cells: Pertusato AROME 2.67, IFS 2.88, ARPEGE 3.09, GFS 3.18, ICON-2I 3.20, ICON-EU 3.33, UKMO 3.44, AIFS 4.17; La Chiappa AROME 3.25, ICON-2I 3.42, ARPEGE 3.48, IFS 3.82, UKMO 3.84, GFS 3.87, AIFS 3.95, ICON-EU 4.34. The proposal's order is AROME, ICON-2I, ARPEGE, ICON-EU, IFS, GFS, UKMO, AIFS. AROME first holds. 'ECMWF is not the best here' and 'ARPEGE better than every global' (proposal :120-125) fail at Pertusato. 'Beyond day 5 GFS catches it' fails at both: +7 d IFS 5.41 vs GFS 6.10 and 4.55 vs 5.80; +5 d 4.50 vs 4.92 and 4.18 vs 4.58 on a common sample. So GFS 29 above IFS 26 at 120+ (src/domain/windConfig.ts:178,194) has the wrong order on sea cells. The practical cost is small: at +1 d the configured median against an equal-weight median is 2.45 vs 2.47 at Pertusato and 3.04 vs 3.07 at La Chiappa. Proposal :131-134 admits absolute errors do not transfer but says the ranking does.",
+      "reproduction": "analyse.mjs and analyse3.mjs in my scratchpad's wx/review-method/.",
+      "specRef": "docs/working/WEATHER_PROPOSAL.md:96-99, :118-127, :131-141",
+      "fix": "Add cell_selection=sea and score against Cap Pertusato and La Chiappa, keeping the airports as a control. The data is open (Licence Ouverte), in tenths of m/s, with gusts, updated daily. Flatten the weights: they barely move the result, so two-digit precision is unearned. Put IFS at or above GFS at 120+, and rewrite the §4 conclusions. Limit 4 and the claim that real verification needs readings from the water should be softened: a station on the Strait 25 km away already exists."
+    },
+    {
+      "id": "WX-4",
+      "title": "'Every model reads low in westerlies' and the on-screen note come from conditioning on the observation, on land cells. On sea cells at coastal stations the claim does not hold.",
+      "evidence": "scripts/weather-backtest.mjs:112-118 selects on observed strength and direction, which produces a negative bias by regression to the mean even for a good forecast. The 'maestrale' bucket is also 240-20 degrees at any speed from 5 kn, not strong W-NW, unlike the column title at proposal :101 and STRONG_WESTERLY at src/domain/windConfig.ts:244-248. The note fires on the forecast, so it must be tested on the forecast. Forecast minus observed at +1 d, sea cells, in W-NW: conditioned on observed >=15 kn, Pertusato AROME -2.10, IFS -2.52, GFS -1.93; conditioned on forecast >=15 kn, the same models read +0.39, +1.17, +2.01, so they read high. La Chiappa forecast-conditioned: +1.93, +1.07, +4.46. Real blend in sessions where the note fires, observed minus mid: Pertusato +0.63 kn (53 sessions), La Chiappa -0.09 (19), Olbia sea -0.60 (11), Figari sea +1.27 (33). Only land cells at Figari show a clear effect, +2.94 (15 sessions), and those are not what the app reads. Control: strong non-westerly sessions at La Chiappa read +4.28 kn low with 61% of hours above the top (21 sessions), and no note fires there; Pertusato's control is -1.27 (11 sessions), so this is one site's signal, not a rule. The advice at src/features/weather/WeatherScreen.tsx:354-355 errs on the safe side, but its stated reason is not supported, and it implies other directions need no such care.",
+      "reproduction": "analyse2.mjs, sections 'strong westerly note' and 'regression-to-the-mean'.",
+      "specRef": "docs/working/WEATHER_PROPOSAL.md:126-127; src/domain/windConfig.ts:238-243",
+      "fix": "Remove the direction-specific note and its claim. Replace it with the general message from WX-2, for every direction: the real wind can pass the top of the range. Correct the comment and proposal :126. Not applying a bias correction is right: on sea cells the bias changes sign by model and station (ARPEGE +0.99 at Pertusato, -1.22 at La Chiappa)."
+    },
+    {
+      "id": "WX-5",
+      "title": "AROME HD and AROME behave as one forecast counted twice, and the family cap does not hold where the proposal says it does.",
+      "evidence": "On the same cell at Figari the two series have mean absolute difference 0.03 kn and r=0.998 over 3672 hours; their scores are 1.97/1.96 and +1 d 2.48/2.49. This fits one run on two output grids; Open-Meteo's page does not state it, so it is my inference. Together they hold 32 of 99 at 0-24 h. Merging them widens the band from 4.11 to 4.50 kn at Pertusato and 4.17 to 4.30 at La Chiappa, with MAE unchanged or within 0.03 kn. Cap: src/domain/wind.test.ts:92-109 reads only the static table and excludes the ensemble, while proposal :87-88 says every lead is under 50%. With the ensemble in the sample, ECMWF holds 92/145 = 63% at 120+. After UKMO ends near +147 h, the live run gives IFS+AIFS 62% of the models list at +150 h and +170 h, and 92/121 = 76% with the ensemble. src/domain/wind.ts never enforces the cap: if both ICON runs were missing, Meteo-France would hold 46/75 = 61%.",
+      "reproduction": "analyse2.mjs section 'AROME HD vs AROME'; live.mjs and edge.mjs for shares by lead.",
+      "specRef": "docs/working/WEATHER_PROPOSAL.md:60-61, :87-88; src/domain/windConfig.ts:133-147, :216-219",
+      "fix": "Keep one AROME row, which also saves a request column. Either count the ensemble and renormalise at run time, or drop the 50% claim and say plainly that days 6-7 are mostly ECMWF. The latter is defensible, since IFS scores best there on sea cells."
+    },
+    {
+      "id": "WX-6",
+      "title": "src/domain/windConfig.ts:124-130 says the weights are each model's 1/MAE² share; for 72 h onward they are hand-adjusted without saying so, and the +1 d rows mix periods.",
+      "evidence": "Recomputed from docs/working/weather-backtest.json. 0-24 h from +1 d scores: 16.7/16.7/14.3/14.0/9.7/8.6/5.7/8.0/6.1 against config 18/14/14/14/10/9/6/8/6, which fits, and the HD lead is disclosed. 48-72 h from +2 d scores: fits within 1. 72-120 h from +3 d scores, order ARPEGE/ICON-EU/IFS/AIFS/GFS/UKMO: 25.6/19.0/16.9/11.4/14.3/12.9 against config 15/17/20/14/18/16; ARPEGE is cut 10.6 points with no stated reason. 120+ from +5 d, order IFS/AIFS/GFS/UKMO: 29.2/20.4/25.9/24.5; from +7 d with UKMO extended: 24.9/20.2/27.1/27.8; config 26/21/29/24 matches neither. Mixed samples: AROME and ARPEGE +1 d start on 7 August (n about 850 per station), others on 1 June (n about 1520). On the common sample ICON-2I moves from 2.59 to 2.71, falling behind ARPEGE at 2.62, and AIFS from 4.10 to 3.85. Proposal limit 3 (:135-138) mentions missing leads, not the mixed period. 1/MAE² also presumes unbiased, independent errors feeding a mean; these errors are biased and correlated and feed a median. Every number in the proposal's table does match the JSON within rounding.",
+      "reproduction": "recompute.mjs and analyse3.mjs in my scratchpad's wx/review-method/, passing the JSON path.",
+      "specRef": "docs/working/WEATHER_PROPOSAL.md:96-99, :135-138; src/domain/windConfig.ts:124-130",
+      "fix": "Generate the table from the backtest with the extension rule in code, on a common sample, with any manual change named. Or call the weights judgement informed by scores, which fits how little they change the result (WX-3)."
+    },
+    {
+      "id": "WX-7",
+      "title": "The band jumps at +48 h and the mid moves at +72 h from reweighting alone, with no new data.",
+      "evidence": "Same forecast and same valid hour, moving only the lead across a bucket edge, Derive, hours where the models truly exist: +48 h top of band mean +4.30 kn, max +7.50, agreement label flips in 9 of 20 hours (example hour: top 5.8 to 13.3, 'media' to 'bassa'); +72 h mean |mid change| 0.71 kn, max 2.40; +120 h 0.10. Cause: src/domain/wind.ts:247-250 gives the ensemble's quantiles full authority as soon as its weight is above zero, so a 5/104 weight sets the band. src/domain/windConfig.ts:227 then steps 5 to 30. The ensemble comes from one 25 km cell at 41.25/9.50, 9 km from Derive and 14.6 km from Cannigione, and is applied to the whole zone. The run-end taper itself works: AROME ends near +45 h, and src/domain/wind.test.ts:343 tests only that case.",
+      "reproduction": "edge2.mjs in my scratchpad's wx/review-method/; live data of 2026-11-05.",
+      "specRef": "docs/working/WEATHER_PROPOSAL.md:85-86, :91-92",
+      "fix": "Interpolate weights linearly across buckets, and fade in the ensemble's widening between +48 and +72 h instead of switching it on. Add a test that moves the clock across each edge and limits the change."
+    },
+    {
+      "id": "WX-8",
+      "title": "The screen prints 'Modello MOLOCH 1,5 km', which I could not support from any LaMMA source. LaMMA's own model page gives about 2.5 km.",
+      "evidence": "src/features/weather/WeatherScreen.tsx:698, src/domain/windConfig.ts:268 and docs/working/WEATHER_PROPOSAL.md:45. LaMMA's BOLAM and MOLOCH page gives 0.034 x 0.024 degrees, about 2.5 km, with four runs a day and a horizon of 42-60 h. The map itself is labelled 'WW3 - MOL01ECM - UG' with no grid size, including at +120 h (step 75), beyond that published horizon; the steps change to 3 h after +60 h and 6 h after +84 h. So what forces the later hours is an open question, not a known fact, and MOL01 may be a configuration LaMMA has not documented publicly. The only 1.5 km I found is a consortium slide from ISPRA, not LaMMA's chain.",
+      "reproduction": "https://www.lamma.toscana.it/modelli/atmo/bolam-e-moloch-info-sui-modelli and wind10.AQ.1.png, wind10.AQ.75.png.",
+      "specRef": "docs/working/WEATHER_PROPOSAL.md:45",
+      "fix": "Print 'MOLOCH (LaMMA), da ECMWF' with no grid size until LaMMA confirms, and add the resolution and the forcing beyond +60 h to the owner's letter to LaMMA (proposal §7 item 4). The other LaMMA claims hold: see evidenceInspected."
+    }
+  ],
+  "qolFindings": [
+    {
+      "id": "WX-Q1",
+      "title": "The Windfinder entry is unfair in wording, though the exclusion stands, and the link opens the weaker product.",
+      "evidence": "src/domain/windConfig.ts:296 opens the GFS page. Windfinder's Superforecast page for La Maddalena exists and states a 3-5-7 km grid, updated 4 times a day. Its page links a 'For businesses / API' offer, so 'No public API found' (proposal :47) should say no free public API; I did not see its terms.",
+      "reproduction": "windfinder.com/forecast/la_maddalena and /weatherforecast/la_maddalena.",
+      "specRef": "docs/working/WEATHER_PROPOSAL.md:47",
+      "fix": "Link /weatherforecast/la_maddalena and correct the sentence. Also update the Windy line: the EUR 990 a year and the randomised free tier are confirmed on Windy's own pricing page, and that plan excludes ECMWF."
+    },
+    {
+      "id": "WX-Q2",
+      "title": "The Liscia di Vacca point is on land at Porto Cervo, not on open water off Liscia di Vacca.",
+      "evidence": "src/domain/windConfig.ts:84-87 uses 41.14/9.535. Open-Meteo returns elevation 4 m for it, the only one of the 11 points checked above 0. OSM reverse lookup gives a street in Porto Cervo; the OSM hamlet is at 41.136/9.516. Sea selection still finds water cells, so the numeric effect is small. Other points read 0 m, which supports but does not prove water; Cala Fico and Isola del Porco could not be found by name on OSM.",
+      "reproduction": "grid.mjs in my scratchpad's wx/review-method/; Nominatim.",
+      "specRef": "src/domain/windConfig.ts:19-22",
+      "fix": "Move the point offshore of the hamlet and include it in the owner's coordinate check (proposal §7 item 3)."
+    },
+    {
+      "id": "WX-Q3",
+      "title": "'From friction alone' overstates the sea-cell effect, though sea cells remain right.",
+      "evidence": "Proposal :73-75 and src/features/weather/windData.ts:14-15. The land cell is often a different place: at the Derive centre the IFS cell moves 11 km and GFS about 16 km. Next 48 h, Derive centre, sea/land ratio: GFS 2.49, others 1.15-1.34, and 1.00 for AROME 2.5 km and ICON-2I, whose cell does not change there. AROME 2.5 km returns identical cells for sea and land at all 11 points. Coarse sea cells stay within about 15 km and inside or beside the archipelago, not far outside it, though some sit over or next to islands the model cannot resolve.",
+      "reproduction": "grid.mjs and live.mjs.",
+      "specRef": "docs/working/WEATHER_PROPOSAL.md:73-75",
+      "fix": "Say the default cell can be inland terrain kilometres away. Keep cell_selection=sea."
+    },
+    {
+      "id": "WX-Q4",
+      "title": "The three Derive points add little at model resolution.",
+      "evidence": "Only AROME HD and ICON-2I give three distinct cells, AROME 2.5 km gives two, and each coarser model at most two. Next-24 h mids were 15.7, 15.5 and 15.4 kn. Proposal :155 already calls them one answer. Mixing points into the Cabinati band is not a real problem: width 8.5 vs 8.0 kn, label differs in 6 of 49 hours.",
+      "reproduction": "grid.mjs and live.mjs.",
+      "specRef": "docs/working/WEATHER_PROPOSAL.md:155",
+      "fix": "Optional: use one Derive point and save the request weight."
+    },
+    {
+      "id": "WX-Q5",
+      "title": "'Modelli concordi' allows a wide range in strong wind.",
+      "evidence": "agreementOf(7, 28, 10) returns 'alta', so 24.5-31.5 kn, across Force 6 and 7, reads as agreement (src/domain/windConfig.ts:231-232). Band 13.9 at mid 28 is still only 'media'.",
+      "reproduction": "live.mjs, constructed cases.",
+      "specRef": "src/domain/windConfig.ts:229-236",
+      "fix": "Cap the 'alta' width in knots, or add a condition that the band stays within one Beaufort force."
+    },
+    {
+      "id": "WX-Q6",
+      "title": "LaMMA map labelling can be wrong by more than the stated twelve hours, and images carry no cache-buster.",
+      "evidence": "src/features/weather/lammaMap.ts:8-10 says a wrong guess costs twelve hours. LaMMA's GFS-initialised frame had Last-Modified 28 October at review time, so a chain can stall for days. That frame is not the one the app uses; its ECMWF chain was current. Today's 00 UTC images appeared at 07:55 UTC, while the 9 h delay switches at 09:00; LaMMA's table puts 12 UTC at about 21:00-21:30, leaving a short window with the label 12 h ahead of the image. LaMMA's own page appends a timestamp and warns about stale images; src/features/weather/lammaMap.ts:33-35 does not.",
+      "reproduction": "curl of wind10.AQ.1.png, daterun.txt and models/ww3gnshrgfs/last/wind10.AQ.1.png.",
+      "specRef": "docs/working/WEATHER_PROPOSAL.md:201-203",
+      "fix": "Append the estimated run as a query string and soften the comment. The UI's instruction to trust the printed UTC time is the right safeguard; keep it."
+    },
+    {
+      "id": "WX-Q7",
+      "title": "Days 5-7 are close to or worse than climatology at the coastal stations, and the ensemble that steers them is unverified.",
+      "evidence": "Pertusato sea cell, +5/+7 d: IFS 4.48/5.41, GFS 4.98/6.10, against an in-sample month-and-hour climatology of 4.69. La Chiappa: IFS 4.18/4.55, GFS 4.61/5.80, against 4.68. In-sample climatology is flattered. This supports the proposal's stated caution (:91-92), but the ensemble's benefit remains a prior.",
+      "reproduction": "analyse2.mjs, climatology section.",
+      "specRef": "docs/working/WEATHER_PROPOSAL.md:91-92, :137-138",
+      "fix": "Show days 6-7 as tendency and direction rather than a knot range presented like day 1. Say on screen that this far out the forecast is close to seasonal average."
+    }
+  ],
+  "evidenceInspected": [
+    "Read: docs/working/WEATHER_PROPOSAL.md, src/domain/windConfig.ts, src/domain/wind.ts, src/features/weather/windData.ts, src/features/weather/lammaMap.ts, scripts/weather-backtest.mjs, docs/working/weather-backtest.json, docs/agents/REVIEW_PROTOCOL.md; relevant parts of src/domain/wind.test.ts, src/features/weather/WeatherScreen.tsx and src/features/weather/windFormat.ts.",
+    "Ran the real src/domain/wind.ts, bundled to scratch with esbuild, on archived and live data. Repo unchanged by me. Untracked docs/working/weather-screens/, tests/e2e/weather.spec.ts and tests/e2e/weatherFixtures.ts appeared during the review; they are not mine.",
+    "Archive: 9 models, June-October 2026, Open-Meteo historical-forecast and previous-runs, land and sea cells, at Figari and Olbia (both) and Pertusato (both), La Chiappa (sea). My Figari and Olbia land scores reproduce the committed JSON.",
+    "Observations: IEM METAR for LFKF and LIEO; Meteo-France hourly open data for department 20 (Cap Pertusato, La Chiappa, Figari), file Last-Modified 2026-11-05, rows to 04 UTC that day.",
+    "Live: Open-Meteo forecast and ensemble of 2026-11-05, per model and per point, sea and land cells, 11 points.",
+    "Attacks that failed, so these parts stand: proposal table matches the JSON within rounding. METAR whole-knot rounding is negligible (0.25 kn mean difference from Meteo-France tenths at Figari). The UTC window and DST are negligible (AROME HD 1.97 vs 1.96, IFS 3.55 vs 3.51 at Figari; 2.09 vs 2.09 and 3.14 vs 3.15 at Olbia). Median against AROME alone: at +1 d on sea cells the median wins (2.45 vs 2.67 at Pertusato, 3.04 vs 3.25 at La Chiappa); at short range they tie (2.28 vs 2.24, 2.50 vs 2.49). AROME+ICON-2I+ARPEGE mean ties the median on water (2.48, 3.03), so I found no clearly better simple method. Bimodal and squall constructed cases are flagged 'bassa', with the gust shown. Direction circular mean beats each model at +1 d (17 degrees at Pertusato, 25 at La Chiappa). The proposal's direction claim is only scored at short range because the script passes null at longer leads; my +1 d scoring fills that gap.",
+    "LaMMA claims confirmed: no Access-Control-Allow-Origin on the PNG or daterun.txt with an Origin header sent. Newest open-data record on dati.toscana.it is 2026-01-20, its file returns 404, and that feed was WRF-ARW 3 km, licensed cc-by there. Site licence is CC BY-ND 4.0 with a request to report uses. Frame AQ spans about 8.99-9.56 E and 41.10-41.49 N, covering all points. Step numbering matches LaMMA's ventoemare_gnshr.js: 75 steps, step 76 is 404. No public OGC weather layer found: the geoportal's public WMS lists 27 names, none matching wind or model terms, and the ARW_3KM workspace returns 404. I used only public documented pages and found no legitimate browser route to LaMMA numbers, so proposal §8 stands.",
+    "Exclusions: Windy and OpenWeather reasons are fair (OpenWeather on reasoning only, see notTested). Beyond the proposal: Cap Pertusato and La Chiappa are the obvious missing verification source, but the file is 32 MB with no CORS header seen, so it suits the backtest, not a phone.",
+    "Requests went beyond the two named providers, all public: LaMMA, dati.toscana.it, data.gouv.fr, Meteo-France's open-data bucket, Nominatim, one Overpass call (refused with 406, unused), Windy and Windfinder pages, web search."
+  ],
+  "anglesTried": {
+    "seed": 243040193,
+    "lenses": [
+      "Backtest validity and conditioning: land vs sea cell, conditioning on observation vs forecast, common samples, sampling window",
+      "Calibration of what the user reads: range coverage, gust exceedance, agreement skill"
+    ],
+    "wildcard": "Clock test: hold the forecast data fixed and move only the lead across each bucket edge, to separate reweighting steps from real weather. No persona file exists for this role, so the seed and lenses are recorded for form only."
+  },
+  "notTested": [
+    "Actual over-water wind at Cala Fico or in the archipelago: no public over-water record found. Pertusato and La Chiappa are headland proxies at 107 m and 57 m, 25-50 km away, and FXI is an instantaneous peak while model gust definitions vary.",
+    "One season only, June-October 2026; +1 d comparisons from 7 August. Winter behaviour is unknown.",
+    "Ensemble skill: no ensemble archive was available, so its weights remain a prior.",
+    "Live results come from one forecast, 2026-11-05, with a frontal passage, so live agreement counts are not typical.",
+    "Guardia Vecchia and ARPAS networks: searches found no public feed and IEM lists neither, but I did not exhaust ARPAS. Meteo-France's official Bonifacio marine bulletin was not checked.",
+    "OpenWeather: not called and its terms not read; judged only on the proposal's reasoning. Windfinder API terms not seen.",
+    "The app was not run in a browser; only domain code and the LaMMA URLs were exercised.",
+    "Process slip: my first command created an empty /tmp/x outside the allowed scratch directory and hung on it. I stopped the command and removed the file; nothing else was affected."
+  ]
+}

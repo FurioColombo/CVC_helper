@@ -30,6 +30,8 @@ const webkitCoreSpecs = [
   // Data migrations and the switch to synced tables run on every iPhone, on
   // WebKit's own storage backend.
   "b1-sync-mode",
+  // The Vento screen's scroll, focus and text sizes on the iPhone engine.
+  "weather",
   // Sign-in, the switch it starts and its reload, on the iPhone engine (B3).
   "b3-backup-ui",
   // The erase forgets the synced copy on WebKit's own storage backend (B6).

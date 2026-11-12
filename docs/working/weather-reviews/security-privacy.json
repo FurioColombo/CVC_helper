@@ -1,0 +1,226 @@
+{
+  "reviewerRole": "security-privacy",
+  "persona": "Il Garante",
+  "milestone": "unregistered (proposed WX1, docs/working/WEATHER_PROPOSAL.md section 9)",
+  "commit": "de89666",
+  "verdict": "FAIL",
+  "blockers": [
+    {
+      "id": "SP-WX-1",
+      "title": "One malformed hour in a third-party response locks the instructor out of the whole course for three days, including export and erase",
+      "evidence": "src/features/weather/windData.ts:105-108 checks only that `time` is a non-empty array; its values are never validated, although the columns are (windData.ts:30-35). src/features/weather/useWindForecast.ts:46-47 writes the forecast to localStorage before any render. src/domain/wind.ts:189-190 lets a non-numeric or out-of-range time through, and src/domain/wind.ts:427-431 throws RangeError on it. src/features/weather/WeatherScreen.tsx:954-961 runs that in render on Home. ScreenErrorBoundary wraps the entire AppShell (src/App.tsx:1106-1116) and its only action is a reload (src/App.tsx:294-325), which lands on Home and throws again. The throw happens before the refresh effect runs, so a healthy provider cannot repair it. Expiry comes only from MAX_AGE_TO_KEEP_SECONDS (windData.ts:21, 281).",
+      "reproduction": "Throwaway Playwright probes (my scratchpad's garante/run/garante.spec.ts, G4 and G5), synthetic course, Pixel 7 profile, weather hosts routed. G4: the wind response has hour 60 set to the string 'x', and in a second run to 1e300. Tap Vento: the boundary 'Questa schermata non si è aperta' appears. Make the provider healthy and reload. Observed in both runs: locked true, Allievi reachable false, requests made 0; cold goto locked true; clock +1 day locked true; +2.9 days locked true; +3.1 days locked false. G5: a valid cache aged one hour, then a malformed refresh. Reload with no tap on Vento gives locked true, and it stays locked after another reload. Expected: a bad forecast costs the forecast, never the course. The trigger is a provider fault or compromise; I have no evidence that Open-Meteo has ever sent such a value.",
+      "specRef": "02_MVP_SCOPE.md:117-118 (every release keeps the course fully usable on the phone without a network); 01_PRODUCT_SPEC.md section 10",
+      "recommendedFix": "Use one validator on both paths (parseForecast and readCachedForecast): `times` must be finite integers within a sane window around now, strictly ascending, with a length cap (for example 16 x 24); every column must match that length and be finite numbers in a plausible range; `points` must be a non-null object holding only known point and model ids. Reject before writing to storage. Also give the Home strip and WeatherScreen their own error boundary that drops the weather cache and leaves the rest of the shell working. Add the G4 and G5 cases as permanent tests."
+    },
+    {
+      "id": "SP-WX-2",
+      "title": "A download in flight writes the forecast back after the full reset has reported everything deleted, and the next course then contacts Open-Meteo unprompted",
+      "evidence": "src/features/weather/useWindForecast.ts:46-47 has no abort on unmount and no check before writing: writeCachedForecast runs even after Home has unmounted. src/persistence/localDataOperations.ts:109-131 clears storage once and the page stays alive on the completion screen (src/App.tsx:1052). The browserStorage test proves only the clear, not the race. Harm is low (no personal data in the key) and the window is short (at most the 20 s time-out), but the screen's statement and the proposal's sentences 'The full reset clears it' and 'contacts nobody' both become false.",
+      "reproduction": "G3: cache aged one hour, wind response held, reload on Home so the download starts, Impostazioni, Azzera tutti i dati locali, confirm. The key is gone and the screen reads 'Dati locali cancellati'. Release the response. Observed: CACHE REVIVED AFTER RESET COMPLETED: true. Aged again and a new course created, with no tap on Vento: requests to api, ensemble-api, marine-api and api.open-meteo.com. Expected: the key stays gone and no request is made.",
+      "specRef": "01_PRODUCT_SPEC.md:81-83 (the reset deletes course, preferences and offline files)",
+      "recommendedFix": "Pass an AbortSignal from the hook into downloadWindForecast and abort it on effect cleanup, and do not write once aborted. AppShell unmounts when a reset closes the course, including in a second tab, so this also covers the broadcast path. Add a permanent test of this race."
+    }
+  ],
+  "importantFindings": [
+    {
+      "id": "SP-WX-3",
+      "title": "'Contacts nobody until first opened' holds per device only: after a course erase Home keeps calling for a course and possibly an instructor who never opened Vento",
+      "evidence": "src/persistence/courses.ts:94 lists only scanNameOrderPrefix in COURSE_PREFERENCE_PREFIXES, so erase (courses.ts:130), replace with the online course (src/backup/session.ts:590) and import (src/persistence/courseArchive.ts:172) all leave the key. Sign-out (src/backup/session.ts:678-683, 706-723) clears only backup keys. src/features/weather/useWindForecast.ts:58-59 treats the key's existence as the consent. Expired entries are ignored but never removed (windData.ts:277-284).",
+      "reproduction": "G2 observed: WEATHER CACHE SURVIVES COURSE ERASE: true. After aging and creating a new course: NEW COURSE, VENTO NEVER OPENED FOR IT, REQUESTS: api, ensemble-api, marine-api, api.open-meteo.com. Only the erase path was driven in the browser; import, replace and sign-out are by code reading.",
+      "specRef": "docs/working/WEATHER_PROPOSAL.md:159-164",
+      "recommendedFix": "Answer to the brief: yes, clear it on course erase and on sign-out. The reason is not personal data, since the cache holds only fetchedAt, times, points and, after a real download, the enrichment columns. The reason is that its existence is the only marker that someone asked for these calls. Add weatherCachePrefix to COURSE_PREFERENCE_PREFIXES (this covers erase, replace and import), clear it in forgetStoredSession, which also runs on sign-out, and in signedOutElsewhere, and delete expired entries on read. Reword the claim to match the result."
+    },
+    {
+      "id": "SP-WX-4",
+      "title": "The feature contradicts three standing contract statements, and section 9 of the proposal amends only two of them",
+      "evidence": "04_IMPLEMENTATION_PLAN.md:58: 'Signed out, the app behaves as 0.4.0. Nothing connects before sign-in.' docs/DEPLOY.md:194-198: 'The only cross-origin request the app ever makes is the Whisper model weights'. 03_TECHNICAL_DECISIONS.md:427-429: the model weights are 'the only third-party download'. docs/working/WEATHER_PROPOSAL.md:215-218 lists 03 and 04 but not docs/DEPLOY.md, and it asserts that the 04 rule 'concerns the backup', which is the author's reading rather than the rule's wording.",
+      "reproduction": "G1: a tap on Vento while signed out makes 1 LaMMA and 4 Open-Meteo requests. G2: signed out, stale cache, no tap: HOME, STALE CACHE, SIGNED OUT, NO TAP lists 4 requests. Not a blocker on this side branch, because nothing is merged and no contract was changed.",
+      "specRef": "AGENTS.md section 2 (do not silently resolve a real contradiction); 04_IMPLEMENTATION_PLAN.md:58",
+      "recommendedFix": "Treat this as a merge gate. Record the owner's decision in 04, 03 and docs/DEPLOY.md together, with the new host list and a CHANGELOG line. Put the two behaviours to the owner separately: a call after a tap is user-initiated, while Home's unprompted refresh is the part that actually breaks 'nothing connects'. If the owner keeps the rule as written, make Home show the cache only and refresh only inside Vento."
+    },
+    {
+      "id": "SP-WX-5",
+      "title": "The disclosure is inaccurate and the app tells the user nothing before the calls start",
+      "evidence": "docs/working/WEATHER_PROPOSAL.md:161-162 says requests carry the coordinates 'and nothing else: no course'; src/features/weather/windData.ts:12-13 says 'nothing of the course'. Measured differently: fetch sends an Origin header identifying the deployment, plus Accept-Language it-IT. The zone comes from course.family (WeatherScreen.tsx:771-773, 950), so the coordinates reveal Deriva or Cabinato. The LaMMA step comes from the slot, which comes from the course start date (WeatherScreen.tsx:596-606; src/domain/wind.ts:469-479), so the image number encodes the hours to the next session. Open-Meteo's terms, read on 2026-11-05, say it may collect IP addresses and keep web server logs that may contain geographical coordinates. The Home strip's text is only 'Prossima uscita e settimana' (WeatherScreen.tsx:1001-1003). A search of docs, top-level documents and src for informativa, privacy policy, gdpr and Garante found no privacy notice.",
+      "reproduction": "G1, recorded by routing: each of the 4 fetches has origin set and no referer or cookie; the image has no origin, referer or cookie and URL wind10.AQ.66.png. None of the 5 requests contains the synthetic student's name. User-Agent is sent by any browser; I did not print it.",
+      "specRef": "AGENTS.md section 8 (what leaves the device)",
+      "recommendedFix": "Correct the proposal and the code comment to list IP, Origin, User-Agent, language, time of use, course family through the coordinates, and next-session offset through the LaMMA step. Show one line on Vento naming Open-Meteo and LaMMA as recipients of the phone's IP address, and repeat it in Impostazioni. To remove the course dependency from LaMMA's log, start the map on the current hour and let the instructor step forward. The owner should decide what notice the instructors are owed; I make no legal finding."
+    },
+    {
+      "id": "SP-WX-6",
+      "title": "Open-Meteo attribution falls short of its licence page, and the Met Office share-alike term is not mentioned",
+      "evidence": "open-meteo.com/en/licence, read on 2026-11-05: 'You must give appropriate credit, provide a link to the licence, and indicate if changes were made' and 'You must include a link next to any location Open-Meteo data are displayed'. The same page lists 'UK Met Office ( CC-BY-SA Licence )'. The only credit is plain text inside a folded details element (WeatherScreen.tsx:757-759). Home (WeatherScreen.tsx:964-985), the hero, the chart and the week grid carry none. UKMO is in the blend (src/domain/windConfig.ts:196-203), but the proposal and the screen cite only CC BY 4.0.",
+      "reproduction": "G1 observed: OPEN-METEO TEXT VISIBLE WITH DETAILS FOLDED: false, LINKS TO IT: 0, LINKS TO A LICENCE: 0; OPEN-METEO TEXT ON HOME: 0, while the strip shows 'NW 12 kn raffiche 17'.",
+      "specRef": "docs/working/WEATHER_PROPOSAL.md:187 and the licence page cited",
+      "recommendedFix": "Add a visible link 'Dati: Open-Meteo.com, CC BY 4.0, elaborati' with the licence link on Vento, and add a credit to the Home strip or get the provider's view of how a one-line strip may comply. Decide whether to drop UKMO (weight 6 to 24) or accept share-alike on the blended output. Record the sources in README's third-party section. Also confirm the non-commercial condition: the terms name 'private or non-profit websites or apps that do not have subscriptions or advertising' as qualifying and 'commercial products or promotional activities' as not, so section 7 item 5 of the proposal is right to ask and should be answered before shipping."
+    },
+    {
+      "id": "SP-WX-7",
+      "title": "LaMMA's reporting condition is stated as mandatory, while the proposal treats it as optional and ships unreported by default",
+      "evidence": "lamma.toscana.it/disclaimer, read on 2026-11-05: 'Informazioni sull'utilizzo che viene fatto di questo materiale devono essere inviate' to info@lamma.toscana.it. docs/working/WEATHER_PROPOSAL.md:186 says the licence 'asks', with the default 'the use unreported until you write'. The rest of the citation checks out: CC BY-ND 4.0, commercial use allowed, attribution to 'Consorzio LaMMA' plus the URL. The credit at WeatherScreen.tsx:696-700 names both, and the image is shown unaltered apart from CSS scaling.",
+      "reproduction": "Read the disclaimer page and compare it with proposal line 186.",
+      "specRef": "docs/working/WEATHER_PROPOSAL.md section 7 item 4",
+      "recommendedFix": "Make writing to LaMMA a precondition of any deployment and add it to docs/OWNER_TODO.md. Change 'asks' to 'requires'. Whether a disclaimer sentence binds beyond CC BY-ND itself is for the owner to judge; the safe course is simply to send the email."
+    },
+    {
+      "id": "SP-WX-8",
+      "title": "Weather read from localStorage is trusted without validation: a same-origin write or a wrong clock can forge a fresh-looking forecast or lock the app with no expiry",
+      "evidence": "src/features/weather/windData.ts:277-284: typeof null passes the points check, and a future fetchedAt makes the age negative, so it never expires. src/features/weather/useWindForecast.ts:60 then skips the refresh. WeatherScreen.tsx:110-112 and 952-953 never mark it stale. docs/working/BACKLOG.md:187-192 records that the origin is shared and has no CSP, so any page on that origin can write this key. A phone whose clock was ahead during a download reaches the no-refresh branch without any attacker (03_TECHNICAL_DECISIONS.md:212 already considers a clock set ahead).",
+      "reproduction": "G6 observed: points null with a future fetchedAt gives locked true, and still locked true with the clock +1 year. A forged calm forecast with fetchedAt 300 days ahead gives strip 'Vento · Sab PM Variabile 1 kn raffiche 2' and requests 0. Strings in columns give 'NaN–NaN kn' on Home, and Vento throws summary.waveHeight.toFixed is not a function. The clock-skew path was shown with a seeded fetchedAt, not by changing a phone clock during a download.",
+      "specRef": "02_MVP_SCOPE.md:117-118",
+      "recommendedFix": "Use the SP-WX-1 validator on read, and treat fetchedAt more than a few minutes ahead of now as invalid and delete it."
+    },
+    {
+      "id": "SP-WX-9",
+      "title": "Provider numbers have no range check, so absurd values render as a confident forecast",
+      "evidence": "src/features/weather/windData.ts:30-35 accepts any JSON number. Rendering is safe: no NaN or Infinity reached an SVG attribute with these numeric inputs and no markup was injected. The problem is content on a screen read before going out.",
+      "reproduction": "G7, with speeds cycling through 1e308, -1e308, 1e30, -5 and 0 and directions 1e30, -1e30, 720, -45. Observed: not locked; SVG attributes nan 0, inf 0; text '-1e+308–1e+308kn', 'Attesi 2.5e+29 kn', 'Forza F0–12', and 'Modelli concordi'.",
+      "specRef": "docs/working/WEATHER_PROPOSAL.md section 5 (no false precision, uncertainty shown)",
+      "recommendedFix": "In the validator, treat speed and gust outside 0 to about 150 kn, direction outside 0 to 360, and wave height outside 0 to about 30 m as null, and treat a response with too many such values as failed."
+    },
+    {
+      "id": "SP-WX-10",
+      "title": "The commit has no test for the privacy claim on any path but one parameter list, and the browser journey the proposal mentions is not in it",
+      "evidence": "docs/working/WEATHER_PROPOSAL.md section 6 item 5 says the browser journey was delegated, but `git diff --stat claude/0.5.0-prep...de89666` shows no spec. tests/e2e/weather.spec.ts and tests/e2e/weatherFixtures.ts appeared untracked in the working tree during this review; they are another agent's unfinished work, and I neither reviewed them as part of the commit nor touched them. Its first test covers Home silent on first run, but nothing there covers erase, sign-out, reset race or malformed times. DEPLOY's 'zero off-origin requests' is a past measurement; a search of tests/e2e found no gate for it.",
+      "reproduction": "grep over the commit's file list; src/features/weather/windData.test.ts covers URLs, parsing and cache shape only, and its 37 tests with browserStorage.test.ts pass while G2 to G5 fail.",
+      "specRef": "AGENTS.md section 3 (programmatic evidence)",
+      "recommendedFix": "Commit a spec that records every off-origin request and asserts this matrix: fresh Home 0; fresh cache 0; after erase 0; after reset including the race 0; after sign-out 0; on opening Vento exactly the listed hosts and no course marker."
+    }
+  ],
+  "qolFindings": [
+    {
+      "id": "SP-WX-Q1",
+      "title": "No limit on response size; a large answer takes most of the storage quota and delays the first render",
+      "evidence": "src/features/weather/windData.ts:53 reads the whole body; 296 stores whatever parsed. The session token lives in the same localStorage (src/backup/session.ts:138).",
+      "reproduction": "G8, 120,000 hours and 3 models: 4,920,237 characters stored 18 to 20 s after the tap; a further 262,144 characters still fit and 524,288 gave QuotaExceededError. Home was ready 3.8 s after a reload, so the app does not hang. Real sizes measured on 2026-11-05: 85,112 characters for Derive and 170,305 for Cabinati, so normal use is far from the quota. An actual token-write failure was not reproduced. An earlier 300 s measurement was an artefact of my probe (the reload stayed on Vento) and is discarded.",
+      "recommendedFix": "The length cap in the SP-WX-1 validator is enough; check Content-Length if present."
+    },
+    {
+      "id": "SP-WX-Q2",
+      "title": "No in-flight guard or back-off",
+      "evidence": "src/features/weather/useWindForecast.ts:57-63: every Home mount or online event with a stale cache starts a new 4-request download, even with one running or after a failure. x-ratelimit-remaining fell from 591.9 to 575.7 for one Cabinati main request, 16.2 units; the terms allow 600 per minute and 10,000 per day. One phone will not reach that in normal use, but the terms reserve the right to block IP addresses and a club Wi-Fi shares one.",
+      "reproduction": "By code reading, and G2's per-mount request log.",
+      "recommendedFix": "Keep one in-flight promise per zone and remember the last failed attempt for some minutes."
+    },
+    {
+      "id": "SP-WX-Q3",
+      "title": "The CSP planned before production must list these hosts",
+      "evidence": "docs/working/BACKLOG.md:187-192 plans a CSP; docs/working/WEATHER_PROPOSAL.md section 9 does not mention it. It will need connect-src for api, ensemble-api and marine-api.open-meteo.com and img-src for www.lamma.toscana.it, or Vento will stop working silently.",
+      "reproduction": "Reading; no CSP exists to test (public/ has no _headers file and no host configuration was found).",
+      "recommendedFix": "Add the host list to the backlog entry."
+    },
+    {
+      "id": "SP-WX-Q4",
+      "title": "windData.ts calls its requests 'the only requests the weather section makes', but LaMMA's image is a fifth",
+      "evidence": "src/features/weather/windData.ts:11-16 against G1, where the first request recorded was the LaMMA PNG.",
+      "reproduction": "G1.",
+      "recommendedFix": "Reword the comment to name the map."
+    }
+  ],
+  "whoReceivesWhat": [
+    {
+      "path": "Fresh device, Home, course and Allievi screens, reload",
+      "offOrigin": "0 requests",
+      "proof": "G1",
+      "claimHolds": true
+    },
+    {
+      "path": "Tap Vento",
+      "offOrigin": "1 www.lamma.toscana.it image (no Origin, Referer or Cookie); 4 fetches to api, ensemble-api, marine-api, api.open-meteo.com (Origin present; no Referer or Cookie)",
+      "proof": "G1",
+      "claimHolds": true
+    },
+    {
+      "path": "Home, cache younger than 45 minutes",
+      "offOrigin": "0",
+      "proof": "G2",
+      "claimHolds": true
+    },
+    {
+      "path": "Home, cache 45 minutes to 3 days old, no tap",
+      "offOrigin": "4 Open-Meteo",
+      "proof": "G2",
+      "claimHolds": "as disclosed, but conflicts with 04:58 when signed out"
+    },
+    {
+      "path": "Home, cache older than 3 days",
+      "offOrigin": "0; readCachedForecast returns null (the G4 +3.1 days run read no cache and unlocked, but this request count was not asserted separately)",
+      "proof": "windData.ts:281, useWindForecast.ts:59",
+      "claimHolds": true
+    },
+    {
+      "path": "Course erased, new course, Home",
+      "offOrigin": "4 Open-Meteo, no tap",
+      "proof": "G2",
+      "claimHolds": false
+    },
+    {
+      "path": "Import or replace with online course; sign-out",
+      "offOrigin": "same as a cached device",
+      "proof": "code reading only: courseArchive.ts:172, session.ts:590, session.ts:678-683",
+      "claimHolds": false
+    },
+    {
+      "path": "Course restored on a device with no cache",
+      "offOrigin": "0 expected; the hook depends only on the key",
+      "proof": "code reading, same branch as G1",
+      "claimHolds": true
+    },
+    {
+      "path": "Full reset",
+      "offOrigin": "0 after a clean reset; 4 Open-Meteo if a download was in flight",
+      "proof": "src/persistence/browserStorage.test.ts; G3",
+      "claimHolds": false
+    },
+    {
+      "path": "LaMMA img eager or lazy",
+      "offOrigin": "Rendered only by WeatherScreen, never on Home; loading=lazy, referrerpolicy=no-referrer, no crossorigin attribute; fired on open in G1",
+      "proof": "WeatherScreen.tsx:685-693, 906; G1",
+      "claimHolds": true
+    }
+  ],
+  "checkedAndFoundClean": [
+    "Course and minors' data: the synthetic student's name appears in no URL or header of any request (G1) and not in the cached key; the cache's top-level keys were fetchedAt, times and points with the enrichment responses routed empty.",
+    "Referrer and credentials: fetch uses credentials omit and referrerPolicy no-referrer (windData.ts:47-51); no Referer and no Cookie were observed on any of the 5 requests.",
+    "External links: all 6 target=_blank anchors carry rel=noreferrer in the DOM (G1), which implies noopener under the HTML standard; no explicit noopener is present and window.opener was not tested directly.",
+    "Injection: no dangerouslySetInnerHTML and no console logging in the weather files; markup seeded in cached columns produced no node and no script execution (G6: xss null, injected nodes 0). SVG attributes receive only computed numbers and were clean in G7.",
+    "Third-party cookies: GET of the LaMMA PNG returned no Set-Cookie; the Open-Meteo forecast API returned none. Windfinder and Meteomar do set cookies, but only when the user follows a link, in their own context.",
+    "Service worker: runtimeCaching covers only /ocr/ and ort assets (vite.config.ts:249-268), so weather responses are not in app caches. The browser's own HTTP cache may hold them and the reset cannot clear it; they contain nothing of the course.",
+    "Course file and backup: the forecast is in localStorage only and src/persistence/courseArchive.ts does not read localStorage, so it enters neither the export nor the synced schema.",
+    "Keys and data in the diff: no API key, no service key, and no personal data found by pattern search of the added lines; docs/working/weather-backtest.json holds airport stations and scores.",
+    "Time-out by code reading: one 20 s AbortController covers all four requests and the body read, cleared in finally (windData.ts:203-205, 256-258). A slow primary can starve the secondaries, which only costs waves and ensemble.",
+    "Channels: weatherCachePrefix differs per channel and the reset's test confirms the other channel is untouched (browserStorage.test.ts).",
+    "Proposal's facts confirmed on 2026-11-05: LaMMA sends no Access-Control-Allow-Origin on its PNG; Open-Meteo answered without a key.",
+    "Lens 8, invite and revoke: nothing in this feature is bound to a course or an account, so a removed instructor's device gains no course data through it. Only the auto-refresh in SP-WX-3 persists.",
+    "Lens 12, retention: the forecast's content is not personal. What remains after a course ends is the key itself and the calls it causes (SP-WX-3)."
+  ],
+  "evidenceInspected": [
+    "git diff claude/0.5.0-prep...de89666: windData.ts, useWindForecast.ts, WeatherScreen.tsx, WindChart.tsx, WindArrow.tsx, windFormat.ts, lammaMap.ts, wind.ts, windConfig.ts, windData.test.ts, browserStorage.ts and its test, appChannel.ts, App.tsx, docs/working/WEATHER_PROPOSAL.md, scripts/weather-backtest.mjs (fetch targets), docs/working/weather-backtest.json (shape and pattern check)",
+    "Contracts: 04_IMPLEMENTATION_PLAN.md:58; 01_PRODUCT_SPEC.md:76-90 and section 10; 02_MVP_SCOPE.md:108-118; 03_TECHNICAL_DECISIONS.md section 5 and section 8; docs/DEPLOY.md:190-215; docs/working/BACKLOG.md:183-195; AGENTS.md",
+    "Related code: src/backup/session.ts (replace, sign-out, forgetStoredSession), src/persistence/courses.ts, courseArchive.ts, localDataOperations.ts, src/App.tsx boundary and reset screen, vite.config.ts PWA section",
+    "Ran nine throwaway Playwright probes (G1 to G8; my scratchpad's garante/run/) on the Vite dev server, Pixel 7 profile, synthetic course and student, weather hosts routed and every off-origin request recorded. Repository src matched HEAD de89666 before and after the first two runs and again after the third; the last G8 rerun followed with no further source change observed in the tree state checked just before it. Results by test are quoted above; G1 and G2 pass as request logs, G3, G4 (two runs) and G5 fail as intended proofs.",
+    "Ran node vitest on src/features/weather/windData.test.ts and src/persistence/browserStorage.test.ts: 37 passed.",
+    "Live reads on 2026-11-05 from the development PC, carrying no course data: open-meteo.com terms and licence pages, lamma.toscana.it disclaimer and privacy policy, response headers of the LaMMA PNG, Open-Meteo API, Windy, Windfinder and Meteomar, two real forecast requests to measure size and rate cost.",
+    "Node v24.21.0. No tracked file edited and no commit made."
+  ],
+  "anglesTried": {
+    "seed": 553476379,
+    "lenses": [
+      "8. Invite and revoke (seed mod 12 = 7, counted from zero)",
+      "12. Retention (floor(seed / 12) mod 12 = 11)"
+    ],
+    "wildcard": "A third-party answer is persisted before it is rendered, so one bad value should survive reloads and escape the shell's error boundary. Confirmed as SP-WX-1. Second part: a download outliving the reset. Confirmed as SP-WX-2."
+  },
+  "notTested": [
+    "Sign-out, revoke and restore against a real backend: none was used, per the rule on development backends being unnecessary for this question; those paths are by code reading. The signed-out state itself was exercised, since it is the app's default.",
+    "The import and replace paths in the browser: by code reading, through the same clearCoursePreferences function as erase.",
+    "The 20 s time-out against a truly hung connection: by code reading only. G3 held a response for a few seconds, not past the limit.",
+    "WebKit and physical phones: probes ran on the Chromium Pixel 7 profile only. Safari's third-party cookie and lazy-load behaviour were not checked.",
+    "The production build and service worker: probes ran on the dev server. The deployed origin's headers were not fetched.",
+    "An actual session-token write failing because of a full localStorage (SP-WX-Q1): the room left was measured, the failure was not provoked.",
+    "A response body far larger than 5 MB: memory behaviour on a phone not measured.",
+    "tests/e2e/weather.spec.ts as a whole: untracked and outside the reviewed commit; only its first test was read.",
+    "Legal conclusions on GDPR notice, CC BY-SA effect on the blend, or whether the club's use counts as non-commercial: flagged for the owner, not decided here."
+  ]
+}
