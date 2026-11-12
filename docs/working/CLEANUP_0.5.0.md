@@ -16,11 +16,6 @@ evidence. An item leaves when it is scheduled in the plan or dropped.
   and isolation checks, dropping the three Chromium projects and `verify`,
   which Linux runs. Evidence: run `ddedbd6`, macOS 76 min against Linux 29;
   every macOS-only failure on record is WebKit.
-- **CL-1b: a milestone's `e2eSpecs` lists only its own specs.**
-  `.milestones/manifest.json` and the milestone-close skill; CI's full tier
-  covers the predecessors' journeys. When WX1 starts it gets only its own
-  specs. Evidence: B4's focus run lists 18 specs; B7 73 min, B6 41, B4 39
-  against 41 for the whole suite (T1).
 - **CL-1c: no re-recording for a Markdown edit.** `scripts/record-verification.mjs`
   or the publisher: the recorder refuses to start on a dirty tree, or the
   publisher accepts a tree dirty only in digest-excluded paths. Evidence:

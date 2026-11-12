@@ -493,7 +493,8 @@ Keep the existing harness and command surface:
 - `npm run verify`: quick + domain + production PWA build;
 - `npm run verify:e2e`: complete Playwright browser suite;
 - `npm run verify:e2e:focus`: the browser specs the milestone being recorded
-  lists as `e2eSpecs` in the manifest;
+  lists as `e2eSpecs` in the manifest, its own only: the full push CI on the
+  checkpoint covers the journeys it may touch;
 - `npm run verify:all`: verify + deterministic full week + offline check of
   the built PWA + E2E;
 - `npm run milestone:start|check|complete -- <ID>`;

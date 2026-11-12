@@ -1455,17 +1455,17 @@
         ".evidence/WX1/owner-setup.json",
         ".evidence/WX1/physical-device-review.json",
         ".evidence/WX1/self-review.json",
-        ".evidence/WX1/field-ux-review.json",
-        ".evidence/WX1/accessibility-mobile-review.json",
-        ".evidence/WX1/security-privacy-review.json",
-        ".evidence/WX1/forecast-method-review.json"
+        ".evidence/WX1/field-ux-review-round-3.json",
+        ".evidence/WX1/accessibility-mobile-review-round-1.json",
+        ".evidence/WX1/security-privacy-review-round-2.json",
+        ".evidence/WX1/forecast-method-review-round-2.json"
       ],
       "requiredReviews": [
         ".evidence/WX1/self-review.json",
-        ".evidence/WX1/field-ux-review.json",
-        ".evidence/WX1/accessibility-mobile-review.json",
-        ".evidence/WX1/security-privacy-review.json",
-        ".evidence/WX1/forecast-method-review.json"
+        ".evidence/WX1/field-ux-review-round-3.json",
+        ".evidence/WX1/accessibility-mobile-review-round-1.json",
+        ".evidence/WX1/security-privacy-review-round-2.json",
+        ".evidence/WX1/forecast-method-review-round-2.json"
       ],
       "allowedAwaitingOwnerPredecessors": [
         {
@@ -1495,7 +1495,7 @@
           }
         ]
       },
-      "e2eSpecs": ["tests/e2e/weather.spec.ts", "tests/e2e/smoke.spec.ts"]
+      "e2eSpecs": ["tests/e2e/weather.spec.ts"]
     },
     {
       "id": "UG4",
