@@ -152,11 +152,11 @@ The owner reported: The owner ran supabase/migrations/20261104000000_keep_course
 
 ## Reach two courses on one account, see both, and keep one — B7
 
-**State:** Setup needed · Required
+**State:** Ready for owner check · Required
 
 **What to do:**
 
-1. Not yet: it needs B7-KEEP-RULE and the next test build. The address follows here when both are ready.
+1. Open CVC Helper Test at https://furiocolombo.github.io/CVC_helper_test/ on the phone and on the PC. Impostazioni should show version 0.5.4; if it shows 0.5.3, close the app fully and open it again. B7-KEEP-RULE is already in place.
 2. Use invented data only. These steps erase one test course for good. Start with the account holding no course: if it holds one, on the phone use Impostazioni, Elimina il corso e inizia un nuovo corso. Keep the app open on the phone and on the PC, both signed in to the same account and both on Crea il corso.
 3. Put the phone in airplane mode. On the phone, create a course, Cabinato level 3, with one invented student.
 4. On the PC, create a different course, Deriva level 2, with one invented student. Wait for Copia online aggiornata in Impostazioni.
@@ -167,11 +167,13 @@ The owner reported: The owner ran supabase/migrations/20261104000000_keep_course
 9. The phone should open Cabinato 3 with its student. On the PC, Deriva 2 should leave by itself and Cabinato 3 should open, with no second choice. Reload both after a minute: only that course, with its student.
 10. Report B7-PHONE-CHOICE with what you saw at each step, and which you skipped.
 
-No phone-test build is ready. Wait until the item becomes READY before running the phone steps. Readiness requires the verified agent checkpoint and a prepared test address. Preparing setup does not mark that work verified.
+Use the test address below and the linked device instructions.
 
 **Expected:** An account holding two courses never locks a device: you see both, can save either to a file, keep one, and every device then opens on that one with nothing of it lost. Only your actual observations can pass this check.
 
-**Build:** No test build is assigned yet.
+**Build:** `cb51dbb1d859bc92afc9a7cd4ce37fe55f3c95cf`
+
+**Test address:** https://furiocolombo.github.io/CVC_helper_test/
 
 **Guide:** [Device check guide](./DEVICE_CHECKS.md)
 
