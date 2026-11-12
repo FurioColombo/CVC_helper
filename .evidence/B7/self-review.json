@@ -53,6 +53,7 @@
     "Not run on a physical device until B7-PHONE-CHOICE. The live backend, PostgREST and a real stream were exercised on 2026-11-10.",
     "The reset's first screen after a reset still says 'Il corso' in the singular.",
     "Decision 23 waits for the owner's reading.",
-    "A second tab on WebKit takes 25-29 s to open where one takes about 8. Measured on the Windows test engine, not on an iPhone; cause unproven; in docs/working/BACKLOG.md."
+    "A second tab on WebKit takes 25-29 s to open where one takes about 8. Measured on the Windows test engine, not on an iPhone; cause unproven; in docs/working/BACKLOG.md.",
+    "2026-11-12: after the review, two test-only changes and one re-recording. b4-uploads now taps Riapri l’app when a slow runner defers the sign-in switch (8a5b50a; the app was right, the test raced). A recording on 8a5b50a failed only on Windows WebKit, where a reopen can stay on Apertura del corso… (BACKLOG; macOS WebKit CI passes); the recording on 91d2fc7 passed with that test flaky. The open has no timeout or way out: in BACKLOG, not B7 scope."
   ]
 }

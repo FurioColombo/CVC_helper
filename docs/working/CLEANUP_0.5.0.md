@@ -66,7 +66,11 @@ evidence. An item leaves when it is scheduled in the plan or dropped.
   commit, the local run only as fallback when CI is unavailable. After B7's
   handoff, with 03 §6 amended in the same commit. Evidence: each recording
   is followed by a 45–76 min `[full-ci]` run that the skill already treats as
-  the authority.
+  the authority. Found on 2026-11-12: CI has no backend secrets, so the
+  `*-live` specs a milestone lists skip there. The record from CI must add a
+  local run of those specs, or it loses coverage the local run has. On
+  2026-11-12 B7's local recording failed only on this PC's WebKit (BACKLOG),
+  which CI passes: one more reason for this item.
 
 ## UG4
 
