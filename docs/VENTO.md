@@ -86,3 +86,18 @@ knowledge beats this screen, and the screen says so.
 The last forecast stays with its age and past hours drop off. From 6 hours it
 is marked old; from 24 Home stops quoting it. Erasing, replacing or importing
 the course and a local reset remove it.
+
+## Limits
+
+- LaMMA is not in the numbers: its server lets a browser show its maps but not
+  read them, and its licence forbids derivatives. Its maps need signal, and
+  their time label is an estimate; the time printed on the map is the true one.
+- Waves are offshore, on a grid of about 8 km.
+- Models at 1–2 km do not resolve Isola del Porco's lee or a gap between two
+  islands.
+- Temperature is the air over a sea cell at the area's centre: by day cooler
+  than on the beach.
+- The coastline is an extract of 2026-11-11. The map has no scale bar and no
+  zoom; Derive's three points are a few hundred metres apart.
+- The method was scored at two exposed capes in south Corsica, June to October
+  2026; nothing has been measured on the water.

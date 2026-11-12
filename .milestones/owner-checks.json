@@ -562,6 +562,30 @@
       "testUrl": null,
       "evidencePath": ".evidence/WX1/owner-setup.json",
       "updatedAt": "2026-11-10T23:15:23.230Z"
+    },
+    {
+      "id": "WX1-PHONE-VENTO",
+      "milestone": "WX1",
+      "kind": "DEVICE_CHECK",
+      "title": "Read Vento on your Android phone, with and without signal",
+      "status": "NEEDS_SETUP",
+      "required": true,
+      "revision": 1,
+      "instructions": [
+        "Not yet: it needs WX1's test build, which can replace CVC Helper Test 0.5.4 only after B7-PHONE-CHOICE. The address follows here when it is ready.",
+        "Use a course with invented data. On Home, before opening Vento, note what the Vento line says.",
+        "Open Vento with signal. It should show the next outing (morning 9-12:30 or afternoon 15-18) with the expected wind, gust and the likely range, sky and temperatures, and the hour row with the extra hours greyed. Say whether the numbers match what you expect for the day, and whether anything is hard to read in the sun.",
+        "Switch Numeri and Mappa: the map should show the area's coast and each point's wind at the hour picked. Then tap a half-day in the week: it should appear above, and one button should bring back the next outing.",
+        "Switch to the other area (Derive or Cabinati) and back.",
+        "Go back to Home: the Vento line should now quote the next outing. Put the phone in airplane mode, close the app fully and open it again: Home and Vento should still show the forecast with its age, without any error.",
+        "Open Impostazioni and read Previsioni del vento: say whether it is clear what Vento sends and to whom.",
+        "Report WX1-PHONE-VENTO with what you saw at each step, the phone and the browser, and which steps you skipped."
+      ],
+      "expected": "Vento shows each area's next outing with expected wind, gust and range from a real download; without signal it keeps the last forecast with its age; Home quotes it without connecting. Only your actual observations can pass this check.",
+      "testedCommit": null,
+      "testUrl": null,
+      "evidencePath": ".evidence/WX1/physical-device-review.json",
+      "updatedAt": "2026-11-12T12:01:09.041Z"
     }
   ]
 }
