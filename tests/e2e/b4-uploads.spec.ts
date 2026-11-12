@@ -176,7 +176,7 @@ async function signIn(page: Page) {
   await reopened
 }
 
-async function backupSection(page: Page) {
+async function openBackupSection(page: Page) {
   // The reopened app is back on the screen it showed: Allievi.
   const settings = page.getByRole("button", { name: "Impostazioni" })
   const home = page
@@ -186,6 +186,24 @@ async function backupSection(page: Page) {
   if (!(await settings.isVisible())) await home.click()
   await settings.click()
   return page.getByRole("region", { name: "Backup online" })
+}
+
+async function backupSection(page: Page) {
+  const section = await openBackupSection(page)
+  // A tap that lands before the sign-in's switch defers it (review FUX-B3-3):
+  // a slow runner then shows "Riapri l’app", and the user taps it.
+  const reopen = section.getByRole("button", { name: "Riapri l’app" })
+  const settled = section.getByText(/Accesso: |Riapri l’app per attivarlo/)
+  // Neither in 30 s: the test's own assertion then says what is missing.
+  await settled
+    .first()
+    .waitFor({ timeout: 30_000 })
+    .catch(() => {})
+  if (!(await reopen.isVisible())) return section
+  const reopened = page.waitForEvent("load")
+  await reopen.click()
+  await reopened
+  return openBackupSection(page)
 }
 
 const hasStudent = (write: Write, name: string) =>
