@@ -18,7 +18,9 @@ const fileOption = options.indexOf("--file")
 const outputName =
   fileOption === -1 ? "verification.json" : options[fileOption + 1]
 if (!milestone || !/^[\w.-]+\.json$/.test(outputName ?? "")) {
-  console.error("Usage: record-verification.mjs <ID> [--file <name>.json]")
+  console.error(
+    "Usage: record-verification.mjs <ID> [--file <name>.json] [--force]",
+  )
   process.exit(1)
 }
 
@@ -53,11 +55,55 @@ const gitCommit = spawnSync("git", ["rev-parse", "HEAD"], {
 }).stdout.trim()
 // Taken before the run: the source the checks below actually exercise.
 const source = sourceDigest(root)
+// Clean as the digest counts it: Markdown, evidence and the manifest are
+// outside the verified source, so a working note does not spoil a recording
+// the publisher would then refuse (CL-1c). Source edits are said at once.
 const uncommitted = spawnSync(
   "git",
-  ["status", "--porcelain", "--", ".", ":!.evidence", ":!.milestones"],
+  [
+    "status",
+    "--porcelain",
+    "--",
+    ".",
+    ":!.evidence",
+    ":!.milestones",
+    ":(exclude)**/*.md",
+    ":(exclude)*.md",
+  ],
   { cwd: root, encoding: "utf8" },
 ).stdout.trim()
+if (uncommitted) {
+  console.warn(
+    `Uncommitted source: this recording will say so, and the test-site publisher will refuse it.
+${uncommitted}`,
+  )
+}
+
+// The same source already passed the same checks: nothing to learn from a
+// second run (retrospective proposal 2). `--force` records it again.
+const previousPath = resolve(root, ".evidence", milestone, outputName)
+if (!options.includes("--force") && existsSync(previousPath)) {
+  const previous = JSON.parse(readFileSync(previousPath, "utf8"))
+  const sameSpecs =
+    JSON.stringify(previous.e2eSpecs ?? []) ===
+    JSON.stringify(
+      scripts.includes("verify:e2e:focus") ? (definition.e2eSpecs ?? []) : [],
+    )
+  if (
+    previous.status === "PASS" &&
+    previous.recorder === RECORDER_ID &&
+    previous.workingTreeClean === true &&
+    uncommitted.length === 0 &&
+    previous.sourceDigest === source.digest &&
+    JSON.stringify(previous.verificationScripts) === JSON.stringify(scripts) &&
+    sameSpecs
+  ) {
+    console.log(
+      `${milestone}: ${outputName} already passed on this source (${source.digest.slice(0, 12)}); nothing re-run. Use --force to record again.`,
+    )
+    process.exit(0)
+  }
+}
 
 for (const script of scripts) {
   const startedAt = new Date().toISOString()

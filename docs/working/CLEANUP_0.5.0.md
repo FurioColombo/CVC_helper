@@ -16,13 +16,6 @@ evidence. An item leaves when it is scheduled in the plan or dropped.
   and isolation checks, dropping the three Chromium projects and `verify`,
   which Linux runs. Evidence: run `ddedbd6`, macOS 76 min against Linux 29;
   every macOS-only failure on record is WebKit.
-- **CL-1c: no re-recording for a Markdown edit.** `scripts/record-verification.mjs`
-  or the publisher: the recorder refuses to start on a dirty tree, or the
-  publisher accepts a tree dirty only in digest-excluded paths. Evidence:
-  `5157e09` re-ran 40 min because an uncommitted BACKLOG edit made the
-  publisher refuse.
-- **Retrospective proposal 2: `npm run evidence` exits early** on an already
-  passed digest (`archive/v0.4.0/RETRO_0X.md`, friction 5).
 - **CL-9: one verification per test build** (lower priority).
   `scripts/milestone.mjs`, `docs/OWNER_WORKFLOW.md`: milestones shipped in one
   test build share one evidence run on that commit. Needs controller
