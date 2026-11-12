@@ -121,23 +121,20 @@ Each passed only on a retry and is a defect to fix (03 §6).
   (Windows test engine; 10/10 opened, none hung). Cause unproven; not seen on a phone.
 
 - `b7-two-courses.spec.ts › two courses open on the choice, and keeping one opens it with every row`
-  — B7: Chrome reopened on Allievi; WebKit opened no course in 15 s with the disk full (ENOSPC). Unproven.
+  — Windows WebKit only (B7 runs of 2026-11-05 and 11-12, disk 97% full): a reopen stays on
+  "Apertura del corso…", `getActiveCourses()` never settles, no console error; 10 b7 tests
+  in a loaded run, 2/27 alone. macOS WebKit CI passes. The open has no timeout or way out.
 
 - `b7-two-courses-live.spec.ts › two devices that each made a course, one offline: neither locks, and one choice settles both`
   — desktop, 2026-11-10: raw storage read once before the row was written; 2/2 alone. Poll it.
 
-- `b7-two-courses.spec.ts › a course another device already gave up cannot be kept here` and
-  `b4-uploads.spec.ts › Riprova sends a refused student with the edit made after the refusal`
-  — Linux CI `43110637196` (desktop-chrome-backup, 2026-11-11): the notice or the refusal
-  alert did not show in 30 s; both passed on retry. Cause unproven.
+- `b7-two-courses.spec.ts › a course another device already gave up cannot be kept here`
+  — Linux CI `43110637196` (Chrome): the notice did not show in 30 s; also the WebKit hang above.
 
-- `b4-uploads.spec.ts › a student deleted after a refusal stays deleted and leaves the list`
-  — CI `43123997014` (desktop-chrome-backup, Linux and macOS, 2026-11-12): the refusal alert
-  did not show in 30 s; passed on retry on both. Same family as the entry above.
-
-- `b6-erase.spec.ts` lines 290, 352, 400 — macOS WebKit CI `43123997014`: the first upload
-  never reached the mock backend in 30 s, all retries; 10/10 locally on WebKit. The job ran
-  5 h against 74 min, under GitHub's macOS capacity notice. Rerun to classify.
+- `b4-uploads.spec.ts` refusal tests ("Riprova sends a refused student", "a student deleted
+  after a refusal"; CI `43110637196`, `43123997014`, `43159843288`): a tap before the
+  sign-in's switch deferred it to "Riapri l’app"; the test taps it since `8a5b50a`.
+  `b6-erase.spec.ts` 290/352/400 on macOS CI `43123997014`: the runner; rerun passed.
 
 - `student-management-gate.spec.ts › keeps the complete student workflow consistent across reload`
   — Mac WebKit CI: Disabilita allievo absent; see `.evidence/T1/ci-checkpoint-434cdcc.json`.
