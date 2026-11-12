@@ -70,7 +70,8 @@ should run locally.
 - Load the `powersync` skill before any data, schema or sync work. Backend
   readiness (deployed sync config, sign-in, publication) comes before app
   code that connects.
-- Signed out, the app behaves as 0.4.0. Nothing connects before sign-in.
+- Signed out, the app behaves as 0.4.0. Nothing connects before sign-in except
+  Vento while its screen is open (`WX1-NETWORK`, 03 §3.4).
 - 03 §3.1 governs the switch to synced tables: 0.4.0's local-only tables stay
   declared, the new version declares its own minimum writer, and the local
   tables are dropped only in a later release.

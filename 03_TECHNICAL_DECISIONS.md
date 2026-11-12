@@ -88,7 +88,7 @@ courses it holds (`local:held-course:<id>`); a mark whose course is gone clears
 that course's refused changes and records a compaction before running it, so a
 cut one is finished later. This housekeeping can never fail an open.
 
-**Online backup (0.5.0).** Signed out, nothing connects. Sign-in is by a link
+**Online backup (0.5.0).** Signed out, nothing connects but Vento (§3.4). Sign-in is by a link
 emailed by Supabase Auth (PKCE, so it signs in only in the browser that asked
 for it); the app never creates accounts, and the email's one-time code becomes
 a second way in once a custom email sender exists. Signed in, the device
@@ -376,6 +376,50 @@ Exported files outside the app remain with their recipient. The regular and
 test channels remain separate on one origin (`docs/DEPLOY.md`); persistence
 permission itself is browser/origin-wide.
 
+### 3.4 Vento: public forecasts (0.5.0)
+
+Vento is the one part of the app that connects without sign-in, and only while
+its screen is open (owner, `WX1-NETWORK`, 2026-11-06). Home's Vento line reads
+the last copy and contacts nobody. Permitted calls:
+
+- Open-Meteo (`api.`, `ensemble-api.` and `marine-api.open-meteo.com`): the
+  forecast, the ensemble, waves for Cabinati, sky and temperature
+  (`src/features/weather/windData.ts`). CC BY 4.0, credited on the screen.
+- LaMMA's map image (`www.lamma.toscana.it`), only when the reader nears it;
+  shown unaltered (CC BY-ND), never read by the app.
+- Meteomar, LaMMA, Windy and Windfinder are links, opened only by a tap.
+
+Every request carries the area's fixed sea coordinates and model names, no
+credentials and no referrer: no course, name or account. The provider still
+sees the phone's address, Origin, User-Agent, language and the hour, and the
+coordinates reveal the course's family. The coastline map is drawn on the phone
+from an OpenStreetMap extract served from this origin (ODbL, credited on the
+map; `scripts/build-coastline.mjs`).
+
+**Refresh.** An open Vento fetches on opening, on returning to it, when signal
+returns and after a reload, but only when its copy is at least 45 minutes old,
+or 5 minutes for a copy missing its extras or after a failure; Aggiorna fetches
+at once. **Budget** (owner, 2026-11-11): Open-Meteo's free tier allows 600
+weighted calls a minute, 5,000 an hour, 10,000 a day and 300,000 a month per
+address, and a centre's shared Wi-Fi is one address. A refresh weighs 12.4
+calls for Derive and 19.7 for Cabinati (measured through its `X-RateLimit-Cost`
+header, 2026-11-12). Ten phones opening Vento five times a day spend about
+1,000, a tenth of the daily limit; one phone left open all day, at most 32
+refreshes, about 630. `windBudget.test.ts` pins the weights and the floor.
+
+**The copy.** The last forecast per area lives in `localStorage` under the
+channel's weather prefix, never in the course database: it needs no backup and
+leaves the synced schema alone. It is checked field by field on reading,
+dropped after 3 days, and versioned so an old shape never reaches the screen.
+Erase, replace, import and reset remove it, and an erase in another tab stops a
+refresh running here. A course erased from another phone or swapped by the
+backup, and sign-out, leave it until the next local erase: it holds no
+personal data.
+
+The blend's models, weights, areas and outing hours live in
+`src/domain/windConfig.ts`, its rules in `src/domain/wind.ts` with
+table-driven tests; the evidence behind them is in `.evidence/WX1/`.
+
 ## 4. Canonical domain implementation
 
 Approved finite mappings and enums live in readable typed configuration and are
@@ -424,8 +468,8 @@ imperfect speech path. Apple/iPhone was unavailable and remains untested; on
 this exception into a physical iPhone PASS.
 
 The speech runtime loads ONNX Runtime from the app's own origin and pins the
-Whisper model to a fixed Hugging Face revision; the model weights are the only
-third-party download, on first use. The roster assistant path (V05) adds no
+Whisper model to a fixed Hugging Face revision; the model weights are its only
+third-party download, on first use (Vento is §3.4). The roster assistant path (V05) adds no
 network call: the operator carries the photograph and the answer.
 
 OCR tests use an anonymous/synthetic corpus with field/person truth, poor-image and

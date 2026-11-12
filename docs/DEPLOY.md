@@ -193,9 +193,13 @@ who opens the URL gets an empty app.
 
 Nothing was added for the deployment — no analytics, no beacons, no error
 reporting. Measured on a cold load through course creation: **zero off-origin
-requests**. The only cross-origin request the app ever makes is the Whisper
-model weights, from huggingface.co on first dictation, which predates this
-milestone and is stated in `CHANGELOG.md`.
+requests**. The app makes cross-origin requests in two places only: the Whisper
+model weights, from huggingface.co on first dictation (`CHANGELOG.md`), and,
+from 0.5.0, the Vento screen's forecasts while it is open (Open-Meteo, and
+LaMMA's map image; `03_TECHNICAL_DECISIONS.md` §3.4). Home never connects.
+When a Content Security Policy lands, `connect-src` needs `api.`,
+`ensemble-api.` and `marine-api.open-meteo.com`, and `img-src`
+`www.lamma.toscana.it`.
 
 The WebAssembly engine that _runs_ that model (`onnxruntime-web`, loaded
 through `@huggingface/transformers`) is a separate matter from the model
