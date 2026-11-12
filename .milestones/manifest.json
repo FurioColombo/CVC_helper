@@ -1444,7 +1444,7 @@
     {
       "id": "WX1",
       "category": "FEATURE",
-      "status": "IN_PROGRESS",
+      "status": "AWAITING_OWNER",
       "ownerEvidence": [
         ".evidence/WX1/owner-setup.json",
         ".evidence/WX1/physical-device-review.json"
@@ -1495,7 +1495,21 @@
           }
         ]
       },
-      "e2eSpecs": ["tests/e2e/weather.spec.ts"]
+      "e2eSpecs": ["tests/e2e/weather.spec.ts"],
+      "agentReady": {
+        "commit": "5cca6fdfafe8e22166700661cc9743a2edc1f5bc",
+        "sourceDigest": "fbd22e42503c3551f322b16294cb3f6540734f540e1b81a5f0e695c28b7feb28",
+        "evidenceHashes": {
+          ".evidence/WX1/verification.json": "f0f5be11e77b6e9909abd34ea9a6295b7883879561d2cb4875166b84bfa63449",
+          ".evidence/WX1/self-review.json": "d739e876d83646daf0754dd932702768a5015a3da0eae9c5f5239710d7dd382f",
+          ".evidence/WX1/field-ux-review-round-3.json": "eb820ccf2e7c3fe63ee133ba0ce37d414b04ded14c7ab24c54b6c30b8c4a2aa1",
+          ".evidence/WX1/accessibility-mobile-review-round-1.json": "fc78cab65b08fe8b9ff2c585ac804aa23aad66351c802ac4f7261a1280d42053",
+          ".evidence/WX1/security-privacy-review-round-2.json": "f5c0790a0f7f2bdb4ca0f1f4e6dcceeb1d1d11631bcf09d35b7bafe27801c784",
+          ".evidence/WX1/forecast-method-review-round-2.json": "d538da7a338f4e12356102ab532292e2118fd886e8b5a82f076229078a145a5c"
+        },
+        "ciRunId": 43246283346,
+        "ciUrl": "https://github.com/FurioColombo/CVC_helper/actions/runs/43246283346"
+      }
     },
     {
       "id": "UG4",

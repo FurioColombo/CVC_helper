@@ -37,11 +37,13 @@ proven by `verify:all`, the reviews below and the owner's Android check.
 | B5 | Complete. An empty device restores the account's course row for row and reopens on it; a device with another course asks before replacing; a newer minimum writer opens it read-only. Owner checks passed: the minimum read rule live, the phone restore on CVC Helper Test 0.5.3 (2026-11-10; the optional PC step skipped). See `.evidence/B5/`. |
 | B6 | Complete. An erase deletes the course from the server and the device, queued changes included; offline it completes on reconnect, and an erased course stays erased. Impostazioni states what the provider's backups keep. Owner check passed on CVC Helper Test 0.5.3 (2026-11-11; the optional reset step skipped). See `.evidence/B6/`. |
 | B7 | Awaiting the owner. Verified at `cb51dbb` (full CI green); the owner ran `B7-KEEP-RULE` and the live spec passes. Reviews in `.evidence/B7/`. CVC Helper Test 0.5.4 carries it for `B7-PHONE-CHOICE`. |
-| WX1 | In progress since 2026-11-12. The side branch is merged; the network rule, `docs/VENTO.md`, the disclosure and the budget test are in. Reviews, the owner's Cabinati points and terms, evidence and the Android check remain. |
+| WX1 | Awaiting the owner. Verified at `5cca6fd` (full CI green). Four reviews passed with findings (`.evidence/WX1/`); evidence recorded from CI with `--from-ci`. Waiting: `WX1-PLACES`, `WX1-TERMS`, then `WX1-PHONE-VENTO` on a test build after `B7-PHONE-CHOICE`. |
 
 Handoff: B4, B5 and B6 closed on 2026-11-11. B7 handed off on 2026-11-12 at
 `cb51dbb`, after full CI on `91d2fc7` (run 43194870459); its local recording
 passed with one Windows WebKit flake (`docs/FLAKY_TESTS.md`).
+WX1 handed off on 2026-11-12 at `5cca6fd`, its verification taken from the
+green full CI of `bc9a5fc` (run 43233078136). UG4 waits for both owner checks.
 
 The workflow clean-up deferred by the review of 2026-11-11 waits in
 `docs/working/CLEANUP_0.5.0.md`.
@@ -110,7 +112,7 @@ sync-chaos, field UX and security/privacy reviews.
 ## WX1 — Vento, the wind forecast
 
 **Category:** FEATURE
-**Status:** IN_PROGRESS
+**Status:** AWAITING_OWNER
 
 A Vento line on Home and a Vento screen: the next session in detail, the next
 24 hours, the week or seven days; seven models blended through Open-Meteo,
