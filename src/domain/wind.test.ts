@@ -15,6 +15,8 @@ import {
   slotsForHorizon,
   splitOf,
   summariseHours,
+  weatherKindOf,
+  weatherOfHours,
   weightAtLead,
   weightedQuantile,
   windName,
@@ -29,6 +31,7 @@ import {
   GUST_RULE,
   LEAD_ANCHOR_HOURS,
   RANGE_HALF_WIDTH,
+  WEATHER_KINDS,
   WIND_MODELS,
   WIND_ZONES,
   zoneForCourse,
@@ -80,6 +83,8 @@ function hour(partial: Partial<BlendedHour>): BlendedHour {
     models: [],
     waveHeight: null,
     thunder: false,
+    weather: null,
+    temperature: null,
     ...partial,
   }
 }
@@ -142,6 +147,67 @@ describe("canonical tables", () => {
   it("sends a course to the area its boats sail", () => {
     expect(zoneForCourse("Deriva")).toBe("derive")
     expect(zoneForCourse("Cabinato")).toBe("cabinati")
+  })
+})
+
+describe("the sky", () => {
+  it("gives every WMO code Open-Meteo sends exactly one kind", () => {
+    const sent = [
+      0, 1, 2, 3, 45, 48, 51, 53, 55, 56, 57, 61, 63, 65, 66, 67, 71, 73, 75,
+      77, 80, 81, 82, 85, 86, 95, 96, 99,
+    ]
+    const listed = WEATHER_KINDS.flatMap((kind) => [...kind.codes])
+    expect([...listed].sort((a, b) => a - b)).toEqual(sent)
+    for (const code of sent) expect(weatherKindOf(code)).not.toBeNull()
+    expect(weatherKindOf(4)).toBeNull()
+    expect(weatherKindOf(null)).toBeNull()
+  })
+
+  it("calls thunder storm, as the thunder line does", () => {
+    for (const code of [95, 96, 99]) expect(weatherKindOf(code)).toBe("storm")
+  })
+
+  const sky = (...kinds: (string | null)[]) =>
+    kinds.map(
+      (weather) =>
+        ({ weather }) as Parameters<typeof weatherOfHours>[0][number],
+    )
+
+  it.each([
+    ["one hour of rain is the half-day's", ["clear", "clear", "rain"], "rain"],
+    ["the worst wet hour wins", ["drizzle", "storm", "rain"], "storm"],
+    ["fog counts as wet", ["clear", "fog", "clear"], "fog"],
+    [
+      "otherwise the most frequent cloud",
+      ["clear", "partly", "partly"],
+      "partly",
+    ],
+    ["the cloudier on a tie", ["clear", "overcast"], "overcast"],
+    ["hours without a sky do not count", [null, "clear", null], "clear"],
+    ["no sky at all", [null, null], null],
+  ] as const)("%s", (_, kinds, expected) => {
+    expect(weatherOfHours(sky(...kinds))).toBe(expected)
+  })
+
+  it("puts the sky and the temperature range in the summary", () => {
+    const summary = summariseHours([
+      hour({ weather: "partly", temperature: 16.2 }),
+      hour({ time: THURSDAY_9 + HOUR, weather: "rain", temperature: 18.9 }),
+      hour({ time: THURSDAY_9 + 2 * HOUR, weather: null, temperature: null }),
+    ])
+    expect(summary?.weather).toBe("rain")
+    expect(summary?.temperature).toEqual({ low: 16.2, high: 18.9 })
+    expect(summariseHours([hour({})])?.temperature).toBeNull()
+  })
+
+  it("blends the zone's sky into each hour", () => {
+    const forecast = {
+      ...forecastOf({ ecmwf_ifs: series(3, 10) }, 3),
+      sky: { code: [0, 61, null], temperature: [14, null, 15] },
+    }
+    const hours = blendForecast(forecast, THURSDAY_9)
+    expect(hours.map((item) => item.weather)).toEqual(["clear", "rain", null])
+    expect(hours.map((item) => item.temperature)).toEqual([14, null, 15])
   })
 })
 
@@ -809,7 +875,7 @@ describe("time in Caprera", () => {
   })
 
   it("keeps a session whole across the change of clock", () => {
-    // Sunday 25 October 2026: clocks go back at 03:00; 09-13 is still 4 hours.
+    // Sunday 25 October 2026: clocks go back at 03:00; 08-14 is still 6 hours.
     const start = Date.UTC(2026, 9, 25, 0) / 1000
     const forecast = forecastOf({ ecmwf_ifs: series(24, 10) }, 24, start)
     const inSlot = hoursInSlot(blendForecast(forecast, start), {
@@ -819,7 +885,7 @@ describe("time in Caprera", () => {
       sessionId: null,
     })
     expect(inSlot.map((item) => romeClock(item.time).hour)).toEqual([
-      9, 10, 11, 12,
+      8, 9, 10, 11, 12, 13,
     ])
   })
 })
@@ -843,12 +909,12 @@ describe("slotsForHorizon", () => {
   it("drops a session once it ends, and keeps it while it runs", () => {
     const during = Date.UTC(2026, 10, 8, 10) / 1000 // Sunday 11:00
     expect(slotsForHorizon("week", COURSE, during)[0]!.sessionId).toBe("sun-am")
-    const after = Date.UTC(2026, 10, 8, 12) / 1000 // Sunday 13:00
+    const after = Date.UTC(2026, 10, 8, 13) / 1000 // Sunday 14:00
     expect(slotsForHorizon("week", COURSE, after)[0]!.sessionId).toBe("sun-pm")
   })
 
   it("has nothing left after Friday PM", () => {
-    const friday = Date.UTC(2026, 10, 13, 17) / 1000 // Friday 18:00
+    const friday = Date.UTC(2026, 10, 13, 18) / 1000 // Friday 19:00
     expect(slotsForHorizon("week", COURSE, friday)).toEqual([])
   })
 
@@ -877,9 +943,10 @@ describe("slotsForHorizon", () => {
       period: "AM",
       sessionId: null,
     } as const
-    expect(slotInProgress(slot, THURSDAY_9)).toBe(true)
-    expect(slotInProgress(slot, THURSDAY_9 + 4 * HOUR)).toBe(false)
-    expect(slotInProgress(slot, THURSDAY_9 - HOUR)).toBe(false)
+    expect(slotInProgress(slot, THURSDAY_9 - HOUR)).toBe(true) // 8:00
+    expect(slotInProgress(slot, THURSDAY_9 + 4 * HOUR)).toBe(true) // 13:00
+    expect(slotInProgress(slot, THURSDAY_9 + 5 * HOUR)).toBe(false) // 14:00
+    expect(slotInProgress(slot, THURSDAY_9 - 2 * HOUR)).toBe(false) // 7:00
   })
 })
 
@@ -893,17 +960,22 @@ describe("nextDecisionSlot", () => {
     ],
     [
       "in its last hour: the afternoon",
-      Date.UTC(2026, 10, 8, 11, 50) / 1000,
+      Date.UTC(2026, 10, 8, 12, 50) / 1000,
       "2026-11-08-PM",
     ],
     [
-      "at lunch: the afternoon",
-      Date.UTC(2026, 10, 8, 12, 30) / 1000,
+      "during the afternoon",
+      Date.UTC(2026, 10, 8, 13, 30) / 1000,
       "2026-11-08-PM",
+    ],
+    [
+      "in the last session's last hour: still that session",
+      Date.UTC(2026, 10, 13, 17, 30) / 1000,
+      "2026-11-13-PM",
     ],
     [
       "after the last session: plain half-days",
-      Date.UTC(2026, 10, 13, 17) / 1000,
+      Date.UTC(2026, 10, 13, 18) / 1000,
       "2026-11-14-AM",
     ],
     ["weeks before: today", Date.UTC(2026, 9, 1, 8) / 1000, "2026-10-01-AM"],
@@ -917,7 +989,7 @@ describe("defaultHorizon", () => {
     ["within seven days of the start", THURSDAY_9, "week"],
     ["during the week", Date.UTC(2026, 10, 10, 10) / 1000, "week"],
     ["weeks before the start", Date.UTC(2026, 9, 1, 10) / 1000, "seven"],
-    ["after the last session", Date.UTC(2026, 10, 13, 17) / 1000, "seven"],
+    ["after the last session", Date.UTC(2026, 10, 13, 18) / 1000, "seven"],
   ])("%s", (_, now, horizon) => {
     expect(defaultHorizon(COURSE, now)).toBe(horizon)
   })

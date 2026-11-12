@@ -54,7 +54,9 @@ describe("forecastUrl", () => {
   it("asks for the extras at the zone's centre, and waves only where they matter", () => {
     expect(secondaryUrls("derive").waves).toBeNull()
     expect(secondaryUrls("cabinati").waves).toContain("hourly=wave_height")
-    expect(secondaryUrls("derive").sky).toContain("hourly=weather_code")
+    expect(secondaryUrls("derive").sky).toContain(
+      "hourly=weather_code,temperature_2m",
+    )
     expect(secondaryUrls("derive").ensemble).toContain("models=ecmwf_ifs025")
   })
 
@@ -238,7 +240,11 @@ describe("parseEnsemble", () => {
 describe("downloadWindForecast", () => {
   const forecastPayload = WIND_ZONES.cabinati.points.map(() => location())
   const skyPayload = {
-    hourly: { time: TIMES, weather_code: [95, 1, 1] },
+    hourly: {
+      time: TIMES,
+      weather_code: [95, 1, 1],
+      temperature_2m: [18.4, 19, null],
+    },
   }
 
   beforeEach(() => {
@@ -267,6 +273,32 @@ describe("downloadWindForecast", () => {
     expect(forecast.ensemble).toBeUndefined()
     expect(forecast.waves).toBeUndefined()
     expect(forecast.sky?.code).toEqual([95, 1, 1])
+    expect(forecast.sky?.temperature).toEqual([18.4, 19, null])
+  })
+
+  it("keeps the sky without a temperature, and no impossible one", async () => {
+    for (const temperature_2m of [undefined, [18, 90, 18]]) {
+      vi.mocked(fetch).mockImplementation(async (input) =>
+        String(input).includes("ensemble-api")
+          ? Promise.reject(new Error("no ensemble"))
+          : new Response(
+              JSON.stringify(
+                String(input).includes("models=")
+                  ? forecastPayload
+                  : {
+                      hourly: {
+                        time: TIMES,
+                        weather_code: [1, 1, 1],
+                        temperature_2m,
+                      },
+                    },
+              ),
+            ),
+      )
+      const forecast = await downloadWindForecast("derive", options)
+      expect(forecast.sky?.code).toEqual([1, 1, 1])
+      expect(forecast.sky?.temperature).toBeUndefined()
+    }
   })
 
   it("hands over the wind before the extras arrive", async () => {
@@ -293,13 +325,18 @@ describe("downloadWindForecast", () => {
       fetchedAt: NOW - 3600,
       times: [NOW - 3600, NOW, NOW + 3600],
       points: {},
-      sky: { code: [1, 95, 2], fetchedAt: NOW - 3600 },
+      sky: {
+        code: [1, 95, 2],
+        temperature: [15, 16, 17],
+        fetchedAt: NOW - 3600,
+      },
     }
     const forecast = await downloadWindForecast("cabinati", {
       ...options,
       previous,
     })
     expect(forecast.sky?.code).toEqual([95, 2, null])
+    expect(forecast.sky?.temperature).toEqual([16, 17, null])
   })
 
   it("does not let an old sky pass for today's", async () => {
@@ -377,7 +414,7 @@ describe("downloadWindForecast", () => {
 })
 
 describe("the offline copy", () => {
-  const key = `${appChannelConfig.weatherCachePrefix}v2.derive`
+  const key = `${appChannelConfig.weatherCachePrefix}v3.derive`
   const point = WIND_ZONES.derive.points[0]!.id
   const column = (value: number | null) => TIMES.map(() => value)
   const forecast = {
@@ -452,6 +489,13 @@ describe("the offline copy", () => {
       JSON.stringify({ ...forecast, waves: { height: ["x", 1, 1] } }),
     ],
     ["a bad sky column", JSON.stringify({ ...forecast, sky: { code: [1] } })],
+    [
+      "an impossible temperature",
+      JSON.stringify({
+        ...forecast,
+        sky: { code: [1, 1, 1], temperature: [18, 99, 18] },
+      }),
+    ],
     ["a bad ensemble", JSON.stringify({ ...forecast, ensemble: { low: [1] } })],
   ])("ignores %s", (_, stored) => {
     localStorage.setItem(key, stored)
@@ -465,7 +509,7 @@ describe("the offline copy", () => {
           ...forecast,
           ensemble: { low: column(1), mid: column(2), high: column(3) },
           waves: { height: column(0.5) },
-          sky: { code: column(95) },
+          sky: { code: column(95), temperature: column(18.5) },
         },
         "derive",
         NOW,

@@ -6,10 +6,19 @@ import {
   ExternalLink,
   LoaderCircle,
   RefreshCw,
+  Thermometer,
   TriangleAlert,
   WifiOff,
 } from "lucide-react"
-import { useEffect, useMemo, useRef, useState, type RefObject } from "react"
+import {
+  lazy,
+  Suspense,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type RefObject,
+} from "react"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -40,6 +49,7 @@ import {
 import type { LammaField } from "@/features/weather/lammaMap"
 import { WindLammaMap } from "@/features/weather/WindLammaMap"
 import { Segmented } from "@/features/weather/Segmented"
+import { WeatherIcon } from "@/features/weather/WeatherIcon"
 import {
   useWindForecast,
   type WindDownloadState,
@@ -56,8 +66,11 @@ import {
   formatDecimal,
   formatKnots,
   formatRange,
+  formatTemperature,
+  hourSkyInWords,
   periodHours,
   slotLabel,
+  skyText,
   slotShortLabel,
   spokenSummary,
   splitText,
@@ -65,11 +78,21 @@ import {
   thunderColor,
   tintFor,
   updatedText,
+  weatherLabel,
 } from "@/features/weather/windFormat"
 import type { CourseRecord } from "@/persistence/courses"
 
 const STALE_AFTER_SECONDS = 6 * 3600
 const VERY_STALE_AFTER_SECONDS = 24 * 3600
+
+// The coastline is most of the map's weight: it loads when the map is asked for.
+const WindZoneMap = lazy(() =>
+  import("@/features/weather/WindZoneMap").then((module) => ({
+    default: module.WindZoneMap,
+  })),
+)
+
+type HeroView = "numbers" | "map"
 
 const prefersReducedMotion = () =>
   window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false
@@ -157,14 +180,24 @@ function StatusLine({
   )
 }
 
-function HourCell({ hour }: { hour: BlendedHour }) {
+function HourCell({
+  hour,
+  selected,
+  onSelect,
+}: {
+  hour: BlendedHour
+  /** Given, the cell is a button that shows its hour on the map. */
+  selected?: boolean
+  onSelect?: (time: number) => void
+}) {
   const clock = romeClock(hour.time).hour
   const direction = directionText(hour.direction)
   const gust = hour.gust === null ? "" : `, raffica ${formatKnots(hour.gust)}`
-  return (
-    <li className="grid justify-items-center gap-0.5 py-1 text-center">
+  const content = (
+    <>
       <span className="sr-only">
         Ore {clock}: da {direction}, {formatKnots(hour.mid)} nodi{gust}
+        {hourSkyInWords(hour)}
       </span>
       <span
         aria-hidden="true"
@@ -184,8 +217,46 @@ function HourCell({ hour }: { hour: BlendedHour }) {
       <span aria-hidden="true" className="text-sm tabular-nums">
         {hour.gust === null ? "–" : `r ${formatKnots(hour.gust)}`}
       </span>
+      {hour.weather !== null && (
+        <WeatherIcon className="size-4" kind={hour.weather} />
+      )}
+      {hour.temperature !== null && (
+        <span
+          aria-hidden="true"
+          className="text-sm text-muted-foreground tabular-nums"
+        >
+          {formatTemperature(hour.temperature)}
+        </span>
+      )}
+    </>
+  )
+  if (!onSelect) {
+    return (
+      <li className="grid justify-items-center gap-0.5 py-1 text-center">
+        {content}
+      </li>
+    )
+  }
+  return (
+    <li className="grid">
+      <button
+        aria-pressed={selected}
+        className="grid min-h-11 justify-items-center gap-0.5 rounded-lg py-1 text-center outline-none focus-visible:ring-3 focus-visible:ring-ring aria-pressed:bg-muted aria-pressed:shadow-[inset_0_0_0_2px_var(--foreground)]"
+        onClick={() => onSelect(hour.time)}
+        type="button"
+      >
+        {content}
+      </button>
     </li>
   )
+}
+
+/** The hour the map opens on: now during the half-day, else the outing's start. */
+function firstMapHour(inSlot: readonly BlendedHour[], now: number) {
+  const current = inSlot.find(
+    (hour) => hour.time <= now && now < hour.time + 3600,
+  )
+  return (current ?? inSlot[1] ?? inSlot[0])?.time ?? null
 }
 
 function PlaceRows({
@@ -321,6 +392,8 @@ function SlotHero({
   onFollow,
   onBackToNext,
   headingRef,
+  view,
+  onView,
 }: {
   forecast: WindForecast
   zone: WindZoneId
@@ -332,9 +405,22 @@ function SlotHero({
   onFollow: (slot: WindSlot) => void
   onBackToNext: () => void
   headingRef: RefObject<HTMLHeadingElement | null>
+  view: HeroView
+  onView: (view: HeroView) => void
 }) {
   const inSlot = hoursInSlot(hours, slot)
   const summary = summariseHours(inSlot)
+  const sky = summary ? skyText(summary) : null
+  // A chosen hour belongs to its half-day; another one opens on its own.
+  const [mapChoice, setMapChoice] = useState<{
+    slot: string
+    time: number
+  } | null>(null)
+  const shownTime =
+    (mapChoice?.slot === slot.key &&
+      inSlot.find((hour) => hour.time === mapChoice.time)?.time) ||
+    firstMapHour(inSlot, now)
+  const onMap = view === "map" && shownTime !== null
   const heading = slotInProgress(slot, now)
     ? "In corso"
     : picked
@@ -361,8 +447,19 @@ function SlotHero({
         >
           {heading} · {slotLabel(slot)}
         </h2>
-        <span className="flex flex-wrap items-center gap-x-3 text-sm text-muted-foreground">
+        <span className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
           {periodHours(slot.period)}
+          {summary && (
+            <Segmented
+              label="Vista"
+              onChange={onView}
+              options={[
+                { value: "numbers", label: "Numeri" },
+                { value: "map", label: "Mappa" },
+              ]}
+              value={view}
+            />
+          )}
           {picked && (
             <button
               aria-label="Torna alla prossima uscita"
@@ -383,47 +480,98 @@ function SlotHero({
         </p>
       ) : (
         <>
-          <div className="mt-2 flex flex-wrap items-center gap-3">
-            <WindDial degrees={summary.direction} />
-            <div className="min-w-0">
-              <p className="m-0 text-[2.5rem] leading-none font-black tracking-tight tabular-nums">
-                {summary.reach !== "near" && "~"}
-                {formatKnots(summary.mid)}
-                <span className="ml-1 text-lg font-bold">kn</span>
-              </p>
-              <p className="m-0 mt-1 text-xl leading-tight font-black tabular-nums">
-                {summary.gust === null
-                  ? "Raffiche: troppo presto"
-                  : `Raffiche ${summary.reach === "near" ? "" : "~"}${formatKnots(summary.gust)}`}
+          {onMap ? (
+            <div className="mt-2">
+              <Suspense
+                fallback={
+                  <p className="m-0 text-sm text-muted-foreground">
+                    Carico la mappa…
+                  </p>
+                }
+              >
+                <WindZoneMap
+                  forecast={forecast}
+                  now={now}
+                  sky={inSlot.find((hour) => hour.time === shownTime)}
+                  time={shownTime}
+                  zone={zone}
+                />
+              </Suspense>
+              <p className="m-0 mt-1 text-base font-semibold">
+                {slotShortLabel(slot)}: {summaryInWords(summary)}
               </p>
             </div>
-          </div>
-          <p className="m-0 mt-2 text-base font-semibold">
-            {directionWithName(summary.direction)} · Forza{" "}
-            {beaufort(summary.mid)}
-          </p>
-          <p className="m-0 text-sm text-muted-foreground">
-            Probabile {formatRange(summary.low, summary.high)} kn
-            {zone === "cabinati" &&
-              summary.waveHeight !== null &&
-              ` · Onda al largo ${formatDecimal(summary.waveHeight)} m`}
-          </p>
+          ) : (
+            <>
+              <div className="mt-2 flex flex-wrap items-center gap-3">
+                <WindDial degrees={summary.direction} />
+                <div className="min-w-0">
+                  <p className="m-0 text-[2.5rem] leading-none font-black tracking-tight tabular-nums">
+                    {summary.reach !== "near" && "~"}
+                    {formatKnots(summary.mid)}
+                    <span className="ml-1 text-lg font-bold">kn</span>
+                  </p>
+                  <p className="m-0 mt-1 text-xl leading-tight font-black tabular-nums">
+                    {summary.gust === null
+                      ? "Raffiche: troppo presto"
+                      : `Raffiche ${summary.reach === "near" ? "" : "~"}${formatKnots(summary.gust)}`}
+                  </p>
+                </div>
+              </div>
+              <p className="m-0 mt-2 text-base font-semibold">
+                {directionWithName(summary.direction)} · Forza{" "}
+                {beaufort(summary.mid)}
+              </p>
+              <p className="m-0 text-sm text-muted-foreground">
+                Probabile {formatRange(summary.low, summary.high)} kn
+                {zone === "cabinati" &&
+                  summary.waveHeight !== null &&
+                  ` · Onda al largo ${formatDecimal(summary.waveHeight)} m`}
+              </p>
+            </>
+          )}
+          {sky && (
+            <p className="m-0 mt-1 flex items-center gap-1.5 text-base font-semibold">
+              {summary.weather && summary.weather !== "storm" ? (
+                <WeatherIcon
+                  className="size-5 shrink-0"
+                  kind={summary.weather}
+                />
+              ) : (
+                <Thermometer aria-hidden="true" className="size-5 shrink-0" />
+              )}
+              {sky}
+            </p>
+          )}
 
           <HeroLines summary={summary} />
 
           <ul
-            aria-label={`Ora per ora, ${slotLabel(slot)}`}
+            aria-label={
+              onMap
+                ? `Ora da mostrare sulla mappa, ${slotLabel(slot)}`
+                : `Ora per ora, ${slotLabel(slot)}`
+            }
             className="m-0 mt-3 grid list-none gap-1 border-t p-0 pt-2"
             style={{
               gridTemplateColumns: `repeat(${Math.max(inSlot.length, 1)}, minmax(0, 1fr))`,
             }}
           >
-            {inSlot.map((hour) => (
-              <HourCell hour={hour} key={hour.time} />
-            ))}
+            {inSlot.map((hour) =>
+              onMap ? (
+                <HourCell
+                  hour={hour}
+                  key={hour.time}
+                  onSelect={(time) => setMapChoice({ slot: slot.key, time })}
+                  selected={hour.time === shownTime}
+                />
+              ) : (
+                <HourCell hour={hour} key={hour.time} />
+              ),
+            )}
           </ul>
 
-          {zone === "cabinati" && (
+          {zone === "cabinati" && !onMap && (
             <PlaceRows forecast={forecast} now={now} slot={slot} zone={zone} />
           )}
         </>
@@ -463,6 +611,17 @@ function hoursListRow(hour: BlendedHour) {
         {formatRange(hour.low, hour.high)}
       </span>
       <span>{hour.gust === null ? "–" : `r ${formatKnots(hour.gust)}`}</span>
+      {(hour.weather !== null || hour.temperature !== null) && (
+        <span className="flex items-center gap-1">
+          {hour.weather !== null && (
+            <WeatherIcon className="size-4" kind={hour.weather} />
+          )}
+          {hour.weather !== null && hour.weather !== "storm" && (
+            <span className="sr-only">{weatherLabel(hour.weather)}</span>
+          )}
+          {hour.temperature !== null && formatTemperature(hour.temperature)}
+        </span>
+      )}
       {hour.thunder && (
         <span className="font-bold text-[#7f2f17]">temporali</span>
       )}
@@ -599,15 +758,31 @@ function SlotCell({
           r{formatKnots(summary.gust)}
         </span>
       )}
-      {(summary.thunder || summary.split) && (
+      {(summary.weather || summary.thunder || summary.split) && (
         <span className="wind-cell-marks" aria-hidden="true">
-          {summary.thunder && (
-            <CloudLightning
+          {summary.weather ? (
+            <WeatherIcon
               className="size-4"
-              style={{ color: thunderColor(tint) }}
+              kind={summary.weather}
+              stormColor={thunderColor(tint)}
             />
+          ) : (
+            summary.thunder && (
+              <CloudLightning
+                className="size-4"
+                style={{ color: thunderColor(tint) }}
+              />
+            )
           )}
           {summary.split && <CircleHelp className="size-3.5" />}
+        </span>
+      )}
+      {summary.temperature && (
+        <span
+          aria-hidden="true"
+          className="text-sm leading-tight whitespace-nowrap tabular-nums"
+        >
+          {formatTemperature(summary.temperature.high)}
         </span>
       )}
     </button>
@@ -695,7 +870,7 @@ function WeekOverview({
         </div>
       )}
       <p className="m-0 mt-2 text-sm text-muted-foreground">
-        Nodi attesi, r = raffica. Più scuro, più vento.{" "}
+        Nodi attesi, r = raffica, gradi: la massima. Più scuro, più vento.{" "}
         <span className="whitespace-nowrap">
           <CloudLightning
             aria-hidden="true"
@@ -826,6 +1001,7 @@ export function WeatherScreen({
   const { forecast, state, now, refresh } = useWindForecast(zone, "network")
   const [pickedKey, setPickedKey] = useState<string | null>(null)
   const [mapField, setMapField] = useState<LammaField>("wind10")
+  const [heroView, setHeroView] = useState<HeroView>("numbers")
   const [announcement, setAnnouncement] = useState("")
   const heading = useRef<HTMLHeadingElement>(null)
   const hero = useRef<HTMLDivElement>(null)
@@ -985,8 +1161,10 @@ export function WeatherScreen({
                 focusHero.current = true
                 pick(slot)
               }}
+              onView={setHeroView}
               picked={picked !== null}
               slot={heroSlot}
+              view={heroView}
               zone={zone}
             />
           </div>

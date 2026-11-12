@@ -1,4 +1,4 @@
-import { ChevronRight, CloudLightning, Wind } from "lucide-react"
+import { ChevronRight, CloudLightning, Thermometer, Wind } from "lucide-react"
 import { useMemo } from "react"
 
 import {
@@ -9,11 +9,13 @@ import {
 } from "@/domain/wind"
 import { zoneForCourse } from "@/domain/windConfig"
 import { useWindForecast } from "@/features/weather/useWindForecast"
+import { WeatherIcon } from "@/features/weather/WeatherIcon"
 import { WindArrow } from "@/features/weather/WindArrow"
 import {
   ageForStrip,
   directionText,
   formatKnots,
+  skyText,
   slotShortLabel,
   spokenSummary,
 } from "@/features/weather/windFormat"
@@ -75,6 +77,7 @@ export function WeatherHomeCard({
   const stale = age >= STALE_AFTER_SECONDS
   const ageText = stale ? ageForStrip(forecast.fetchedAt, now) : null
   const far = summary.reach !== "near"
+  const sky = skyText(summary)
   const name =
     `Vento, ${slotShortLabel(slot)}: ${spokenSummary(summary)}` +
     (summary.thunder === null ? " Temporali: dato non scaricato." : "") +
@@ -109,6 +112,16 @@ export function WeatherHomeCard({
             </span>
           )}
         </span>
+        {sky && (
+          <span className="flex items-center gap-1 text-sm font-semibold">
+            {summary.weather && summary.weather !== "storm" ? (
+              <WeatherIcon className="size-4 shrink-0" kind={summary.weather} />
+            ) : (
+              <Thermometer aria-hidden="true" className="size-4 shrink-0" />
+            )}
+            {sky}
+          </span>
+        )}
         {summary.thunder && (
           <span className="flex items-center gap-1 text-sm font-bold text-[#7f2f17]">
             <CloudLightning

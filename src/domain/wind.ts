@@ -14,6 +14,8 @@ import {
   SEASONAL_AFTER_HOURS,
   SPLIT_RULES,
   TENDENCY_AFTER_HOURS,
+  WEATHER_KINDS,
+  type WeatherKindId,
   WIND_MODELS,
   WIND_NAMES,
   WIND_SESSION_HOURS,
@@ -41,7 +43,13 @@ export type WindForecast = {
   }
   /** fetchedAt on the extras: a copy can carry one older than its wind. */
   waves?: { height: readonly (number | null)[]; fetchedAt?: number }
-  sky?: { code: readonly (number | null)[]; fetchedAt?: number }
+  /** At the zone's centre, from the provider's best model for the place. */
+  sky?: {
+    code: readonly (number | null)[]
+    /** Air at 2 m, °C; over a sea cell, so cooler by day than on land. */
+    temperature?: readonly (number | null)[]
+    fetchedAt?: number
+  }
 }
 
 export type ModelContribution = {
@@ -69,6 +77,8 @@ export type BlendedHour = {
   waveHeight: number | null
   /** null: the sky was not downloaded, which is not the same as no thunder. */
   thunder: boolean | null
+  weather: WeatherKindId | null
+  temperature: number | null
 }
 
 type Sample = { value: number; weight: number }
@@ -168,6 +178,50 @@ function lastValueIndexes(forecast: WindForecast) {
     }
   }
   return last
+}
+
+export function weatherKindOf(code: number | null): WeatherKindId | null {
+  if (code === null) return null
+  return (
+    WEATHER_KINDS.find((kind) =>
+      (kind.codes as readonly number[]).includes(code),
+    )?.id ?? null
+  )
+}
+
+const WEATHER_ORDER: readonly WeatherKindId[] = WEATHER_KINDS.map(
+  (kind) => kind.id,
+)
+
+/**
+ * The worst rain, fog or storm of the hours; failing that, their most frequent
+ * cloud, the cloudier on a tie. null when no hour has a sky.
+ */
+export function weatherOfHours(
+  hours: readonly { weather: WeatherKindId | null }[],
+): WeatherKindId | null {
+  const known = hours.flatMap((hour) =>
+    hour.weather === null ? [] : [hour.weather],
+  )
+  const first = known[0]
+  if (first === undefined) return null
+  const rank = (id: WeatherKindId) => WEATHER_ORDER.indexOf(id)
+  const wet = known.filter(
+    (id) => WEATHER_KINDS.find((kind) => kind.id === id)?.wet,
+  )
+  if (wet.length > 0) {
+    return wet.reduce((worst, id) => (rank(id) > rank(worst) ? id : worst))
+  }
+  const counts = new Map<WeatherKindId, number>()
+  for (const id of known) counts.set(id, (counts.get(id) ?? 0) + 1)
+  let best: WeatherKindId = first
+  for (const [id, count] of counts) {
+    const bestCount = counts.get(best) ?? 0
+    if (count > bestCount || (count === bestCount && rank(id) > rank(best))) {
+      best = id
+    }
+  }
+  return best
 }
 
 function thunderAt(forecast: WindForecast, index: number) {
@@ -333,6 +387,8 @@ export function blendForecast(
       models: contributions.sort((a, b) => b.weight - a.weight),
       waveHeight: forecast.waves?.height[index] ?? null,
       thunder: thunderAt(forecast, index),
+      weather: weatherKindOf(forecast.sky?.code[index] ?? null),
+      temperature: forecast.sky?.temperature?.[index] ?? null,
     })
   })
 
@@ -359,6 +415,8 @@ export type WindSummary = {
   turning: boolean
   waveHeight: number | null
   thunder: boolean | null
+  weather: WeatherKindId | null
+  temperature: { low: number; high: number } | null
   /** How far ahead: a tendency beyond 72 h, close to the season's average beyond 120 h. */
   reach: "near" | "tendency" | "seasonal"
 }
@@ -413,6 +471,9 @@ export function summariseHours(
   const waves = hours.flatMap((hour) =>
     hour.waveHeight === null ? [] : [hour.waveHeight],
   )
+  const temperatures = hours.flatMap((hour) =>
+    hour.temperature === null ? [] : [hour.temperature],
+  )
   const reach =
     firstHour.lead >= SEASONAL_AFTER_HOURS
       ? "seasonal"
@@ -448,6 +509,10 @@ export function summariseHours(
       lastDirection !== null &&
       angleBetween(firstDirection, lastDirection) >= 40,
     waveHeight: waves.length ? Math.max(...waves) : null,
+    weather: weatherOfHours(hours),
+    temperature: temperatures.length
+      ? { low: Math.min(...temperatures), high: Math.max(...temperatures) }
+      : null,
     thunder: hours.some((hour) => hour.thunder === true)
       ? true
       : hours.some((hour) => hour.thunder === null)

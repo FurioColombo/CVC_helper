@@ -4,6 +4,7 @@ import type { WindSummary } from "@/domain/wind"
 import { WIND_TINTS } from "@/domain/windConfig"
 import {
   refreshingText,
+  skyText,
   spokenSummary,
   splitText,
   thunderColor,
@@ -25,6 +26,8 @@ const SUMMARY: WindSummary = {
   turning: false,
   waveHeight: null,
   thunder: false,
+  weather: null,
+  temperature: null,
   reach: "near",
 }
 
@@ -104,5 +107,35 @@ describe("spokenSummary", () => {
     ).toBe(
       "NW circa 14 nodi, raffiche 28. Temporali possibili. Modelli divisi. Solo una tendenza.",
     )
+  })
+
+  it("says the sky and the temperature, and thunder once", () => {
+    expect(
+      spokenSummary({
+        ...SUMMARY,
+        weather: "partly",
+        temperature: { low: 15.6, high: 19.2 },
+      }),
+    ).toBe("NW 14 nodi, raffiche 28. Poco nuvoloso, da 16 a 19 gradi.")
+    expect(
+      spokenSummary({
+        ...SUMMARY,
+        thunder: true,
+        weather: "storm",
+        temperature: { low: 17, high: 17.4 },
+      }),
+    ).toBe("NW 14 nodi, raffiche 28. Temporali possibili. 17 gradi.")
+  })
+})
+
+describe("skyText", () => {
+  it.each([
+    ["sky and range", "rain", { low: 15.6, high: 19.2 }, "Pioggia · 16–19 °C"],
+    ["one temperature", "clear", { low: 17, high: 17.4 }, "Sereno · 17 °C"],
+    ["thunder has its own line", "storm", { low: 17, high: 17 }, "17 °C"],
+    ["no temperature", "overcast", null, "Coperto"],
+    ["nothing", null, null, null],
+  ] as const)("%s", (_, weather, temperature, text) => {
+    expect(skyText({ weather, temperature })).toBe(text)
   })
 })

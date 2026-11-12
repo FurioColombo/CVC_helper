@@ -8,15 +8,18 @@ import type { Page, Route } from "@playwright/test"
  *
  * - Every model, at every sea point, sends 10 kn from 315 with gusts of 22,
  *   except in the windows below.
- * - Saturday 7 Nov, 14-18 (Sat PM, the course's first session): all models
+ * - Saturday 7 Nov, 14-19 (Sat PM, the course's first session): all models
  *   send 15 kn from 315 (NW, Maestrale) with gusts of 32. At Spargi, a
- *   Cabinati place, the wind is 18 kn with gusts of 38.
- * - Sunday 8 Nov, 9-13 (Sun AM): the models disagree. Four of them send 6 kn
+ *   Cabinati place, the wind is 18 kn with gusts of 38. The air goes from
+ *   19 °C at 14 and 15 down to 16 °C at 18.
+ * - Sunday 8 Nov, 8-14 (Sun AM): the models disagree. Four of them send 6 kn
  *   from 135, the other three 20 kn from 315, so the screen must say so.
- * - Sunday 8 Nov, 14-18 (Sun PM): the sky codes say thunder.
- * - Wednesday 11 Nov, 9-18: 24 kn with gusts of 50, for the widest cell values.
+ * - Sunday 8 Nov, 14-19 (Sun PM): the sky codes say thunder.
+ * - Monday 9 Nov, 8-14 (Mon AM): rain (code 61).
+ * - Wednesday 11 Nov, 8-19: 24 kn with gusts of 50, for the widest cell values.
  * - The 51 ensemble members agree with the models (15 kn; 13 kn on Sun AM).
- * - Waves are 0.5 m and the rest of the sky is clear (code 1).
+ * - Waves are 0.5 m; the rest of the sky is partly cloudy (code 1), 17 °C by
+ *   day (8-19) and 13 °C at night.
  */
 
 export const WEATHER_NOW = new Date("2026-11-07T09:00:00+01:00")
@@ -40,17 +43,17 @@ function reading(model: string, latitude: number, index: number): Reading {
   const day = Math.floor(index / 24)
   const hour = index % 24
   // Day 2 is Saturday 7 Nov, day 3 Sunday 8 Nov (day 0 is Thursday 5 Nov).
-  if (day === 2 && hour >= 14 && hour < 18) {
+  if (day === 2 && hour >= 14 && hour < 19) {
     return latitude === SPARGI_LATITUDE
       ? { speed: 18, direction: 315, gust: 38 }
       : { speed: 15, direction: 315, gust: 32 }
   }
-  if (day === 3 && hour >= 9 && hour < 13) {
+  if (day === 3 && hour >= 8 && hour < 14) {
     return DISAGREEING_LOW.has(model)
       ? { speed: 6, direction: 135, gust: 13 }
       : { speed: 20, direction: 315, gust: 42 }
   }
-  if (day === 6 && hour >= 9 && hour < 18) {
+  if (day === 6 && hour >= 8 && hour < 19) {
     return { speed: 24, direction: 315, gust: 50 }
   }
   return { speed: 10, direction: 315, gust: 22 }
@@ -59,13 +62,22 @@ function reading(model: string, latitude: number, index: number): Reading {
 function ensembleSpeed(index: number) {
   const day = Math.floor(index / 24)
   const hour = index % 24
-  return day === 3 && hour >= 9 && hour < 13 ? 13 : 15
+  return day === 3 && hour >= 8 && hour < 14 ? 13 : 15
 }
 
 function skyCode(index: number) {
   const day = Math.floor(index / 24)
   const hour = index % 24
-  return day === 3 && hour >= 14 && hour < 18 ? 95 : 1
+  if (day === 3 && hour >= 14 && hour < 19) return 95
+  if (day === 4 && hour >= 8 && hour < 14) return 61
+  return 1
+}
+
+function temperature(index: number) {
+  const day = Math.floor(index / 24)
+  const hour = index % 24
+  if (day === 2 && hour >= 14 && hour < 19) return 19 - Math.max(0, hour - 15)
+  return hour >= 8 && hour < 19 ? 17 : 13
 }
 
 const times = Array.from({ length: HOURS }, (_, i) => FIRST_HOUR + i * 3600)
@@ -164,7 +176,11 @@ function apiAnswer(url: URL): unknown {
   }
   if (hourly.includes("weather_code")) {
     return respond(() => ({
-      hourly: { time: times, weather_code: times.map((_, i) => skyCode(i)) },
+      hourly: {
+        time: times,
+        weather_code: times.map((_, i) => skyCode(i)),
+        temperature_2m: times.map((_, i) => temperature(i)),
+      },
     }))
   }
   const models = (url.searchParams.get("models") ?? "").split(",")

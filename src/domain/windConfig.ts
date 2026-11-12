@@ -17,8 +17,9 @@ export type WindZoneId = "derive" | "cabinati"
 
 /**
  * Points sit on open water just off each place, because the models are asked
- * for sea cells. The owner set the areas on 2026-11-05. Cala Fico is not named
- * on OpenStreetMap: its position is estimated and awaits the owner's check.
+ * for sea cells. The owner set the areas on 2026-11-05 and gave the Derive
+ * places on 2026-11-11 (.evidence/WX1/owner-places.json on claude/0.5.0-prep);
+ * the Cabinati points still await the owner's check.
  */
 export const WIND_ZONES: Readonly<
   Record<
@@ -36,26 +37,26 @@ export const WIND_ZONES: Readonly<
   derive: {
     label: "Derive",
     description: "Cala Fico, Isola del Porco, Punta Rossa",
-    centre: { latitude: 41.172, longitude: 9.466 },
+    centre: { latitude: 41.18, longitude: 9.455 },
     waves: false,
     points: [
       {
         id: "cala-fico",
         label: "Cala Fico",
-        latitude: 41.178,
-        longitude: 9.478,
+        latitude: 41.185,
+        longitude: 9.448,
       },
       {
         id: "isola-del-porco",
         label: "Isola del Porco",
-        latitude: 41.1725,
-        longitude: 9.455,
+        latitude: 41.1757,
+        longitude: 9.4597,
       },
       {
         id: "punta-rossa",
         label: "Punta Rossa",
-        latitude: 41.167,
-        longitude: 9.472,
+        latitude: 41.1712,
+        longitude: 9.4659,
       },
     ],
   },
@@ -105,12 +106,14 @@ export function zoneForCourse(family: CourseFamily): WindZoneId {
 }
 
 /**
- * Provisional: the specification gives sessions no clock time (01 §7.1), and
- * the forecast needs one. The owner is asked to confirm these hours (Italy).
+ * The hours each half-day covers (Italy), whole hours with the end excluded.
+ * The school boats at 9:00 and is back by 12:30, then out from 15:00 to 18:00
+ * (the CT's guide). The owner chose on 2026-11-12 to show an hour more on each
+ * side, to read the trend: 8 to 14 and 14 to 19.
  */
 export const WIND_SESSION_HOURS = {
-  AM: { start: 9, end: 13 },
-  PM: { start: 14, end: 18 },
+  AM: { start: 8, end: 14 },
+  PM: { start: 14, end: 19 },
 } as const
 
 export const WIND_FORECAST_DAYS = 8
@@ -254,6 +257,50 @@ export const WIND_TINTS = [
   { fromKnots: 22, background: "#a9c4e6", color: "var(--foreground)" },
   { fromKnots: 28, background: "#2f5fa0", color: "#ffffff" },
 ] as const
+
+/**
+ * The sky of the WMO weather codes Open-Meteo sends, from the clearest to the
+ * worst. A half-day shows the worst rain, fog or storm any of its hours has,
+ * and otherwise its most frequent cloud: an hour of rain matters on the water,
+ * an hour of cloud does not.
+ */
+export const WEATHER_KINDS = [
+  { id: "clear", label: "Sereno", codes: [0], wet: false },
+  { id: "partly", label: "Poco nuvoloso", codes: [1, 2], wet: false },
+  { id: "overcast", label: "Coperto", codes: [3], wet: false },
+  { id: "fog", label: "Nebbia", codes: [45, 48], wet: true },
+  {
+    id: "drizzle",
+    label: "Pioviggine",
+    codes: [51, 53, 55, 56, 57],
+    wet: true,
+  },
+  {
+    id: "rain",
+    label: "Pioggia",
+    codes: [61, 63, 65, 66, 67, 80, 81, 82],
+    wet: true,
+  },
+  { id: "snow", label: "Neve", codes: [71, 73, 75, 77, 85, 86], wet: true },
+  { id: "storm", label: "Temporale", codes: [95, 96, 99], wet: true },
+] as const satisfies readonly {
+  id: string
+  label: string
+  codes: readonly number[]
+  wet: boolean
+}[]
+
+export type WeatherKindId = (typeof WEATHER_KINDS)[number]["id"]
+
+/**
+ * The map's landmark: the Scalo of the centre, from the owner's record of
+ * places (.evidence/WX1/owner-places.json, 2026-11-11).
+ */
+export const CENTRE_PLACE = {
+  label: "CVC",
+  latitude: 41.186,
+  longitude: 9.442,
+} as const
 
 /** Minimum knots of Beaufort forces 0-12. */
 export const BEAUFORT_MIN_KNOTS = [

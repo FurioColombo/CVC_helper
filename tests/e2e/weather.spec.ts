@@ -69,6 +69,7 @@ async function expectKnownHero(page: Page) {
   await expect(box.getByText("Raffiche 32")).toBeVisible()
   await expect(box.getByText("NW · Maestrale · Forza 4")).toBeVisible()
   await expect(box.getByText("Probabile 11–20 kn")).toBeVisible()
+  await expect(box.getByText("Poco nuvoloso · 16–19 °C")).toBeVisible()
   // Silent when the models agree.
   await expect(box.getByText(/Modelli divisi/)).toHaveCount(0)
 }
@@ -78,6 +79,10 @@ async function expectStrip(page: Page) {
   await expect(card).toContainText("Vento · Sab PM")
   await expect(card).toContainText("NW 15 kn")
   await expect(card).toContainText("raffiche 32")
+  await expect(card).toContainText("Poco nuvoloso · 16–19 °C")
+  await expect(card).toHaveAccessibleName(
+    /^Vento, Sab PM: NW 15 nodi, raffiche 32\. Poco nuvoloso, da 16 a 19 gradi\./,
+  )
 }
 
 async function settle(page: Page) {
@@ -114,8 +119,8 @@ test("Home stays silent; Vento asks only for the three Derive sea points", async
   const wind = windRequests(weather)
   expect(wind).toHaveLength(1)
   expect(pointsOf(wind[0]!)).toEqual({
-    latitudes: [41.178, 41.1725, 41.167],
-    longitudes: [9.478, 9.455, 9.472],
+    latitudes: [41.185, 41.1757, 41.1712],
+    longitudes: [9.448, 9.4597, 9.4659],
   })
   // Three data calls (wind, ensemble, sky; Derive asks no waves) and LaMMA's
   // map. Only fixed sea coordinates and model names travel: nothing of the
@@ -432,6 +437,15 @@ test("a tap on the week shows that half-day above, and the horizon moves only th
     page.getByRole("heading", { name: "Scelta · Domenica PM" }),
   ).toBeVisible()
   await expect(hero(page).getByText("Temporali possibili")).toBeVisible()
+  // Said once, in red: the sky line keeps only the temperature.
+  await expect(hero(page).getByText("17 °C", { exact: true })).toBeVisible()
+
+  // Rain is named in the week, and above once chosen.
+  await expect(
+    week.getByRole("button", { name: /^Lunedì 9 AM:/ }),
+  ).toHaveAccessibleName(/Pioggia, 17 gradi\./)
+  await week.getByRole("button", { name: /^Lunedì 9 AM:/ }).click()
+  await expect(hero(page).getByText("Pioggia · 17 °C")).toBeVisible()
 
   // Beyond three days it is only a tendency, and says so.
   await week.getByRole("button", { name: /^Martedì 10 PM:/ }).click()
@@ -476,6 +490,81 @@ test("a tap on the week shows that half-day above, and the horizon moves only th
   await expect(
     page.getByRole("heading", { level: 1, name: "Vento" }),
   ).toHaveCount(0)
+})
+
+test("the map shows each place's wind at the chosen hour, drawn without a download", async ({
+  page,
+}) => {
+  const weather = await routeWeather(page)
+  await createCourse(page, "Deriva")
+  await openVento(page)
+  await expectKnownHero(page)
+  await settle(page)
+  const before = weather.requests.length
+
+  await hero(page)
+    .getByRole("group", { name: "Vista" })
+    .getByRole("button", { name: "Mappa" })
+    .click()
+  // It opens on the outing's first hour: the window starts an hour earlier.
+  const derive = hero(page).getByRole("group", { name: "Mappa Derive alle 15" })
+  await expect(derive).toBeVisible()
+  await expect(derive).toContainText("Cala Fico: da NW, 15 nodi, raffiche 32")
+  await expect(derive).toContainText("Isola del Porco")
+  await expect(derive).toContainText("Punta Rossa")
+  await expect(derive).toContainText("CVC")
+  await expect(
+    hero(page).getByText("Sab PM: NW 15 nodi, raffiche 32"),
+  ).toBeVisible()
+  await expect(hero(page).getByText("Poco nuvoloso · 16–19 °C")).toBeVisible()
+  await expect(page.getByRole("link", { name: /^OpenStreetMap/ })).toBeVisible()
+
+  const hours = hero(page).getByRole("list", {
+    name: "Ora da mostrare sulla mappa, Sabato PM",
+  })
+  await expect(hours.getByRole("button")).toHaveCount(5)
+  await expect(hours.getByRole("button", { name: /^Ore 15:/ })).toHaveAttribute(
+    "aria-pressed",
+    "true",
+  )
+  await hours.getByRole("button", { name: /^Ore 18:/ }).click()
+  await expect(
+    hero(page).getByRole("group", { name: "Mappa Derive alle 18" }),
+  ).toBeVisible()
+  await expect(hours.getByRole("button", { name: /^Ore 18:/ })).toHaveAttribute(
+    "aria-pressed",
+    "true",
+  )
+  await expect(
+    hours.getByRole("button", { name: /^Ore 18:/ }),
+  ).toHaveAccessibleName(/poco nuvoloso, 16 gradi$/)
+  if (TAKE_SCREENS) await screenshot(page, "vento-mappa-derive.png", 915)
+
+  // Nothing left the phone to draw it.
+  expect(weather.requests).toHaveLength(before)
+  expect(weather.otherOffOrigin).toEqual([])
+
+  // The other area has its own places and keeps the map.
+  await page
+    .getByRole("group", { name: "Area" })
+    .getByRole("button", { name: "Cabinati" })
+    .click()
+  const cabinati = hero(page).getByRole("group", {
+    name: /^Mappa Cabinati alle/,
+  })
+  await expect(cabinati).toBeVisible()
+  await expect(cabinati).toContainText("Spargi: da NW, 18 nodi, raffiche 38")
+  await expect(cabinati).toContainText("Cannigione")
+  if (TAKE_SCREENS) await screenshot(page, "vento-mappa-cabinati.png", 915)
+
+  await hero(page)
+    .getByRole("group", { name: "Vista" })
+    .getByRole("button", { name: "Numeri" })
+    .click()
+  await expect(hero(page).getByRole("group", { name: /^Mappa/ })).toHaveCount(0)
+  await expect(
+    hero(page).getByRole("list", { name: "Ora per ora, Sabato PM" }),
+  ).toBeVisible()
 })
 
 test("a number in the week is never broken across lines, chosen or not, and cells stay tappable", async ({
@@ -664,8 +753,8 @@ test("a Cabinato course opens on Cabinati with its places and waves; Derive has 
   wind = windRequests(weather)
   expect(wind).toHaveLength(2)
   expect(pointsOf(wind[1]!)).toEqual({
-    latitudes: [41.178, 41.1725, 41.167],
-    longitudes: [9.478, 9.455, 9.472],
+    latitudes: [41.185, 41.1757, 41.1712],
+    longitudes: [9.448, 9.4597, 9.4659],
   })
 })
 
@@ -715,6 +804,22 @@ for (const { width, textScale } of [
       week.getByRole("button", { name: /^Sabato 7 PM:/ }),
     ).toBeVisible()
     await expectNoSidewaysScroll(page, `Vento at ${width} px, ${textScale}%`)
+    const view = hero(page).getByRole("group", { name: "Vista" })
+    await view.getByRole("button", { name: "Mappa" }).click()
+    await expect(
+      hero(page).getByRole("group", { name: "Mappa Derive alle 15" }),
+    ).toBeVisible()
+    await expectNoSidewaysScroll(
+      page,
+      `Vento map at ${width} px, ${textScale}%`,
+    )
+    if (TAKE_SCREENS && width === 320 && textScale === 200) {
+      await hero(page).scrollIntoViewIfNeeded()
+      await hero(page).screenshot({
+        path: path.join(SCREENS, `vento-mappa-${width}-${textScale}.png`),
+      })
+    }
+    await view.getByRole("button", { name: "Numeri" }).click()
     if (TAKE_SCREENS && width === 320) {
       await page.setViewportSize({
         width,

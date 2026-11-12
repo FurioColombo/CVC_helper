@@ -16,7 +16,7 @@ describe("WeatherBoundary", () => {
 
   it("costs the forecast, not the course, and drops the copy that caused it", () => {
     vi.spyOn(console, "error").mockImplementation(() => undefined)
-    const key = `${appChannelConfig.weatherCachePrefix}v2.derive`
+    const key = `${appChannelConfig.weatherCachePrefix}v3.derive`
     localStorage.setItem(key, "{}")
     localStorage.setItem("other", "kept")
     render(

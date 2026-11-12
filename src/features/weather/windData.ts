@@ -30,13 +30,14 @@ const MAX_FUTURE_SECONDS = 5 * 60
 const MAX_HOURS = 16 * 24
 const SANE_TIME_WINDOW_SECONDS = 30 * 24 * 3600
 /** Bump when WindForecast changes: an old shape must never reach the screen. */
-const CACHE_VERSION = "v2"
+const CACHE_VERSION = "v3"
 
 const RANGES = {
   speed: [0, 150],
   direction: [0, 360],
   height: [0, 30],
   code: [0, 99],
+  temperature: [-40, 55],
 } as const
 type Range = (typeof RANGES)[keyof typeof RANGES]
 
@@ -124,7 +125,7 @@ export function secondaryUrls(zoneId: WindZoneId) {
     waves: WIND_ZONES[zoneId].waves
       ? `${MARINE_URL}?${query}&hourly=wave_height`
       : null,
-    sky: `${FORECAST_URL}?${query}&hourly=weather_code`,
+    sky: `${FORECAST_URL}?${query}&hourly=weather_code,temperature_2m`,
   }
 }
 
@@ -325,11 +326,22 @@ export async function downloadWindForecast(
   const pastSky = stillRecent(previous?.sky, now())
   const pastWaves = stillRecent(previous?.waves, now())
   const carriedSky = carriedOver(wind.times, previous, pastSky?.code)
+  const carriedTemperature = carriedOver(
+    wind.times,
+    previous,
+    pastSky?.temperature,
+  )
   const carriedWaves = carriedOver(wind.times, previous, pastWaves?.height)
   const withCarried: WindForecast = {
     ...wind,
     ...(carriedSky
-      ? { sky: { code: carriedSky, fetchedAt: pastSky?.fetchedAt } }
+      ? {
+          sky: {
+            code: carriedSky,
+            ...(carriedTemperature ? { temperature: carriedTemperature } : {}),
+            fetchedAt: pastSky?.fetchedAt,
+          },
+        }
       : {}),
     ...(carriedWaves
       ? { waves: { height: carriedWaves, fetchedAt: pastWaves?.fetchedAt } }
@@ -355,7 +367,12 @@ export async function downloadWindForecast(
       const hourly = hourlyOf(await getJson(urls.sky, signal))
       const code =
         hourly && aligned(hourly, "weather_code", wind.times, RANGES.code)
-      return code ? { code, fetchedAt: now() } : undefined
+      const temperature =
+        hourly &&
+        aligned(hourly, "temperature_2m", wind.times, RANGES.temperature)
+      return code
+        ? { code, ...(temperature ? { temperature } : {}), fetchedAt: now() }
+        : undefined
     }, abort),
   ])
   abort.throwIfAborted()
@@ -442,15 +459,15 @@ export function isStoredForecast(
           RANGES.height,
         ) && extraTimeIsSane(column),
     ) &&
-    isOptional(
-      sky,
-      (column) =>
-        strictColumn(
-          (column as NonNullable<WindForecast["sky"]>).code,
-          length,
-          RANGES.code,
-        ) && extraTimeIsSane(column),
-    )
+    isOptional(sky, (column) => {
+      const { code, temperature } = column as NonNullable<WindForecast["sky"]>
+      return (
+        strictColumn(code, length, RANGES.code) &&
+        (temperature === undefined ||
+          strictColumn(temperature, length, RANGES.temperature)) &&
+        extraTimeIsSane(column)
+      )
+    })
   )
 }
 

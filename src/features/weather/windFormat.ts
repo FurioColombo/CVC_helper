@@ -5,7 +5,12 @@ import {
   type WindSummary,
   windName,
 } from "@/domain/wind"
-import { WIND_SESSION_HOURS, WIND_TINTS } from "@/domain/windConfig"
+import {
+  WEATHER_KINDS,
+  WIND_SESSION_HOURS,
+  WIND_TINTS,
+  type WeatherKindId,
+} from "@/domain/windConfig"
 
 export function formatKnots(knots: number) {
   return String(Math.round(knots))
@@ -125,6 +130,48 @@ export function ageForStrip(fetchedAt: number, now: number) {
   return days === 0 ? `dati delle ${when}` : `dati di ieri ${when}`
 }
 
+export function weatherLabel(kind: WeatherKindId) {
+  return WEATHER_KINDS.find((item) => item.id === kind)?.label ?? ""
+}
+
+export function formatTemperature(celsius: number) {
+  return `${Math.round(celsius)}°`
+}
+
+type Sky = Pick<WindSummary, "weather" | "temperature">
+
+/** The sky in a line; thunder has its own, red, so it is not said twice. */
+export function skyText({ weather, temperature }: Sky) {
+  const parts: string[] = []
+  if (weather && weather !== "storm") parts.push(weatherLabel(weather))
+  if (temperature) {
+    parts.push(`${formatRange(temperature.low, temperature.high)} °C`)
+  }
+  return parts.length === 0 ? null : parts.join(" · ")
+}
+
+function skySpoken({ weather, temperature }: Sky) {
+  const parts: string[] = []
+  if (weather && weather !== "storm") parts.push(weatherLabel(weather))
+  if (temperature) {
+    const low = Math.round(temperature.low)
+    const high = Math.round(temperature.high)
+    parts.push(low === high ? `${low} gradi` : `da ${low} a ${high} gradi`)
+  }
+  return parts.length === 0 ? "" : ` ${capitalised(parts.join(", "))}.`
+}
+
+/** One hour's sky for a screen reader, after its wind. */
+export function hourSkyInWords(hour: {
+  weather: WeatherKindId | null
+  temperature: number | null
+}) {
+  return (
+    (hour.weather ? `, ${weatherLabel(hour.weather).toLowerCase()}` : "") +
+    (hour.temperature === null ? "" : `, ${Math.round(hour.temperature)} gradi`)
+  )
+}
+
 /** The whole reading in words, for a name a screen reader says at once. */
 export function summaryInWords(summary: WindSummary) {
   const tilde = summary.reach === "near" ? "" : "circa "
@@ -138,6 +185,7 @@ export function spokenSummary(summary: WindSummary) {
   return (
     `${summaryInWords(summary)}.` +
     (summary.thunder ? " Temporali possibili." : "") +
+    skySpoken(summary) +
     (summary.split ? " Modelli divisi." : "") +
     (summary.reach === "near" ? "" : " Solo una tendenza.")
   )

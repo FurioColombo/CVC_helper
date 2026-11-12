@@ -6,7 +6,7 @@ import { useWindForecast } from "@/features/weather/useWindForecast"
 import { appChannelConfig } from "@/runtimeConfig"
 
 const NOW = Date.UTC(2026, 10, 5, 8) / 1000
-const key = `${appChannelConfig.weatherCachePrefix}v2.derive`
+const key = `${appChannelConfig.weatherCachePrefix}v3.derive`
 
 function payload(fetchedAt = NOW) {
   const hourly = {

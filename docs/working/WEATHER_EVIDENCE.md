@@ -24,7 +24,8 @@ Mean hourly speed error at +1 day, knots, common sample:
 | CHIA | 3.25  | 3.82 | 3.48   | 3.87 | 3.42    | 4.34    | 3.84 | 3.95 |
 
 The blend itself, computed by the app's own domain code, on sessions with all seven
-models (the second build's table had let in sessions without them, and said otherwise).
+models (session windows 9–13 and 14–18, before the owner widened them to 8–14 and 14–19
+on 2026-11-12; the hourly figures do not depend on them) (the second build's table had let in sessions without them, and said otherwise).
 +1 d covers August to October only, 171 sessions; short range covers 306. The session
 error compares session means; the hourly one is comparable with the table above.
 

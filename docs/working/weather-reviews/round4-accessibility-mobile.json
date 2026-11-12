@@ -1,0 +1,158 @@
+{
+  "reviewerRole": "accessibility-mobile",
+  "persona": "La Maestra",
+  "milestone": "WX1 side branch claude/weather-section: Vento map view (Numeri | Mappa), sky and temperature",
+  "commit": "27d3554 plus the uncommitted working-tree diff of 2026-11-12 (26 modified files, 7 new)",
+  "verdict": "FAIL",
+  "blockers": [
+    {
+      "id": "A11Y-29",
+      "title": "If the map's code fails to download, Vento is replaced by a false error, focus is lost and the stored forecast is deleted",
+      "evidence": "src/features/weather/WeatherScreen.tsx:89 is the app's only React.lazy import. The Suspense at WeatherScreen.tsx:485 has no error boundary of its own, so a rejected import reaches the screen-level WeatherBoundary (src/App.tsx:862). Its componentDidCatch calls clearCachedForecasts() (src/features/weather/WeatherBoundary.tsx:21-22, src/features/weather/windData.ts:513). Dev server with the WindZoneMap module request aborted, Mappa pressed with Enter: stored forecasts went from 1 to 0, focus fell to BODY, and role=alert said 'Le previsioni non si sono aperte e sono state tolte dal telefono. Il corso non è toccato.' with 'Torna alla Home' as the only action. Built app (vite build to a scratch folder, then vite preview), first visit: service worker registered, controller false. Going offline after the forecast had downloaded and tapping Mappa gave the same alert, and 0 stored forecasts remained. The built sw.js precaches WindZoneMap-*.js, so a page the service worker already controls should be safe. The failure needs a page the service worker does not control: the first session after opening the link (registerType 'prompt', no clientsClaim), a browser whose service worker storage was evicted or never ran, or a deploy while such a page is open (old chunk returns 404). The alert blames the forecast, which was valid. Its remedy cannot work offline.",
+      "reproduction": "test-results/maestra/b-edges.maestra.ts test 'B2' (route abort, Pixel 7) and test-results/maestra/c-prod.preview.ts test 'C1' (built app, context offline before Mappa). Expected: the map area says it could not load and offers a retry; focus stays on the Vista control; the forecast stays. Observed: whole screen replaced, focus on BODY, forecast deleted.",
+      "specRef": "docs/working/WEATHER_PROPOSAL.md:163 ('Last forecast stays with its age'); the screen's own promise at src/features/weather/WeatherScreen.tsx:1118 ('Dopo, l'ultima scaricata resta qui anche senza segnale'); docs/design/06_DESIGN_RULEBOOK.md R14 (error states with real recovery actions); integrity of the stored forecast"
+    }
+  ],
+  "importantFindings": [
+    {
+      "id": "A11Y-30",
+      "title": "At 200% text the new 6-hour morning and the new temperature line draw hour values over one another; hour buttons are wider than their columns",
+      "evidence": "Sessions widened to 8-14 and 14-19 (src/domain/windConfig.ts:115), so a morning has 6 columns. Domenica AM, in both views: columns are 32 px at 320/200, 29 px at 360/200, 34 px at 390/200 and 38 px at 412/200. Every button and drawn value is 41 px wide. tests/e2e/layout-audit.ts auditLayout reports '\"17°\" overlaps \"17°\"' at 320/200 and 360/200 in Numeri and Mappa views. In Mappa view it also reports '\"20\" is under button[Ore 9…]' and '\"17°\" is under button[Ore 8…]'. In the screenshot the speeds read '2015152015 15' and the temperatures '17°17°17°17°17°'. Adjacent buttons overlap by 1 px at 320/200 and 4 px at 360/200. A tap at the left edge of hour 10's drawn gust still chose hour 10, so no wrong-hour tap was reproduced. The journey in tests/e2e/weather.spec.ts covers only Sabato PM (5 hours), and expectNoSidewaysScroll checks only the document, so this case is untested.",
+      "reproduction": "test-results/maestra/e-more.maestra.ts 'E numeri and week at 320px/360px 200%' (Chromium and WebKit) and test-results/maestra/d-geometry.maestra.ts 'D 320px 200%' / 'D 360px 200%'. Week pick 'Domenica 8 AM', then measure the hour list.",
+      "specRef": "docs/design/06_DESIGN_RULEBOOK.md R05 (testo al 200%), R18 (contenuto conservato), R04 (area attiva non sovrapposta). Classed as important for consistency with A11Y-22 and A11Y-27 of round 2."
+    },
+    {
+      "id": "A11Y-31",
+      "title": "Map text ignores the reader's text size, is below the rulebook's floor, and shrinks at 200%; the per-place hourly values appear nowhere else",
+      "evidence": "Computed sizes on Pixel 7: speed numbers are 12.48 px at 320/100 and 12.0 px at 320/200 and 360/200. Gusts, place names and 'CVC' are 11 px at every width up to 360 and at every 200% case (12.1 px only at 412/100). The clock and temperature badge, which is the sighted user's statement of the shown hour, is 10.6 px at 320/100 and 10.2 px at 320/200: fontSize '0.85em' has no floor (src/features/weather/WindZoneMap.tsx:217). At 200% the map gets narrower (230 px at 320, 214 px at 360) because the page padding is in rem, so its text gets smaller while the text around it doubles (docs/working/weather-screens/vento-mappa-320-200.png shows this). The comment at WindZoneMap.tsx:26-30 says the same numbers are 'larger, in the Numeri view'. That is false for Derive: Numeri has no per-place values, because PlaceRows is Cabinati only (WeatherScreen.tsx:574). For Cabinati, PlaceRows has half-day summaries, not the chosen hour. My judgement on the trade-off: pinch-zoom is not blocked (index.html viewport meta), and browser or page zoom scales the 12 px floor, so I do not class it as a WCAG 1.4.4 failure. F94 (viewport-unit text) is the nearest documented failure. Under the app's own 200% contract and R05 (12-13 px only for badges that are not essential on their own), the per-place gusts and names are essential and appear only here. A rem-based floor would keep the scaling with the map and still respect the reader, for example clamp(0.75rem, 4.8cqw, 1.2rem) with labels at max(0.7rem, 0.75em). A text list of the places under the map would also work.",
+      "reproduction": "test-results/maestra/d-geometry.maestra.ts, all six width/scale cases. The 'font sizes' line prints the computed sizes.",
+      "specRef": "docs/design/06_DESIGN_RULEBOOK.md R05; WCAG 1.4.4 (advisory, see evidence)"
+    },
+    {
+      "id": "A11Y-32",
+      "title": "Place names cover neighbouring numbers and are clipped at the map edge, so a speed can be misread",
+      "evidence": "Measured overlaps between the drawn label and the drawn marker. Cabinati at 320/100: the 'Caprera sud' label covers 25x11 px of the Liscia di Vacca marker. At 360/200 it covers 36x14 px and hides the first digit of '15', which then reads '5 r32' (test-results/maestra/shots/g1-cabinati-360-200.png). At 360/200 'Liscia di Vacca' covers 33x12 px of Cannigione's marker and 'La Maddalena nord' covers 39x10 px of Spargi's. The 'Cannigione' label is clipped by the map's bottom edge (overflow-hidden) at 320/200 and 360/200. Derive at 320/200 and 360/200: 'Isola del Porco' covers 40x4 and 42x6 px of the Punta Rossa marker. The comment at WindZoneMap.tsx:186 says 'Names last, so a neighbour's marker never hides one'. Drawing names last means names now hide numbers.",
+      "reproduction": "test-results/maestra/d-geometry.maestra.ts (the 'overlaps' and 'clipped' lines) and test-results/maestra/g-map.maestra.ts 'G1' (DPR 3 image)",
+      "specRef": "docs/design/06_DESIGN_RULEBOOK.md R05 (niente perdita), R18 (contenuto conservato); WCAG 1.4.10"
+    },
+    {
+      "id": "A11Y-33",
+      "title": "When the focused hour ends, its button is removed: focus falls to BODY and the map moves on silently",
+      "evidence": "Clock at Sabato 16:58, 'In corso · Sabato PM', Mappa view, focus on the pressed 'Ore 16' button. Then the clock moved to 17:00:30 and a visibilitychange fired: buttons went from 3 to 2, focus was BODY, the map label became 'Mappa Derive alle 17', and no live region changed. The remaining buttons widened from about 110 px to 167 px under the finger. Cause: blendForecast drops an hour once it has ended (src/domain/wind.ts:269), and the hour buttons are keyed by time. In Numeri view the cells were not focusable, so this focus loss is new.",
+      "reproduction": "test-results/maestra/b-edges.maestra.ts 'B1 the focused hour ends during the outing'",
+      "specRef": "docs/design/06_DESIGN_RULEBOOK.md R12 (ritorno del focus); WCAG 2.4.3. Same class as A11Y-6 and A11Y-24."
+    },
+    {
+      "id": "A11Y-34",
+      "title": "Choosing an hour changes the map above the control without any announcement; on the map, the hour is spoken only after the three places",
+      "evidence": "After Enter on 'Ore 18', only aria-pressed changes and every live region stays the same. The map above changes to 18:00 silently. To hear the places at 18, a TalkBack user swipes back 6-7 items: sky line, summary, credit link, caption, then three places. In reading order the shown hour first appears in the figcaption ('Alle 15, poco nuvoloso, 19 gradi.'), after the three place sentences. The other place it appears is the label of a non-focusable role=group, which TalkBack does not reliably speak. A sighted user sees the '15:00' badge first and sees the change at once.",
+      "reproduction": "test-results/maestra/a-focus.maestra.ts 'A1' (the 'after Ore 18' and 'live changed? false' lines, and the hero aria snapshot)",
+      "specRef": "Precedent A11Y-5 (a pick that changes content elsewhere is announced); reviewer lens 5; WCAG 1.3.2 (advisory). Suggested fix: announce 'Mappa alle 18: Cala Fico …' politely, or put an sr-only 'Alle 18' before the markers."
+    },
+    {
+      "id": "A11Y-35",
+      "title": "Below 11 kn the marker pills are transparent, so the coastline runs through the numbers",
+      "evidence": "WIND_TINTS[0].background is 'transparent' (src/domain/windConfig.ts:254). WindZoneMap.tsx:156 falls back to white only on null, so that fallback never applies. At 10 kn (Derive, Lunedì PM) the computed backgrounds of all three markers are rgba(0, 0, 0, 0). In the image the coastline crosses '10' at Isola del Porco and 'r22' at Punta Rossa. Text against the stroke is 3.56:1 where they cross (11.2:1 against the sea). Light wind is the common case for Derive courses.",
+      "reproduction": "test-results/maestra/g-map.maestra.ts 'G2' (prints the marker backgrounds; image test-results/maestra/shots/g2-derive-low-wind.png)",
+      "specRef": "docs/design/06_DESIGN_RULEBOOK.md R06; WCAG 1.4.3 (text on a non-uniform background)"
+    }
+  ],
+  "qolFindings": [
+    {
+      "id": "A11Y-Q15",
+      "title": "The map's loading and arrival are not announced",
+      "evidence": "With the chunk delayed, 'Carico la mappa…' (WeatherScreen.tsx:488) is a plain paragraph outside any live region, and the map's arrival changes no live region. Focus correctly stays on the pressed Mappa button throughout. Hour buttons are already active while the map loads. From the precache this takes milliseconds; on an uncontrolled page with a weak signal there is no timeout.",
+      "reproduction": "test-results/maestra/a-focus.maestra.ts 'A1' (loading lines)",
+      "specRef": "docs/design/06_DESIGN_RULEBOOK.md R14"
+    },
+    {
+      "id": "A11Y-Q16",
+      "title": "One concept, two words",
+      "evidence": "The map says 'raffiche 32' and the hour button says 'raffica 32' for the same value. Hour button names say 'da Variabile' (e.g. 'Ore 8: da Variabile, 20 nodi') while the map says 'direzione variabile'.",
+      "reproduction": "Aria snapshot in test-results/maestra/a-focus.maestra.ts 'A1'; layout audit lines in d-geometry 'D 320px 200%'",
+      "specRef": "docs/design/06_DESIGN_RULEBOOK.md R13"
+    },
+    {
+      "id": "A11Y-Q17",
+      "title": "The figure takes the whole caption as its name",
+      "evidence": "Aria snapshot: figure \"Alle 15, poco nuvoloso, 19 gradi. Frecce: dove va il vento, nodi attesi, r = raffica. Costa © OpenStreetMap, i suoi collaboratori: nuova scheda.\". The same text follows as the caption, so VoiceOver may read it twice.",
+      "reproduction": "test-results/maestra/a-focus.maestra.ts 'A1'",
+      "specRef": "Reviewer lens 2"
+    },
+    {
+      "id": "A11Y-Q18",
+      "title": "Two controls under the 44 px preference",
+      "evidence": "The Vista buttons are 68x40 and 64x40 at 100% text. This is the app's Segmented pattern, but it is not a dense repeated group, so R04 prefers 44. The OpenStreetMap credit link is 98x19: WCAG 2.5.8 exempts inline links, R04 has no such exception, and the repo's auditLayout flags it.",
+      "reproduction": "test-results/maestra/d-geometry.maestra.ts ('audit (map view)' lines)",
+      "specRef": "docs/design/06_DESIGN_RULEBOOK.md R04"
+    },
+    {
+      "id": "A11Y-Q19",
+      "title": "Land and sea are almost the same tone",
+      "evidence": "LAND #f3eee2 against SEA #d6e6f2 is 1.10:1. Only the 1.2 px coast stroke separates them (3.14:1 against the sea), which is weak outdoors in sun.",
+      "reproduction": "Contrast computed from WindZoneMap.tsx constants",
+      "specRef": "WCAG 1.4.11; docs/design/06_DESIGN_RULEBOOK.md R06"
+    },
+    {
+      "id": "A11Y-Q20",
+      "title": "The hourly sky is an icon without a word for sighted users",
+      "evidence": "The map badge and each hour button show only a lucide sky icon. Screen readers get the word; sighted users must tell Sun, CloudSun, Cloud, CloudFog, CloudDrizzle and CloudRain apart at 16 px. The week legend explains only thunder.",
+      "reproduction": "Visual inspection of test-results/maestra/shots/d-320-100-derive-am.png and the hour buttons",
+      "specRef": "docs/design/06_DESIGN_RULEBOOK.md R06, R20"
+    },
+    {
+      "id": "A11Y-Q21",
+      "title": "The journey's map assertions pass on text that screen readers never hear",
+      "evidence": "tests/e2e/weather.spec.ts asserts toContainText('CVC'), 'Isola del Porco', 'Punta Rossa' and 'Cannigione' on the map group. toContainText reads textContent, which includes the aria-hidden labels. 'CVC' is never spoken. Only Cala Fico's and Spargi's spoken sentences are checked. toHaveAccessibleName or an aria snapshot would prove what is announced.",
+      "reproduction": "Read tests/e2e/weather.spec.ts (new map test); compare with the aria snapshot in a-focus 'A1'",
+      "specRef": "AGENTS.md §9 (assert visible or announced outcomes)"
+    },
+    {
+      "id": "A11Y-Q22",
+      "title": "The hour is a toggle that cannot be released",
+      "evidence": "Space on the pressed hour leaves aria-pressed true, so a screen reader announces a toggle that does not toggle. This matches the app's Segmented, so it is a note only. Radio semantics would describe a choice of one.",
+      "reproduction": "test-results/maestra/a-focus.maestra.ts 'A1' ('Space again on pressed hour')",
+      "specRef": "Reviewer lens 2"
+    }
+  ],
+  "screenReaderScript": [
+    "1. Heading: 'Prossima uscita · Sabato PM, titolo' | sighted: the same heading.",
+    "2. '14–19', then 'Vista, gruppo: Numeri, premuto; Mappa, non premuto' | sighted: the pill switch.",
+    "3. Double-tap Mappa: 'Mappa, premuto'. Focus stays on Mappa (good). Loading and arrival are silent | sighted: 'Carico la mappa…' flashes, then the map.",
+    "4. Swipe: 'Cala Fico: da NW, 15 nodi, raffiche 32', 'Isola del Porco: …', 'Punta Rossa: …'. The group name 'Mappa Derive alle 15' may not be spoken | sighted: the '15:00' badge top left, then the three pills at 12 px and 11 px.",
+    "5. Swipe: 'Alle 15, poco nuvoloso, 19 gradi. Frecce: dove va il vento, nodi attesi, r = raffica. Costa ©', then 'OpenStreetMap, i suoi collaboratori: nuova scheda, link'. The listener learns the hour only here, after the places.",
+    "6. 'Sab PM: NW 15 nodi, raffiche 32', 'Poco nuvoloso · 16–19 °C' | sighted: the same lines below the map.",
+    "7. 'Ora da mostrare sulla mappa, Sabato PM, elenco' then 'Ore 14: da NW, 15 nodi, raffica 32, poco nuvoloso, 19 gradi, pulsante' … 'Ore 15 …, premuto'.",
+    "8. Double-tap 'Ore 18': 'premuto'. Nothing else is said; 6-7 swipes back are needed to hear the places at 18 | sighted: the badge and all pills change at once above.",
+    "9. During the outing, at the turn of the hour: the focused 'Ore 16' vanishes, focus is lost, and the map moves to 17 silently.",
+    "10. Offline before the service worker controls the page: double-tap Mappa and the alert says 'Le previsioni non si sono aperte e sono state tolte dal telefono…'. Focus is lost and the forecast is gone."
+  ],
+  "evidenceInspected": [
+    "docs/agents/REVIEW_PROTOCOL.md; .claude/agents/reviewer-accessibility-mobile.md; earlier reports docs/working/weather-reviews/accessibility-mobile.json and round2-accessibility-mobile.json (angles and classification precedent)",
+    "git diff and status of the worktree: src/features/weather/WeatherScreen.tsx, WindZoneMap.tsx, WeatherIcon.tsx, Segmented.tsx, WeatherHomeCard.tsx, windFormat.ts, src/domain/wind.ts, windConfig.ts, tests/e2e/weather.spec.ts, weatherFixtures.ts, docs/working/WEATHER_PROPOSAL.md (coastline.ts body skipped)",
+    "src/App.tsx WeatherBoundary use, src/features/weather/WeatherBoundary.tsx, windData.ts clearCachedForecasts, vite.config.ts PWA settings, index.html viewport and lang",
+    "docs/design/06_DESIGN_RULEBOOK.md R04, R05, R06, R12, R13, R14, R18, R20 and the sources section; 03_TECHNICAL_DECISIONS.md §1 platform targets",
+    "Playwright on Pixel 7 Chromium (it-IT, Europe/Rome) with a separate config and dev server: aria snapshots, focus after every step, Tab order, live-region contents, the lazy chunk delayed and then aborted",
+    "Production build into a scratch folder, served with vite preview, first visit offline (service worker registered, not controlling); the sw.js precache list contains WindZoneMap-*.js",
+    "Geometry at 320/360/412 px by 100/200% text, plus 390 and 430 at 200%: hour button and column widths, computed map font sizes, label and marker overlaps, clipping; tests/e2e/layout-audit.ts auditLayout on the hero, the hour list and the week",
+    "A real touchscreen tap on a drawn hour value at 320/390/412/430 px and 200% (chose the right hour)",
+    "WebKit (Playwright iPhone 13): cqw supported, aspect-ratio 400/380, map 262x249 and 12.48 px text as on Chromium",
+    "Contrast computed for marker text on every wind tint (at least 6.43:1), labels on white/85 over sea, land and the darkest tint (at least 11.68:1), storm red against tints (at least 3.67:1, non-text), the selected-hour ring (12.21:1), muted text on the pressed background (5.05:1)",
+    "Passing checks: focus stays on the Vista button both ways and during loading; Tab order Mappa, credit link, hour buttons, Mappa LaMMA; a week pick keeps focus and announces sky and temperature; hour buttons and week cells name sky and temperature; selection uses a ring, not colour alone; the diff adds no animation or transition; no new inputs (all new buttons are type=button); pinch-zoom not blocked; html lang=it",
+    "Screenshots docs/working/weather-screens/vento-mappa-320-200.png and my own in test-results/maestra/shots/"
+  ],
+  "anglesTried": {
+    "seed": 360829496,
+    "lenses": [
+      "Lens A drew index 8 (landscape, notches, safe areas), already tried in round 1, so I took the next untried lens, index 9 (input behaviour). The diff adds no inputs. I applied the lens to touch input instead: tapping drawn hour values at 200% (the right hour is chosen; targets overlap by 1-4 px, see A11Y-30), pinch-zoom left available for the fixed-size map text, and button types.",
+      "Lens B, index 4 (save, error and retry states announced): led to A11Y-29 (failure announced with the wrong cause and remedy, plus data loss), A11Y-33, A11Y-34 and A11Y-Q15."
+    ],
+    "wildcard": "The app's first React.lazy component: what happens when its chunk cannot arrive, because the user went offline before the service worker controlled the page or because a deploy removed the chunk. Reproduced on the dev server and in the production build: A11Y-29."
+  },
+  "notTested": [
+    "Real TalkBack and VoiceOver: whether the role=group label is spoken, and whether touch exploration of a drawn pill finds the 1 px sr-only sentence (the visual is aria-hidden). Needs a phone.",
+    "Chrome Android's own text scaling and iOS Safari page zoom applied to the cqw text. Only the repo's root font-size emulation was measured.",
+    "A built page already controlled by the service worker going offline: Playwright request routing kept the page uncontrolled. Its safety is inferred from the precache list.",
+    "Letter and word spacing (lens 6), landscape and safe areas (covered in round 1), and real sunlight."
+  ]
+}

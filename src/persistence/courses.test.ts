@@ -144,7 +144,7 @@ describe("course persistence", () => {
       "surname-given",
     )
     window.localStorage.setItem("cvc-helper.crew-display-columns", "3")
-    const forecastKey = `${appChannelConfig.weatherCachePrefix}v2.derive`
+    const forecastKey = `${appChannelConfig.weatherCachePrefix}v3.derive`
     window.localStorage.setItem(forecastKey, "{}")
 
     await eraseAllCourseData()
