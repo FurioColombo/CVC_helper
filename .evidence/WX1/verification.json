@@ -1,0 +1,85 @@
+{
+  "milestone": "WX1",
+  "status": "PASS",
+  "recordedAt": "2026-11-12T15:17:45.222Z",
+  "nodeVersion": "v24.21.0",
+  "appVersion": "0.5.0",
+  "recorder": "scripts/record-verification.mjs@3",
+  "gitCommit": "bc9a5fca6f4f1fa2150b305273e163fa9bd8206c",
+  "workingTreeClean": true,
+  "sourceDigest": "fbd22e42503c3551f322b16294cb3f6540734f540e1b81a5f0e695c28b7feb28",
+  "sourceFiles": 562,
+  "verificationScripts": [
+    "verify",
+    "verify:e2e:focus"
+  ],
+  "e2eSpecs": [
+    "tests/e2e/weather.spec.ts"
+  ],
+  "ci": {
+    "runId": 43233078136,
+    "attempt": 1,
+    "url": "https://github.com/FurioColombo/CVC_helper/actions/runs/43233078136",
+    "jobs": [
+      {
+        "name": "verify (macos-15)",
+        "conclusion": "success",
+        "ranSteps": [
+          "Set up job",
+          "Run actions/checkout@v4",
+          "Run actions/setup-node@v4",
+          "Run node scripts/ci-status.mjs --skip-verified >> \"$GITHUB_OUTPUT\"",
+          "Run npm ci",
+          "Run node scripts/ci-scope.mjs \"8083f812ba9a0071a1aaab3931f7f0b3440dc68b\" \"bc9a5fca6f4f1fa2150b305273e163fa9bd8206c\" >> \"$GITHUB_OUTPUT\"",
+          "Run npx playwright install --with-deps chromium webkit",
+          "macOS WebKit project and the update and isolation journeys",
+          "Keep browser timing and coverage report",
+          "Run actions/upload-artifact@v4",
+          "Post Run actions/setup-node@v4",
+          "Post Run actions/checkout@v4",
+          "Complete job"
+        ]
+      },
+      {
+        "name": "verify (ubuntu-latest)",
+        "conclusion": "success",
+        "ranSteps": [
+          "Set up job",
+          "Run actions/checkout@v4",
+          "Run actions/setup-node@v4",
+          "Run node scripts/ci-status.mjs --skip-verified >> \"$GITHUB_OUTPUT\"",
+          "Run npm ci",
+          "Run node scripts/ci-scope.mjs \"8083f812ba9a0071a1aaab3931f7f0b3440dc68b\" \"bc9a5fca6f4f1fa2150b305273e163fa9bd8206c\" >> \"$GITHUB_OUTPUT\"",
+          "Run npx playwright install --with-deps chromium",
+          "Linux deterministic checks and Chromium layout and storage projects",
+          "Keep browser timing and coverage report",
+          "Run actions/upload-artifact@v4",
+          "Post Run actions/setup-node@v4",
+          "Post Run actions/checkout@v4",
+          "Complete job"
+        ]
+      }
+    ]
+  },
+  "flakyTests": [],
+  "checks": [
+    {
+      "command": "npm run verify",
+      "status": "PASS",
+      "source": "ci",
+      "startedAt": "2026-11-12T14:02:18Z",
+      "durationMs": 4512000,
+      "exitCode": 0,
+      "outputTail": "Covered by the green full push run https://github.com/FurioColombo/CVC_helper/actions/runs/43233078136 of bc9a5fca6f4f1fa2150b305273e163fa9bd8206c: verify (macos-15) success; verify (ubuntu-latest) success"
+    },
+    {
+      "command": "npm run verify:e2e:focus",
+      "status": "PASS",
+      "source": "ci",
+      "startedAt": "2026-11-12T14:02:18Z",
+      "durationMs": 4512000,
+      "exitCode": 0,
+      "outputTail": "Covered by the green full push run https://github.com/FurioColombo/CVC_helper/actions/runs/43233078136 of bc9a5fca6f4f1fa2150b305273e163fa9bd8206c: verify (macos-15) success; verify (ubuntu-latest) success"
+    }
+  ]
+}

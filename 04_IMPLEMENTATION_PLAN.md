@@ -127,10 +127,15 @@ lines; one home for Vento instead of cutting other rules) and `02` §4; the
 disclosure in Impostazioni and the README; `07` P01 and P21; the budget test
 (12.4 calls a refresh for Derive, 19.7 for Cabinati, measured).
 
-**Left.** Reviews, round four's fixes included; the proposal's §8 items done or
-filed in the backlog; `WX1-PLACES`' Cabinati points and `WX1-TERMS` with the
-owner; the working documents folded into `.evidence/WX1/` and the contracts;
-evidence and the owner's Android check.
+**Reviews** (2026-11-12, `.evidence/WX1/`): forecast method and
+security/privacy passed with findings in round two, field UX in round three,
+accessibility/mobile in round one; no blocker remains, and every open finding
+and the proposal's §8 leftovers are in the backlog. The self-review lists each.
+
+**Left.** `WX1-PLACES`' Cabinati points and `WX1-TERMS` with the owner; the
+owner's Android check on WX1's test build, which can replace CVC Helper Test
+0.5.4 only after `B7-PHONE-CHOICE`; at closure, the working documents folded
+into `.evidence/WX1/` and the contracts.
 
 **Success predicate:** on the owner's phone, Vento shows each area's next
 session with expected wind, gust and range from a real download; without

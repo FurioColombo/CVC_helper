@@ -128,6 +128,11 @@ three were adopted on 2026-10-12, and 1, 2 and 7 on 2026-11-11 (now in
 
 ## Engineering follow-ups
 
+- **`ci:status -- --wait` spends GitHub's anonymous limit** (2026-11-12): it
+  asks every 15 s, 40 calls in its 10 minutes, and the public API allows 60 an
+  hour per address. A full run lasts 45–76 min, so a second wait, or
+  `evidence --from-ci` after it, gets HTTP 403 until the hour resets. Poll
+  every 2–3 min, or read `X-RateLimit-Remaining` and wait for the reset.
 - **For 0.5.0's first migration** (UG3 DI-UG3-2): an import keeps the device's
   migration ledger, so a file from before a ledgered migration is imported
   unmigrated (03 §3.3). DI-UG3-Q3: a hand-edited file can raise the recorded
