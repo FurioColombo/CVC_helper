@@ -7,11 +7,12 @@ import type { Page, Route } from "@playwright/test"
  * is a real forecast. The scenario is small enough to check by hand:
  *
  * - Every model, at every sea point, sends 10 kn from 315 with gusts of 22,
- *   except in the windows below.
+ *   except in the windows below. Each window is an outing with the hour
+ *   shown on each side of it (outings 9-13 and 15-18).
  * - Saturday 7 Nov, 14-19 (Sat PM, the course's first session): all models
  *   send 15 kn from 315 (NW, Maestrale) with gusts of 32. At Spargi, a
  *   Cabinati place, the wind is 18 kn with gusts of 38. The air goes from
- *   19 °C at 14 and 15 down to 16 °C at 18.
+ *   19 °C at 14 and 15 down to 16 °C at 18: 17-19 °C over the outing.
  * - Sunday 8 Nov, 8-14 (Sun AM): the models disagree. Four of them send 6 kn
  *   from 135, the other three 20 kn from 315, so the screen must say so.
  * - Sunday 8 Nov, 14-19 (Sun PM): the sky codes say thunder.

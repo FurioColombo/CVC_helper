@@ -19,6 +19,7 @@ import {
   WIND_MODELS,
   WIND_NAMES,
   WIND_SESSION_HOURS,
+  WIND_TREND_HOURS,
   type WindModelId,
 } from "@/domain/windConfig"
 
@@ -694,13 +695,36 @@ export function nextDecisionSlot(course: CourseDates, now: number): WindSlot {
   return inLastHour ? (ordered[1] ?? first) : first
 }
 
+function hoursBetween(
+  hours: readonly BlendedHour[],
+  date: string,
+  { start, end }: { start: number; end: number },
+) {
+  return hours.filter((hour) => {
+    const clock = romeClock(hour.time)
+    return clock.date === date && clock.hour >= start && clock.hour < end
+  })
+}
+
+/** The outing's own hours: what its numbers are made of. */
 export function hoursInSlot(
   hours: readonly BlendedHour[],
   slot: WindSlot,
 ): BlendedHour[] {
+  return hoursBetween(hours, slot.date, WIND_SESSION_HOURS[slot.period])
+}
+
+/** The outing with an hour each side, to show the trend around it. */
+export function hoursAroundSlot(
+  hours: readonly BlendedHour[],
+  slot: WindSlot,
+): BlendedHour[] {
+  return hoursBetween(hours, slot.date, WIND_TREND_HOURS[slot.period])
+}
+
+/** Whether an hour shown around an outing falls outside the outing itself. */
+export function outsideOuting(hour: BlendedHour, slot: WindSlot) {
   const { start, end } = WIND_SESSION_HOURS[slot.period]
-  return hours.filter((hour) => {
-    const clock = romeClock(hour.time)
-    return clock.date === slot.date && clock.hour >= start && clock.hour < end
-  })
+  const clock = romeClock(hour.time).hour
+  return clock < start || clock >= end
 }

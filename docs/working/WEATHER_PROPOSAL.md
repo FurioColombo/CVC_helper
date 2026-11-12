@@ -24,17 +24,17 @@ go out. That stays the instructor's decision.
 
 In the screen's order:
 
-| Part                 | Shows                                                                                                                                  | Why it is there                                                            |
-| -------------------- | -------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
-| Home line            | `NW 15 kn raffiche 32` and the sky with its temperatures for the next session, from the last download, with its age when old           | The answer without a tap. It contacts nobody                               |
-| Next session         | Expected wind and gust large; direction, name, force; likely range; sky and temperatures; thunder, division, change; hour by hour      | The decision of the moment                                                 |
-| Mappa (same section) | The switch Numeri / Mappa draws the area from OpenStreetMap's coastline, each forecast point's wind at the hour picked in the hour row | Where the wind is, at a glance. Drawn on the phone: nothing downloaded     |
-| Nell'area (Cabinati) | Each place's expected wind and gust, opening by itself when they differ by 3 kn or more                                                | A cruising area differs by place; one number would hide that               |
-| La settimana         | One grid: a column per day, AM and PM, direction letter, knots, gust, sky icon, highest temperature, one blue deepening with the wind  | The grasp of what is coming. A tap puts that half-day in the section above |
-| Prossime 24 ore      | One chart without sideways scroll: thick line expected, band likely, thin stepped line gusts, sessions by name                         | The shape of the day                                                       |
-| Mappa LaMMA          | LaMMA's own Bonifacio map for the chosen session, wind or waves, hour by hour                                                          | The owner's preferred source, unaltered                                    |
-| Modelli e pesi       | Every model's number, grid and weight at that hour; how often range and gust held                                                      | So the blend can be checked, not trusted                                   |
-| Altre fonti          | Meteomar, LaMMA, Windy, Windfinder                                                                                                     | One tap to the tools in use. Meteomar first: it is the official bulletin   |
+| Part                 | Shows                                                                                                                                                             | Why it is there                                                            |
+| -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
+| Home line            | `NW 15 kn raffiche 32` and the sky with its temperatures for the next session, from the last download, with its age when old                                      | The answer without a tap. It contacts nobody                               |
+| Next session         | Expected wind and gust large; direction, name, force; likely range; thunder; sky and temperatures; division, change; hour by hour                                 | The decision of the moment                                                 |
+| Mappa (same section) | The switch Numeri / Mappa draws the area from OpenStreetMap's coastline with each point's wind at the hour picked, then lists the places and the outing's numbers | Where the wind is, at a glance. Drawn on the phone: nothing downloaded     |
+| Nell'area (Cabinati) | Each place's expected wind and gust, opening by itself when they differ by 3 kn or more                                                                           | A cruising area differs by place; one number would hide that               |
+| La settimana         | One grid: a column per day, AM and PM, direction letter, knots, gust, highest temperature, an icon only when wet, one blue deepening with the wind                | The grasp of what is coming. A tap puts that half-day in the section above |
+| Prossime 24 ore      | One chart without sideways scroll: thick line expected, band likely, thin stepped line gusts, sessions by name                                                    | The shape of the day                                                       |
+| Mappa LaMMA          | LaMMA's own Bonifacio map for the chosen session, wind or waves, hour by hour                                                                                     | The owner's preferred source, unaltered                                    |
+| Modelli e pesi       | Every model's number, grid and weight at that hour; how often range and gust held                                                                                 | So the blend can be checked, not trusted                                   |
+| Altre fonti          | Meteomar, LaMMA, Windy, Windfinder                                                                                                                                | One tap to the tools in use. Meteomar first: it is the official bulletin   |
 
 **Areas** follow the course: Deriva opens on Cala Fico, Isola del Porco and Punta
 Rossa; Cabinato on all of Caprera, La Maddalena, Spargi, Cannigione and Liscia di
@@ -189,24 +189,33 @@ personal data. Sign-out leaves it too, for the same reason, and makes no calls.
 6. **The map is recreated, not LaMMA's.** LaMMA's images are CC BY-ND, so arrows cannot
    be drawn on them, and they cover Bonifacio at a scale where Porto Palma is a few
    pixels. The coastline comes from OpenStreetMap (ODbL, credited on the map), cut and
-   simplified once by `scripts/build-coastline.mjs` into `coastline.ts`; it loads only
-   when the map is opened. LaMMA's map stays further down, one tap away.
-7. **The window around an outing.** The owner asked for an hour more than the real
-   session on each side (2026-11-12). The afternoon is 14–19 as said. The morning
-   outing runs 9:00–12:30; I read "an hour more" as 8–14, whole hours, so the half-day
-   ends where the afternoon starts.
+   simplified once by `scripts/build-coastline.mjs` into `coastline.ts`. It is its own
+   file, fetched in the background when Vento opens; if it cannot be had, the section
+   keeps its forecast and offers to try again. LaMMA's map stays further down, one tap
+   away, behind a button now named "LaMMA" so that one card has one "Mappa".
+7. **The outing, and the hours around it.** The owner asked for an hour more than the
+   real session on each side, to read the trend (2026-11-12). The outing's own hours
+   (9–12:30 and 15–18) make every number said about it, "In corso" and the moment the
+   next outing becomes the answer. The hour row and the map show 8–14 and 14–19, the
+   extra hours muted and spoken as "prima/dopo l'uscita". Round four showed why: counting
+   the wider window moved the headlines to unsailed hours and held the morning till 13:00.
 8. **The map opens on the outing's first hour** (9 or 15), or on the current hour during
-   it. The hour row below becomes its control.
-9. **Map text follows the map's width**, not the reader's text size: at 200 % text the
-   places would cover one another. The same numbers are spoken to screen readers and
-   are large in the Numeri view.
+   it. The hour row under the map is its control; a choice is announced with each
+   place's wind. When the hour shown ends, focus moves to the next one.
+9. **The map is a picture of the list under it.** Its text follows the map's width, with
+   floors of 16 px for knots and 13 px for names (at 200 % the places would cover one
+   another); the list gives each place's wind at the reader's own size, and screen readers
+   hear the list, not the picture. Markers slide off each other over their point; names
+   try each side of their marker, crowded ones first (`mapNames.ts`).
 10. **The week shows the highest temperature only:** a cell is 40 px wide.
+11. **The view chosen is remembered** on the phone, next to the forecast, so a local
+    reset forgets it too.
 
 ## 7. What needs you
 
 | #   | Item                                       | Why                                                                                                                                                                                     | Default until you answer                                                |
 | --- | ------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------- |
-| 1   | ~~Real session hours~~                     | Settled by the owner on 2026-11-12: the outings' hours plus one on each side                                                                                                            | AM 8–14, PM 14–19 (§6 item 7)                                           |
+| 1   | ~~Real session hours~~                     | Settled by the owner on 2026-11-12: an hour each side of the outings, to read the trend                                                                                                 | Outings 9–12:30, 15–18; shown 8–14, 14–19 (§6 item 7)                   |
 | 2   | ~~Where exactly is Cala Fico?~~            | Settled: the owner's Derive points of 2026-11-11 are in `windConfig.ts`                                                                                                                 | Cala Fico, Isola del Porco, Punta Rossa as given                        |
 | 3   | **Are the Cabinati points right?**         | Chosen just off each place you named; you know where boats go                                                                                                                           | As in `windConfig.ts`                                                   |
 | 4   | **Write to LaMMA** (info@lamma.toscana.it) | **Required before release:** its disclaimer says information on use must be sent to it. Ask too: real grid size, forcing beyond +60 h, a point series or CORS header for Caprera        | Maps shown on the branch only. I have not written: that is your message |
@@ -254,8 +263,12 @@ Bocche best. Not built: it adds data to the course model and deserves its own de
 - The coastline is an extract of 2026-11-11. The map has no scale bar and no zoom; its
   three Derive points are a few hundred metres apart, so it shows where the numbers
   belong more than how they differ.
-- The 22 journeys pass on Chrome's Android emulation and on Playwright's WebKit build with
-  iPhone settings. Neither is a phone: nothing here has run on a real device, in sun.
+- Left from round four: on the map, area, places and outing give three labelled numbers
+  for one hour (FUX-52); at 320 px and 200 % the switch wraps under the heading (FUX-53);
+  whether a browser retries a failed map file or replays its failure is untested.
+- The 24 journeys pass on Chrome's Android emulation and Playwright's WebKit with iPhone
+  settings; on WebKit one reset journey once lost its button to a re-render, then passed
+  four times. Neither is a phone: nothing here has run on a real device, in sun.
 
 ## 9. To adopt it
 
@@ -278,7 +291,8 @@ privacy review is required (new network calls).
 
 ## 10. What the reviews changed
 
-Three rounds, twelve reports, seven FAIL, all in the first two. What each proved and what it
-changed is in [WEATHER_EVIDENCE.md](WEATHER_EVIDENCE.md) §2. Round three could not falsify the
-fixes to round two's four blockers. It found further faults worth fixing, three of them caused by
-that pass; those fixes have **not** been reviewed. The adoption milestone's reviews should.
+Four rounds, fourteen reports, nine FAIL: what each proved and changed is in
+[WEATHER_EVIDENCE.md](WEATHER_EVIDENCE.md) §2. Round three could not falsify the fixes to round
+two's blockers. Round four failed the owner's additions of 2026-11-12 twice: the six-hour row
+overlapped at 200 % text, and a failed map file deleted the stored forecast. The fixes to rounds
+three and four have **not** been reviewed; the adoption milestone's reviews should.

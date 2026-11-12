@@ -19,7 +19,7 @@ export function Segmented<T extends string>({
       {options.map((option) => (
         <button
           aria-pressed={option.value === value}
-          className="min-h-10 min-w-0 flex-[1_1_auto] rounded-lg px-2 text-sm font-black break-words outline-none focus-visible:ring-3 focus-visible:ring-ring aria-pressed:bg-primary aria-pressed:text-primary-foreground"
+          className="min-h-11 min-w-0 flex-[1_1_auto] rounded-lg px-2 text-sm font-black break-words outline-none focus-visible:ring-3 focus-visible:ring-ring aria-pressed:bg-primary aria-pressed:text-primary-foreground"
           key={option.value}
           onClick={() => onChange(option.value)}
           type="button"

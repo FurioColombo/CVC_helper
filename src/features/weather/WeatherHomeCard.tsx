@@ -112,16 +112,6 @@ export function WeatherHomeCard({
             </span>
           )}
         </span>
-        {sky && (
-          <span className="flex items-center gap-1 text-sm font-semibold">
-            {summary.weather && summary.weather !== "storm" ? (
-              <WeatherIcon className="size-4 shrink-0" kind={summary.weather} />
-            ) : (
-              <Thermometer aria-hidden="true" className="size-4 shrink-0" />
-            )}
-            {sky}
-          </span>
-        )}
         {summary.thunder && (
           <span className="flex items-center gap-1 text-sm font-bold text-[#7f2f17]">
             <CloudLightning
@@ -134,6 +124,16 @@ export function WeatherHomeCard({
         {summary.thunder === null && (
           <span className="block text-sm text-muted-foreground">
             Temporali: dato non scaricato
+          </span>
+        )}
+        {sky && (
+          <span className="flex items-center gap-1 text-sm">
+            {summary.weather && summary.weather !== "storm" ? (
+              <WeatherIcon className="size-4 shrink-0" kind={summary.weather} />
+            ) : (
+              <Thermometer aria-hidden="true" className="size-4 shrink-0" />
+            )}
+            {sky}
           </span>
         )}
       </span>

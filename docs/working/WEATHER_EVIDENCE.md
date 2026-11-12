@@ -169,6 +169,20 @@ reviewer put the old faults back to prove the new tests catch them.
 | Field UX | My inset selection wiped the focus ring; the week jumped 24 px when a refresh ended; "Torna" 37 px | Both shadows on a focused chosen cell; a one-line refreshing text, same padding; 44 px             |
 | Field UX | The wave map is 1181 wide, not 1168, and three fixes had no journey                                | The image's own ratio once loaded; journeys for the wave map, no map on a tap, and the scroll back |
 
-**Not reviewed.** These last fixes come from round three and only my own tests cover them. No
-reviewer has seen them; the adoption milestone's reviews should. Routing: the orchestrator wrote
-all fixes; reviewers ran on Opus, the method one as a general-purpose agent on Opus.
+**Round four**, at `27d3554` plus the owner's additions of 2026-11-12 (hours around the outing,
+the map, sky and temperature; checkpoint `b3036da`). Reports named `round4-*`. Field UX FAIL,
+accessibility FAIL.
+
+| Reviewer      | What it proved                                                                                    | What changed                                                                                                |
+| ------------- | ------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| Field UX      | At 320 px and 200 % the six-hour morning ran its numbers together and the hour buttons overlapped | The row wraps at 2.75rem a cell; a journey audits Sunday morning at every size, both views                  |
+| Field UX      | The wider window moved every headline to unsailed hours and kept the morning on Home until 13:00  | The outing's hours make the numbers; the window only shows them, muted; a 12:40 journey and test cases      |
+| Field UX      | Sky before thunder; map text 11–14 px; names over a neighbour's number; two "Mappa" in one card   | Thunder first, sky lighter; floors 16 and 13 px; markers and names placed apart; the jump is "LaMMA"        |
+| Field UX      | Mappa dropped the likely range, waves and places; thirteen sky icons in the week; Torna by Mappa  | Range and waves under the map, places listed; icons only when wet, red bolt on a chip; Torna on its own row |
+| Accessibility | If the map's file failed, the whole screen showed an error and the stored forecast was deleted    | The map has its own error boundary and retry; a journey aborts the file and checks the forecast stays       |
+| Accessibility | The map's values reached nobody at their text size; the focused hour vanished; picks were silent  | A list under the map; focus moves to the hour shown; each pick announced with every place's wind            |
+| Accessibility | Clear markers let the coast run through numbers; "raffiche"/"raffica", "da Variabile"; view lost  | White below 11 kn; one wording (`readingInWords`); loading announced; the view remembered; 44 px switch     |
+
+**Not reviewed.** The fixes to rounds three and four are covered only by my own tests. No reviewer
+has seen them; the adoption milestone's reviews should. Routing: the orchestrator wrote all fixes;
+reviewers ran on Opus, the method one as a general-purpose agent on Opus.

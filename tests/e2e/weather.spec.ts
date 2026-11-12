@@ -3,7 +3,7 @@ import path from "node:path"
 
 import { expect, test, type Page } from "@playwright/test"
 
-import { expectNoSidewaysScroll } from "./layout-audit"
+import { expectCleanLayout, expectNoSidewaysScroll } from "./layout-audit"
 import {
   pointsOf,
   routeWeather,
@@ -69,7 +69,8 @@ async function expectKnownHero(page: Page) {
   await expect(box.getByText("Raffiche 32")).toBeVisible()
   await expect(box.getByText("NW · Maestrale · Forza 4")).toBeVisible()
   await expect(box.getByText("Probabile 11–20 kn")).toBeVisible()
-  await expect(box.getByText("Poco nuvoloso · 16–19 °C")).toBeVisible()
+  // The outing's own hours, 15 to 18: not the hours shown around it.
+  await expect(box.getByText("Poco nuvoloso · 17–19 °C")).toBeVisible()
   // Silent when the models agree.
   await expect(box.getByText(/Modelli divisi/)).toHaveCount(0)
 }
@@ -79,10 +80,62 @@ async function expectStrip(page: Page) {
   await expect(card).toContainText("Vento · Sab PM")
   await expect(card).toContainText("NW 15 kn")
   await expect(card).toContainText("raffiche 32")
-  await expect(card).toContainText("Poco nuvoloso · 16–19 °C")
+  await expect(card).toContainText("Poco nuvoloso · 17–19 °C")
   await expect(card).toHaveAccessibleName(
-    /^Vento, Sab PM: NW 15 nodi, raffiche 32\. Poco nuvoloso, da 16 a 19 gradi\./,
+    /^Vento, Sab PM: NW 15 nodi, raffiche 32\. Poco nuvoloso, da 17 a 19 gradi\./,
   )
+}
+
+/** The map's names stay inside it and cover no marker, no other name. */
+async function expectMapClear(page: Page, where: string) {
+  const map = page.locator("[data-zone-map]")
+  await expect(map.locator("[data-map-name]").first()).toBeVisible()
+  const problems = await map.evaluate((root) => {
+    const frame = root.getBoundingClientRect()
+    const read = (selector: string) =>
+      [...root.querySelectorAll<HTMLElement>(selector)].map((element) => ({
+        key: element.dataset.mapName ?? element.dataset.mapMark ?? "",
+        box: element.getBoundingClientRect(),
+        hidden: getComputedStyle(element).visibility === "hidden",
+      }))
+    const marks = read("[data-map-mark]")
+    const names = read("[data-map-name]")
+    const cross = (a: DOMRect, b: DOMRect) =>
+      Math.min(a.right, b.right) - Math.max(a.left, b.left) > 0.5 &&
+      Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top) > 0.5
+    const found: string[] = []
+    for (const name of names) {
+      if (name.hidden) found.push(`${name.key} not placed`)
+      const { left, right, top, bottom } = name.box
+      if (
+        left < frame.left ||
+        right > frame.right ||
+        top < frame.top ||
+        bottom > frame.bottom
+      ) {
+        found.push(`${name.key} outside the map`)
+      }
+      for (const mark of marks) {
+        if (cross(name.box, mark.box)) {
+          found.push(`${name.key} over the mark ${mark.key}`)
+        }
+      }
+      for (const other of names) {
+        if (other !== name && cross(name.box, other.box)) {
+          found.push(`${name.key} over the name ${other.key}`)
+        }
+      }
+    }
+    marks.forEach((mark, index) => {
+      for (const other of marks.slice(index + 1)) {
+        if (cross(mark.box, other.box)) {
+          found.push(`mark ${mark.key} over mark ${other.key}`)
+        }
+      }
+    })
+    return found
+  })
+  expect(problems, where).toEqual([])
 }
 
 async function settle(page: Page) {
@@ -506,17 +559,26 @@ test("the map shows each place's wind at the chosen hour, drawn without a downlo
     .getByRole("group", { name: "Vista" })
     .getByRole("button", { name: "Mappa" })
     .click()
-  // It opens on the outing's first hour: the window starts an hour earlier.
-  const derive = hero(page).getByRole("group", { name: "Mappa Derive alle 15" })
+  // It opens on the outing's first hour: the row starts an hour earlier.
+  await expect(hero(page).getByText(/^Alle 15/)).toHaveText(
+    /^Alle 15\W*Poco nuvoloso\W*19 °C$/,
+  )
+  const derive = hero(page).locator("[data-zone-map=derive]")
   await expect(derive).toBeVisible()
-  await expect(derive).toContainText("Cala Fico: da NW, 15 nodi, raffiche 32")
-  await expect(derive).toContainText("Isola del Porco")
-  await expect(derive).toContainText("Punta Rossa")
-  await expect(derive).toContainText("CVC")
+  for (const name of ["Cala Fico", "Isola del Porco", "Punta Rossa", "CVC"]) {
+    await expect(derive.getByText(name, { exact: true })).toBeVisible()
+  }
+  // Every reader gets the places in words, at their own text size.
+  const places = hero(page).getByRole("list", { name: "Luoghi alle 15" })
+  await expect(places.getByRole("listitem")).toHaveCount(3)
   await expect(
-    hero(page).getByText("Sab PM: NW 15 nodi, raffiche 32"),
+    places.getByRole("listitem").filter({ hasText: "Cala Fico" }),
+  ).toContainText("da NW, 15 nodi, raffica 32")
+  await expect(
+    hero(page).getByText("Uscita 15–18: NW 15 nodi, raffiche 32"),
   ).toBeVisible()
-  await expect(hero(page).getByText("Poco nuvoloso · 16–19 °C")).toBeVisible()
+  await expect(hero(page).getByText("Probabile 11–20 kn")).toBeVisible()
+  await expect(hero(page).getByText("Poco nuvoloso · 17–19 °C")).toBeVisible()
   await expect(page.getByRole("link", { name: /^OpenStreetMap/ })).toBeVisible()
 
   const hours = hero(page).getByRole("list", {
@@ -524,21 +586,33 @@ test("the map shows each place's wind at the chosen hour, drawn without a downlo
   })
   await expect(hours.getByRole("button")).toHaveCount(5)
   await expect(hours.getByRole("button", { name: /^Ore 15:/ })).toHaveAttribute(
-    "aria-pressed",
+    "aria-current",
     "true",
   )
-  await hours.getByRole("button", { name: /^Ore 18:/ }).click()
   await expect(
-    hero(page).getByRole("group", { name: "Mappa Derive alle 18" }),
+    hours.getByRole("button", { name: /^Ore 14, prima dell'uscita:/ }),
   ).toBeVisible()
-  await expect(hours.getByRole("button", { name: /^Ore 18:/ })).toHaveAttribute(
-    "aria-pressed",
-    "true",
-  )
+  await hours.getByRole("button", { name: /^Ore 18\b/ }).click()
   await expect(
-    hours.getByRole("button", { name: /^Ore 18:/ }),
+    hours.getByRole("button", { name: /^Ore 18, dopo l'uscita:/ }),
+  ).toHaveAttribute("aria-current", "true")
+  await expect(
+    hours.getByRole("button", { name: /^Ore 18\b/ }),
   ).toHaveAccessibleName(/poco nuvoloso, 16 gradi$/)
-  if (TAKE_SCREENS) await screenshot(page, "vento-mappa-derive.png", 915)
+  await expect(
+    hero(page).getByRole("list", { name: "Luoghi alle 18" }),
+  ).toBeVisible()
+  // The choice is said, with the places it changed.
+  await expect(
+    page.getByText(
+      /^Alle 18, dopo l'uscita: Cala Fico da NW, 15 nodi, raffica 32; Isola del Porco /,
+    ),
+  ).toBeAttached()
+  for (const width of [320, 360, 412]) {
+    await page.setViewportSize({ width, height: 900 })
+    await expectMapClear(page, `Derive map at ${width} px`)
+  }
+  if (TAKE_SCREENS) await screenshot(page, "vento-mappa-derive.png", 1100)
 
   // Nothing left the phone to draw it.
   expect(weather.requests).toHaveLength(before)
@@ -549,22 +623,88 @@ test("the map shows each place's wind at the chosen hour, drawn without a downlo
     .getByRole("group", { name: "Area" })
     .getByRole("button", { name: "Cabinati" })
     .click()
-  const cabinati = hero(page).getByRole("group", {
-    name: /^Mappa Cabinati alle/,
-  })
-  await expect(cabinati).toBeVisible()
-  await expect(cabinati).toContainText("Spargi: da NW, 18 nodi, raffiche 38")
-  await expect(cabinati).toContainText("Cannigione")
-  if (TAKE_SCREENS) await screenshot(page, "vento-mappa-cabinati.png", 915)
+  await expect(hero(page).locator("[data-zone-map=cabinati]")).toBeVisible()
+  const cabinati = hero(page).getByRole("list", { name: /^Luoghi alle/ })
+  await expect(cabinati.getByRole("listitem")).toHaveCount(6)
+  await expect(
+    cabinati.getByRole("listitem").filter({ hasText: "Spargi" }),
+  ).toContainText("da NW, 18 nodi, raffica 38")
+  // What the numbers view says about the outing is still here.
+  await expect(hero(page).getByText(/Onda al largo 0,5 m/)).toBeVisible()
+  for (const width of [320, 360, 412]) {
+    await page.setViewportSize({ width, height: 900 })
+    await expectMapClear(page, `Cabinati map at ${width} px`)
+  }
+  if (TAKE_SCREENS) await screenshot(page, "vento-mappa-cabinati.png", 1200)
+
+  // The view chosen is the one Vento opens on next time.
+  await backHome(page)
+  await openVento(page)
+  await expect(
+    hero(page)
+      .getByRole("group", { name: "Vista" })
+      .getByRole("button", { name: "Mappa" }),
+  ).toHaveAttribute("aria-pressed", "true")
+  await expect(hero(page).locator("[data-zone-map]")).toBeVisible()
 
   await hero(page)
     .getByRole("group", { name: "Vista" })
     .getByRole("button", { name: "Numeri" })
     .click()
-  await expect(hero(page).getByRole("group", { name: /^Mappa/ })).toHaveCount(0)
+  await expect(hero(page).locator("[data-zone-map]")).toHaveCount(0)
   await expect(
     hero(page).getByRole("list", { name: "Ora per ora, Sabato PM" }),
   ).toBeVisible()
+})
+
+test("if the map's code cannot be had, the forecast stays and the map can be tried again", async ({
+  page,
+}) => {
+  await routeWeather(page)
+  await page.route("**/WindZoneMap*", (route) => route.abort())
+  await createCourse(page, "Deriva")
+  await openVento(page)
+  await expectKnownHero(page)
+  await hero(page)
+    .getByRole("group", { name: "Vista" })
+    .getByRole("button", { name: "Mappa" })
+    .click()
+  await expect(
+    hero(page).getByText(/^La mappa dell'area non si è caricata/),
+  ).toBeVisible()
+  // Not the whole screen's error: the forecast is on show and still stored.
+  await expect(
+    hero(page).getByRole("list", { name: "Luoghi alle 15" }),
+  ).toBeVisible()
+  await expect(
+    hero(page).getByText("Uscita 15–18: NW 15 nodi, raffiche 32"),
+  ).toBeVisible()
+  expect(await storedForecasts(page)).toContainEqual(
+    expect.stringMatching(/weather\.v3\.derive$/),
+  )
+
+  await page.unroute("**/WindZoneMap*")
+  await hero(page).getByRole("button", { name: "Riprova la mappa" }).click()
+  // The button goes; focus stays in the hero, on the hour shown.
+  await expect(
+    hero(page)
+      .getByRole("list", { name: "Ora da mostrare sulla mappa, Sabato PM" })
+      .getByRole("button", { name: /^Ore 15:/ }),
+  ).toBeFocused()
+})
+
+test("at lunch, Home and Vento already show the afternoon", async ({
+  page,
+}) => {
+  await routeWeather(page)
+  // Sunday 12:40: the morning's boats are back by 12:30.
+  await createCourse(page, "Deriva", new Date("2026-11-08T12:40:00+01:00"))
+  await openVento(page)
+  await expect(
+    page.getByRole("heading", { name: "Prossima uscita · Domenica PM" }),
+  ).toBeVisible()
+  await backHome(page)
+  await expect(strip(page)).toContainText("Vento · Dom PM")
 })
 
 test("a number in the week is never broken across lines, chosen or not, and cells stay tappable", async ({
@@ -656,7 +796,7 @@ test("the jump to the map takes focus with it, and a self-removing button leaves
   await routeWeather(page)
   await createCourse(page, "Deriva", new Date("2026-11-07T15:00:00+01:00"))
   await openVento(page)
-  await hero(page).getByRole("button", { name: "Mappa LaMMA" }).click()
+  await hero(page).getByRole("button", { name: "LaMMA" }).click()
   await expect(page.getByRole("heading", { name: "Mappa LaMMA" })).toBeFocused()
 
   await hero(page)
@@ -766,7 +906,7 @@ test("with reduced motion the jump to the map arrives at once", async ({
   await createCourse(page, "Deriva")
   await openVento(page)
   await expectKnownHero(page)
-  await hero(page).getByRole("button", { name: "Mappa LaMMA" }).click()
+  await hero(page).getByRole("button", { name: "LaMMA" }).click()
   const top = await page.evaluate(
     () => document.getElementById("mappa-lamma")!.getBoundingClientRect().top,
   )
@@ -806,12 +946,15 @@ for (const { width, textScale } of [
     await expectNoSidewaysScroll(page, `Vento at ${width} px, ${textScale}%`)
     const view = hero(page).getByRole("group", { name: "Vista" })
     await view.getByRole("button", { name: "Mappa" }).click()
-    await expect(
-      hero(page).getByRole("group", { name: "Mappa Derive alle 15" }),
-    ).toBeVisible()
+    await expect(hero(page).locator("[data-zone-map=derive]")).toBeVisible()
     await expectNoSidewaysScroll(
       page,
       `Vento map at ${width} px, ${textScale}%`,
+    )
+    await expectMapClear(page, `Vento map at ${width} px, ${textScale}%`)
+    await expectCleanLayout(
+      hero(page),
+      `Vento map hero at ${width} px, ${textScale}%`,
     )
     if (TAKE_SCREENS && width === 320 && textScale === 200) {
       await hero(page).scrollIntoViewIfNeeded()
@@ -820,6 +963,26 @@ for (const { width, textScale } of [
       })
     }
     await view.getByRole("button", { name: "Numeri" }).click()
+    // The six-hour morning, an hour each side of the outing, at every size.
+    await week.getByRole("button", { name: /^Domenica 8 AM:/ }).click()
+    await expect(
+      hero(page)
+        .getByRole("list", { name: "Ora per ora, Domenica AM" })
+        .getByRole("listitem"),
+    ).toHaveCount(6)
+    await expectCleanLayout(
+      hero(page),
+      `Vento Sunday morning at ${width} px, ${textScale}%`,
+    )
+    await view.getByRole("button", { name: "Mappa" }).click()
+    await expectCleanLayout(
+      hero(page),
+      `Vento Sunday morning map at ${width} px, ${textScale}%`,
+    )
+    await view.getByRole("button", { name: "Numeri" }).click()
+    await hero(page)
+      .getByRole("button", { name: "Torna alla prossima uscita" })
+      .click()
     if (TAKE_SCREENS && width === 320) {
       await page.setViewportSize({
         width,

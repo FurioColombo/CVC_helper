@@ -106,12 +106,22 @@ export function zoneForCourse(family: CourseFamily): WindZoneId {
 }
 
 /**
- * The hours each half-day covers (Italy), whole hours with the end excluded.
- * The school boats at 9:00 and is back by 12:30, then out from 15:00 to 18:00
- * (the CT's guide). The owner chose on 2026-11-12 to show an hour more on each
- * side, to read the trend: 8 to 14 and 14 to 19.
+ * The outings (Italy), whole hours with the end excluded: the school boats at
+ * 9:00 and is back by 12:30, then out from 15:00 to 18:00 (the CT's guide).
+ * They decide everything said about an outing: its numbers and sky, when it is
+ * under way, and when the next one becomes the answer.
  */
 export const WIND_SESSION_HOURS = {
+  AM: { start: 9, end: 13, label: "9–12:30" },
+  PM: { start: 15, end: 18, label: "15–18" },
+} as const
+
+/**
+ * The hours shown around each outing: an hour more on each side, to read the
+ * trend (the owner, 2026-11-12). They appear, muted, in the hour row and on
+ * the map, and never count in the outing's numbers.
+ */
+export const WIND_TREND_HOURS = {
   AM: { start: 8, end: 14 },
   PM: { start: 14, end: 19 },
 } as const

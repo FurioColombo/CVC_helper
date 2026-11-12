@@ -8,8 +8,10 @@ import {
   compassPoint,
   compassPoint8,
   defaultHorizon,
+  hoursAroundSlot,
   hoursInSlot,
   nextDecisionSlot,
+  outsideOuting,
   romeClock,
   slotInProgress,
   slotsForHorizon,
@@ -33,6 +35,8 @@ import {
   RANGE_HALF_WIDTH,
   WEATHER_KINDS,
   WIND_MODELS,
+  WIND_SESSION_HOURS,
+  WIND_TREND_HOURS,
   WIND_ZONES,
   zoneForCourse,
   type WindModelId,
@@ -147,6 +151,18 @@ describe("canonical tables", () => {
   it("sends a course to the area its boats sail", () => {
     expect(zoneForCourse("Deriva")).toBe("derive")
     expect(zoneForCourse("Cabinato")).toBe("cabinati")
+  })
+})
+
+describe("outing hours", () => {
+  it("shows every outing inside its trend window, an hour each side", () => {
+    for (const period of ["AM", "PM"] as const) {
+      const outing = WIND_SESSION_HOURS[period]
+      const shown = WIND_TREND_HOURS[period]
+      expect(shown.start).toBe(outing.start - 1)
+      expect(shown.end).toBe(outing.end + 1)
+    }
+    expect(WIND_TREND_HOURS.AM.end).toBe(WIND_TREND_HOURS.PM.start)
   })
 })
 
@@ -875,7 +891,7 @@ describe("time in Caprera", () => {
   })
 
   it("keeps a session whole across the change of clock", () => {
-    // Sunday 25 October 2026: clocks go back at 03:00; 08-14 is still 6 hours.
+    // Sunday 25 October 2026: clocks go back at 03:00; 09-13 is still 4 hours.
     const start = Date.UTC(2026, 9, 25, 0) / 1000
     const forecast = forecastOf({ ecmwf_ifs: series(24, 10) }, 24, start)
     const inSlot = hoursInSlot(blendForecast(forecast, start), {
@@ -885,8 +901,34 @@ describe("time in Caprera", () => {
       sessionId: null,
     })
     expect(inSlot.map((item) => romeClock(item.time).hour)).toEqual([
-      8, 9, 10, 11, 12, 13,
+      9, 10, 11, 12,
     ])
+  })
+
+  it("shows an hour each side of the outing, and counts only the outing", () => {
+    const start = Date.UTC(2026, 10, 7, 0) / 1000 // Saturday, CET
+    const hours = blendForecast(
+      forecastOf({ ecmwf_ifs: series(24, 10) }, 24, start),
+      start,
+    )
+    const slot = {
+      key: "2026-11-07-PM",
+      date: "2026-11-07",
+      period: "PM",
+      sessionId: "sat-pm",
+    } as const
+    const around = hoursAroundSlot(hours, slot)
+    expect(around.map((item) => romeClock(item.time).hour)).toEqual([
+      14, 15, 16, 17, 18,
+    ])
+    expect(
+      around
+        .filter((item) => outsideOuting(item, slot))
+        .map((item) => romeClock(item.time).hour),
+    ).toEqual([14, 18])
+    expect(
+      hoursInSlot(hours, slot).map((item) => romeClock(item.time).hour),
+    ).toEqual([15, 16, 17])
   })
 })
 
@@ -909,12 +951,12 @@ describe("slotsForHorizon", () => {
   it("drops a session once it ends, and keeps it while it runs", () => {
     const during = Date.UTC(2026, 10, 8, 10) / 1000 // Sunday 11:00
     expect(slotsForHorizon("week", COURSE, during)[0]!.sessionId).toBe("sun-am")
-    const after = Date.UTC(2026, 10, 8, 13) / 1000 // Sunday 14:00
+    const after = Date.UTC(2026, 10, 8, 12) / 1000 // Sunday 13:00
     expect(slotsForHorizon("week", COURSE, after)[0]!.sessionId).toBe("sun-pm")
   })
 
   it("has nothing left after Friday PM", () => {
-    const friday = Date.UTC(2026, 10, 13, 18) / 1000 // Friday 19:00
+    const friday = Date.UTC(2026, 10, 13, 17) / 1000 // Friday 18:00
     expect(slotsForHorizon("week", COURSE, friday)).toEqual([])
   })
 
@@ -943,10 +985,11 @@ describe("slotsForHorizon", () => {
       period: "AM",
       sessionId: null,
     } as const
-    expect(slotInProgress(slot, THURSDAY_9 - HOUR)).toBe(true) // 8:00
-    expect(slotInProgress(slot, THURSDAY_9 + 4 * HOUR)).toBe(true) // 13:00
-    expect(slotInProgress(slot, THURSDAY_9 + 5 * HOUR)).toBe(false) // 14:00
-    expect(slotInProgress(slot, THURSDAY_9 - 2 * HOUR)).toBe(false) // 7:00
+    // The outing, not the hours shown around it: 8:00 is not under way.
+    expect(slotInProgress(slot, THURSDAY_9)).toBe(true)
+    expect(slotInProgress(slot, THURSDAY_9 + 3 * HOUR)).toBe(true) // 12:00
+    expect(slotInProgress(slot, THURSDAY_9 + 4 * HOUR)).toBe(false) // 13:00
+    expect(slotInProgress(slot, THURSDAY_9 - HOUR)).toBe(false) // 8:00
   })
 })
 
@@ -960,22 +1003,27 @@ describe("nextDecisionSlot", () => {
     ],
     [
       "in its last hour: the afternoon",
-      Date.UTC(2026, 10, 8, 12, 50) / 1000,
+      Date.UTC(2026, 10, 8, 11, 10) / 1000, // 12:10, back by 12:30
       "2026-11-08-PM",
     ],
     [
-      "during the afternoon",
-      Date.UTC(2026, 10, 8, 13, 30) / 1000,
+      "at lunch: the afternoon",
+      Date.UTC(2026, 10, 8, 11, 40) / 1000, // 12:40
+      "2026-11-08-PM",
+    ],
+    [
+      "in the hour shown after the morning: the afternoon",
+      Date.UTC(2026, 10, 8, 12, 30) / 1000, // 13:30
       "2026-11-08-PM",
     ],
     [
       "in the last session's last hour: still that session",
-      Date.UTC(2026, 10, 13, 17, 30) / 1000,
+      Date.UTC(2026, 10, 13, 16, 30) / 1000, // 17:30
       "2026-11-13-PM",
     ],
     [
       "after the last session: plain half-days",
-      Date.UTC(2026, 10, 13, 18) / 1000,
+      Date.UTC(2026, 10, 13, 17) / 1000, // 18:00
       "2026-11-14-AM",
     ],
     ["weeks before: today", Date.UTC(2026, 9, 1, 8) / 1000, "2026-10-01-AM"],
@@ -989,7 +1037,7 @@ describe("defaultHorizon", () => {
     ["within seven days of the start", THURSDAY_9, "week"],
     ["during the week", Date.UTC(2026, 10, 10, 10) / 1000, "week"],
     ["weeks before the start", Date.UTC(2026, 9, 1, 10) / 1000, "seven"],
-    ["after the last session", Date.UTC(2026, 10, 13, 18) / 1000, "seven"],
+    ["after the last session", Date.UTC(2026, 10, 13, 17) / 1000, "seven"],
   ])("%s", (_, now, horizon) => {
     expect(defaultHorizon(COURSE, now)).toBe(horizon)
   })

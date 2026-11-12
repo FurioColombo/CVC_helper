@@ -38,9 +38,9 @@ export function directionWithName(degrees: number | null) {
     : `${compassPoint(degrees)} · ${windName(degrees)}`
 }
 
+/** The outing's real times, as the school states them. */
 export function periodHours(period: WindPeriod) {
-  const { start, end } = WIND_SESSION_HOURS[period]
-  return `${start}–${end}`
+  return WIND_SESSION_HOURS[period].label
 }
 
 const dayLong = new Intl.DateTimeFormat("it-IT", {
@@ -134,6 +134,11 @@ export function weatherLabel(kind: WeatherKindId) {
   return WEATHER_KINDS.find((item) => item.id === kind)?.label ?? ""
 }
 
+/** Fog, drizzle, rain, snow or storm: the skies worth an icon among many cells. */
+export function isWetWeather(kind: WeatherKindId | null) {
+  return WEATHER_KINDS.some((item) => item.id === kind && item.wet)
+}
+
 export function formatTemperature(celsius: number) {
   return `${Math.round(celsius)}°`
 }
@@ -159,6 +164,21 @@ function skySpoken({ weather, temperature }: Sky) {
     parts.push(low === high ? `${low} gradi` : `da ${low} a ${high} gradi`)
   }
   return parts.length === 0 ? "" : ` ${capitalised(parts.join(", "))}.`
+}
+
+/** One reading in words: "da NW, 15 nodi, raffica 32". */
+export function readingInWords(reading: {
+  direction: number | null
+  mid: number
+  gust: number | null
+}) {
+  const from =
+    reading.direction === null
+      ? "direzione variabile"
+      : `da ${compassPoint(reading.direction)}`
+  const gust =
+    reading.gust === null ? "" : `, raffica ${formatKnots(reading.gust)}`
+  return `${from}, ${formatKnots(reading.mid)} nodi${gust}`
 }
 
 /** One hour's sky for a screen reader, after its wind. */
@@ -215,11 +235,6 @@ export function changeText(summary: WindSummary) {
     )
   }
   return parts.length === 0 ? null : capitalised(parts.join("; "))
-}
-
-/** Red only for thunder, except where red cannot be seen: white on the darkest tint. */
-export function thunderColor(tint: (typeof WIND_TINTS)[number]) {
-  return tint.color === "#ffffff" ? tint.color : "#b42318"
 }
 
 export function tintFor(knots: number) {

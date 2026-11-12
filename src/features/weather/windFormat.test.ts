@@ -1,13 +1,14 @@
 import { describe, expect, it } from "vitest"
 
 import type { WindSummary } from "@/domain/wind"
-import { WIND_TINTS } from "@/domain/windConfig"
 import {
   refreshingText,
+  periodHours,
+  readingInWords,
   skyText,
   spokenSummary,
   splitText,
-  thunderColor,
+  isWetWeather,
 } from "@/features/weather/windFormat"
 
 const SUMMARY: WindSummary = {
@@ -58,15 +59,22 @@ describe("refreshingText", () => {
   })
 })
 
-describe("thunderColor", () => {
-  it("stays visible on every tint of the week", () => {
-    for (const tint of WIND_TINTS) {
-      if (!tint.background.startsWith("#")) continue
-      expect(
-        contrast(thunderColor(tint), tint.background),
-        tint.background,
-      ).toBeGreaterThanOrEqual(3)
-    }
+describe("the week's thunder mark", () => {
+  it("is red on its own white chip, visible on every tint", () => {
+    // The chip, not the tint, is the bolt's background: one red mark everywhere.
+    expect(contrast("#b42318", "#ffffff")).toBeGreaterThanOrEqual(4.5)
+  })
+})
+
+describe("isWetWeather", () => {
+  it("marks only the skies worth an icon among many cells", () => {
+    expect(
+      (["clear", "partly", "overcast"] as const).map(isWetWeather),
+    ).toEqual([false, false, false])
+    expect(
+      (["fog", "drizzle", "rain", "snow", "storm"] as const).map(isWetWeather),
+    ).toEqual([true, true, true, true, true])
+    expect(isWetWeather(null)).toBe(false)
   })
 })
 
@@ -125,6 +133,22 @@ describe("spokenSummary", () => {
         temperature: { low: 17, high: 17.4 },
       }),
     ).toBe("NW 14 nodi, raffiche 28. Temporali possibili. 17 gradi.")
+  })
+})
+
+describe("outing words", () => {
+  it("states the outing's real times", () => {
+    expect(periodHours("AM")).toBe("9–12:30")
+    expect(periodHours("PM")).toBe("15–18")
+  })
+
+  it("says one reading the same way everywhere", () => {
+    expect(readingInWords({ direction: 315, mid: 14.6, gust: 31.5 })).toBe(
+      "da NW, 15 nodi, raffica 32",
+    )
+    expect(readingInWords({ direction: null, mid: 4, gust: null })).toBe(
+      "direzione variabile, 4 nodi",
+    )
   })
 })
 

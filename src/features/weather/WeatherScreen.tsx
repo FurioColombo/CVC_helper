@@ -1,8 +1,10 @@
 import {
   ArrowDown,
+  ArrowLeft,
   ChevronDown,
   CircleHelp,
   CloudLightning,
+  CloudRain,
   ExternalLink,
   LoaderCircle,
   RefreshCw,
@@ -11,12 +13,15 @@ import {
   WifiOff,
 } from "lucide-react"
 import {
+  Component,
   lazy,
   Suspense,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
+  type ReactNode,
   type RefObject,
 } from "react"
 
@@ -26,8 +31,10 @@ import {
   blendForecast,
   compassPoint8,
   defaultHorizon,
+  hoursAroundSlot,
   hoursInSlot,
   nextDecisionSlot,
+  outsideOuting,
   romeClock,
   slotInProgress,
   slotsForHorizon,
@@ -68,31 +75,43 @@ import {
   formatRange,
   formatTemperature,
   hourSkyInWords,
+  isWetWeather,
   periodHours,
+  readingInWords,
   slotLabel,
   skyText,
   slotShortLabel,
   spokenSummary,
   splitText,
   summaryInWords,
-  thunderColor,
   tintFor,
   updatedText,
   weatherLabel,
 } from "@/features/weather/windFormat"
+import { placeHours, type PlaceHours } from "@/features/weather/zonePlaces"
+import { appChannelConfig } from "@/runtimeConfig"
 import type { CourseRecord } from "@/persistence/courses"
 
 const STALE_AFTER_SECONDS = 6 * 3600
 const VERY_STALE_AFTER_SECONDS = 24 * 3600
 
-// The coastline is most of the map's weight: it loads when the map is asked for.
-const WindZoneMap = lazy(() =>
-  import("@/features/weather/WindZoneMap").then((module) => ({
-    default: module.WindZoneMap,
-  })),
-)
+// The coastline is most of the map's weight: its own file, fetched when Vento opens.
+const loadZoneMap = () => import("@/features/weather/WindZoneMap")
+const lazyZoneMap = () =>
+  lazy(() => loadZoneMap().then((module) => ({ default: module.WindZoneMap })))
 
 type HeroView = "numbers" | "map"
+
+// Under the forecast's prefix, so a local reset forgets it with the rest.
+const VIEW_KEY = `${appChannelConfig.weatherCachePrefix}view`
+
+function storedView(): HeroView {
+  try {
+    return localStorage.getItem(VIEW_KEY) === "map" ? "map" : "numbers"
+  } catch {
+    return "numbers"
+  }
+}
 
 const prefersReducedMotion = () =>
   window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false
@@ -182,22 +201,22 @@ function StatusLine({
 
 function HourCell({
   hour,
+  aside,
   selected,
   onSelect,
 }: {
   hour: BlendedHour
+  /** An hour shown for the trend, outside the outing: drawn muted. */
+  aside?: string | undefined
   /** Given, the cell is a button that shows its hour on the map. */
   selected?: boolean
   onSelect?: (time: number) => void
 }) {
   const clock = romeClock(hour.time).hour
-  const direction = directionText(hour.direction)
-  const gust = hour.gust === null ? "" : `, raffica ${formatKnots(hour.gust)}`
   const content = (
     <>
       <span className="sr-only">
-        Ore {clock}: da {direction}, {formatKnots(hour.mid)} nodi{gust}
-        {hourSkyInWords(hour)}
+        {`Ore ${clock}${aside ? `, ${aside}` : ""}: ${readingInWords(hour)}${hourSkyInWords(hour)}`}
       </span>
       <span
         aria-hidden="true"
@@ -214,10 +233,13 @@ function HourCell({
       >
         {formatKnots(hour.mid)}
       </span>
-      <span aria-hidden="true" className="text-sm tabular-nums">
+      <span
+        aria-hidden="true"
+        className="text-sm whitespace-nowrap tabular-nums"
+      >
         {hour.gust === null ? "–" : `r ${formatKnots(hour.gust)}`}
       </span>
-      {hour.weather !== null && (
+      {hour.weather !== null && isWetWeather(hour.weather) && (
         <WeatherIcon className="size-4" kind={hour.weather} />
       )}
       {hour.temperature !== null && (
@@ -232,7 +254,9 @@ function HourCell({
   )
   if (!onSelect) {
     return (
-      <li className="grid justify-items-center gap-0.5 py-1 text-center">
+      <li
+        className={`grid justify-items-center gap-0.5 py-1 text-center ${aside ? "text-muted-foreground" : ""}`}
+      >
         {content}
       </li>
     )
@@ -240,8 +264,9 @@ function HourCell({
   return (
     <li className="grid">
       <button
-        aria-pressed={selected}
-        className="grid min-h-11 justify-items-center gap-0.5 rounded-lg py-1 text-center outline-none focus-visible:ring-3 focus-visible:ring-ring aria-pressed:bg-muted aria-pressed:shadow-[inset_0_0_0_2px_var(--foreground)]"
+        aria-current={selected || undefined}
+        className={`grid min-h-11 justify-items-center gap-0.5 rounded-lg py-1 text-center outline-none focus-visible:ring-3 focus-visible:ring-ring aria-[current=true]:bg-muted aria-[current=true]:shadow-[inset_0_0_0_2px_var(--foreground)] ${aside ? "text-muted-foreground" : ""}`}
+        data-hour={hour.time}
         onClick={() => onSelect(hour.time)}
         type="button"
       >
@@ -251,12 +276,12 @@ function HourCell({
   )
 }
 
-/** The hour the map opens on: now during the half-day, else the outing's start. */
+/** The hour the map opens on: now during the outing, else the outing's start. */
 function firstMapHour(inSlot: readonly BlendedHour[], now: number) {
   const current = inSlot.find(
     (hour) => hour.time <= now && now < hour.time + 3600,
   )
-  return (current ?? inSlot[1] ?? inSlot[0])?.time ?? null
+  return (current ?? inSlot[0])?.time ?? null
 }
 
 function PlaceRows({
@@ -272,11 +297,9 @@ function PlaceRows({
 }) {
   const rows = useMemo(
     () =>
-      WIND_ZONES[zone].points.map((point) => ({
+      placeHours(forecast, now, zone).map(({ point, hours }) => ({
         point,
-        summary: summariseHours(
-          hoursInSlot(blendForecast(forecast, now, [point.id]), slot),
-        ),
+        summary: summariseHours(hoursInSlot(hours, slot)),
       })),
     [forecast, now, slot, zone],
   )
@@ -331,6 +354,83 @@ function PlaceRows({
   )
 }
 
+/** The map's words: each place's wind at the hour shown, at the reader's text size. */
+function PlaceList({
+  places,
+  time,
+  label,
+}: {
+  places: readonly PlaceHours[]
+  time: number
+  label: string
+}) {
+  return (
+    <ul aria-label={label} className="m-0 grid list-none p-0">
+      {places.map(({ point, hours }) => {
+        const hour = hours.find((item) => item.time === time)
+        return (
+          <li
+            className="flex min-h-10 flex-wrap items-center justify-between gap-x-2 border-t py-1 text-base"
+            key={point.id}
+          >
+            <span className="font-semibold">{point.label}</span>
+            {hour ? (
+              <>
+                <span className="sr-only">{readingInWords(hour)}</span>
+                <span
+                  aria-hidden="true"
+                  className="flex items-center gap-1.5 tabular-nums"
+                >
+                  <WindArrow degrees={hour.direction} size={18} />
+                  <span className="font-black">{formatKnots(hour.mid)} kn</span>
+                  {hour.gust !== null && (
+                    <span className="text-sm">r {formatKnots(hour.gust)}</span>
+                  )}
+                </span>
+              </>
+            ) : (
+              <span className="text-muted-foreground">Nessun dato</span>
+            )}
+          </li>
+        )
+      })}
+    </ul>
+  )
+}
+
+/**
+ * The map's code comes in its own file: if it cannot be had, the hero keeps
+ * its forecast and offers to try again, instead of the whole screen's error.
+ */
+class MapBoundary extends Component<
+  { children: ReactNode; onRetry: () => void },
+  { failed: boolean }
+> {
+  state = { failed: false }
+
+  static getDerivedStateFromError() {
+    return { failed: true }
+  }
+
+  render() {
+    if (!this.state.failed) return this.props.children
+    return (
+      <div className="grid gap-2 rounded-xl border p-3">
+        <p className="m-0 text-sm" role="status">
+          La mappa dell&apos;area non si è caricata: i luoghi sono qui sotto.
+        </p>
+        <Button
+          className="min-h-11"
+          onClick={this.props.onRetry}
+          variant="secondary"
+        >
+          Riprova la mappa
+        </Button>
+      </div>
+    )
+  }
+}
+
 function jumpToMap() {
   document.getElementById("mappa-lamma")?.scrollIntoView({
     block: "start",
@@ -343,6 +443,7 @@ function jumpToMap() {
 function HeroLines({ summary }: { summary: WindSummary }) {
   const split = splitText(summary)
   const change = changeText(summary)
+  const sky = skyText(summary)
   return (
     <div className="mt-2 grid gap-1 text-sm">
       {summary.thunder === true && (
@@ -358,6 +459,22 @@ function HeroLines({ summary }: { summary: WindSummary }) {
         <p className="m-0 flex items-start gap-1.5 font-semibold">
           <CircleHelp aria-hidden="true" className="mt-0.5 size-4 shrink-0" />
           Temporali: dato non scaricato
+        </p>
+      )}
+      {sky && (
+        <p className="m-0 flex items-start gap-1.5">
+          {summary.weather && summary.weather !== "storm" ? (
+            <WeatherIcon
+              className="mt-0.5 size-4 shrink-0"
+              kind={summary.weather}
+            />
+          ) : (
+            <Thermometer
+              aria-hidden="true"
+              className="mt-0.5 size-4 shrink-0"
+            />
+          )}
+          {sky}
         </p>
       )}
       {split && (
@@ -391,6 +508,7 @@ function SlotHero({
   following,
   onFollow,
   onBackToNext,
+  onAnnounce,
   headingRef,
   view,
   onView,
@@ -404,13 +522,21 @@ function SlotHero({
   following: WindSlot | null
   onFollow: (slot: WindSlot) => void
   onBackToNext: () => void
+  onAnnounce: (text: string) => void
   headingRef: RefObject<HTMLHeadingElement | null>
   view: HeroView
   onView: (view: HeroView) => void
 }) {
   const inSlot = hoursInSlot(hours, slot)
+  // The outing with an hour each side: the extra hours show the trend only.
+  const around = hoursAroundSlot(hours, slot)
+  const asideOf = (hour: BlendedHour) =>
+    !outsideOuting(hour, slot)
+      ? undefined
+      : hour.time < (inSlot[0]?.time ?? Infinity)
+        ? "prima dell'uscita"
+        : "dopo l'uscita"
   const summary = summariseHours(inSlot)
-  const sky = summary ? skyText(summary) : null
   // A chosen hour belongs to its half-day; another one opens on its own.
   const [mapChoice, setMapChoice] = useState<{
     slot: string
@@ -418,9 +544,34 @@ function SlotHero({
   } | null>(null)
   const shownTime =
     (mapChoice?.slot === slot.key &&
-      inSlot.find((hour) => hour.time === mapChoice.time)?.time) ||
+      around.find((hour) => hour.time === mapChoice.time)?.time) ||
     firstMapHour(inSlot, now)
-  const onMap = view === "map" && shownTime !== null
+  const shownHour = around.find((hour) => hour.time === shownTime)
+  const mapHour = view === "map" ? shownHour : undefined
+  const onMap = mapHour !== undefined
+  const places = useMemo(
+    () => (view === "map" ? placeHours(forecast, now, zone) : []),
+    [forecast, now, view, zone],
+  )
+  // A failed download leaves a component that fails for ever: a retry makes a new one.
+  const [ZoneMap, setZoneMap] = useState(lazyZoneMap)
+  const [mapAttempt, setMapAttempt] = useState(0)
+  const row = useRef<HTMLUListElement>(null)
+  const focusedHour = useRef<number | null>(null)
+
+  // The focused hour's button goes when its hour ends: focus moves to the hour shown.
+  useLayoutEffect(() => {
+    const lost = focusedHour.current
+    if (lost === null || around.some((hour) => hour.time === lost)) return
+    focusedHour.current = null
+    const active = document.activeElement
+    if (active && active !== document.body) return
+    const next =
+      row.current?.querySelector<HTMLElement>("button[aria-current]") ??
+      row.current?.querySelector<HTMLElement>("button")
+    next?.focus()
+  })
+
   const heading = slotInProgress(slot, now)
     ? "In corso"
     : picked
@@ -433,12 +584,79 @@ function SlotHero({
       ? summariseHours(hoursInSlot(hours, following))
       : null
 
+  function showHour(time: number) {
+    setMapChoice({ slot: slot.key, time })
+    const hour = around.find((item) => item.time === time)
+    const aside = hour ? asideOf(hour) : undefined
+    const readings = places.map(({ point, hours: pointHours }) => {
+      const reading = pointHours.find((item) => item.time === time)
+      return `${point.label} ${reading ? readingInWords(reading) : "nessun dato"}`
+    })
+    onAnnounce(
+      `Alle ${romeClock(time).hour}${aside ? `, ${aside}` : ""}: ${readings.join("; ")}.`,
+    )
+  }
+
+  function retryMap() {
+    row.current?.querySelector<HTMLElement>("button[aria-current]")?.focus()
+    setZoneMap(() => lazyZoneMap())
+    setMapAttempt((attempt) => attempt + 1)
+  }
+
+  const hourRow = (
+    <ul
+      aria-label={
+        onMap
+          ? `Ora da mostrare sulla mappa, ${slotLabel(slot)}`
+          : `Ora per ora, ${slotLabel(slot)}`
+      }
+      className={`m-0 grid list-none gap-0.5 p-0 ${onMap ? "" : "mt-3 border-t pt-2"}`}
+      onBlur={(event) => {
+        const next = event.relatedTarget
+        if (next instanceof Node && !event.currentTarget.contains(next)) {
+          focusedHour.current = null
+        }
+      }}
+      onFocus={(event) => {
+        const time = event.target.getAttribute("data-hour")
+        focusedHour.current = time === null ? null : Number(time)
+      }}
+      ref={row}
+      style={{
+        gridTemplateColumns: "repeat(auto-fit, minmax(2.75rem, 1fr))",
+      }}
+    >
+      {around.map((hour) =>
+        onMap ? (
+          <HourCell
+            aside={asideOf(hour)}
+            hour={hour}
+            key={hour.time}
+            onSelect={showHour}
+            selected={hour.time === shownTime}
+          />
+        ) : (
+          <HourCell aside={asideOf(hour)} hour={hour} key={hour.time} />
+        ),
+      )}
+    </ul>
+  )
+
+  const likely = summary && (
+    <p className="m-0 text-sm text-muted-foreground">
+      Probabile {formatRange(summary.low, summary.high)} kn
+      {zone === "cabinati" &&
+        summary.waveHeight !== null &&
+        ` · Onda al largo ${formatDecimal(summary.waveHeight)} m`}
+    </p>
+  )
+
   return (
     <section
       aria-labelledby="wind-hero"
       className="rounded-2xl border bg-card p-4"
     >
-      <div className="flex min-h-11 flex-wrap items-center justify-between gap-x-2">
+      <div className="flex min-h-11 flex-wrap items-center justify-between gap-x-2 gap-y-1">
         <h2
           className="m-0 text-base font-black outline-none"
           id="wind-hero"
@@ -460,18 +678,18 @@ function SlotHero({
               value={view}
             />
           )}
-          {picked && (
-            <button
-              aria-label="Torna alla prossima uscita"
-              className="min-h-11 min-w-11 font-bold text-primary outline-none focus-visible:ring-3 focus-visible:ring-ring"
-              onClick={onBackToNext}
-              type="button"
-            >
-              Torna
-            </button>
-          )}
         </span>
       </div>
+      {picked && (
+        <button
+          className="inline-flex min-h-11 items-center gap-1 text-sm font-bold text-primary outline-none focus-visible:ring-3 focus-visible:ring-ring"
+          onClick={onBackToNext}
+          type="button"
+        >
+          <ArrowLeft aria-hidden="true" className="size-4" />
+          Torna alla prossima uscita
+        </button>
+      )}
 
       {!summary ? (
         <p className="mt-3 mb-0 text-base">
@@ -480,26 +698,57 @@ function SlotHero({
         </p>
       ) : (
         <>
-          {onMap ? (
-            <div className="mt-2">
-              <Suspense
-                fallback={
-                  <p className="m-0 text-sm text-muted-foreground">
-                    Carico la mappa…
-                  </p>
-                }
-              >
-                <WindZoneMap
-                  forecast={forecast}
-                  now={now}
-                  sky={inSlot.find((hour) => hour.time === shownTime)}
-                  time={shownTime}
-                  zone={zone}
-                />
-              </Suspense>
-              <p className="m-0 mt-1 text-base font-semibold">
-                {slotShortLabel(slot)}: {summaryInWords(summary)}
+          {mapHour ? (
+            <div className="mt-2 grid gap-2">
+              <p className="m-0 flex flex-wrap items-center gap-x-1.5 text-base font-black">
+                Alle {romeClock(mapHour.time).hour}
+                {asideOf(mapHour) && (
+                  <span className="font-semibold text-muted-foreground">
+                    ({asideOf(mapHour)})
+                  </span>
+                )}
+                {mapHour.weather && (
+                  <span className="inline-flex items-center gap-1 font-semibold">
+                    ·
+                    <WeatherIcon
+                      className="size-5 shrink-0"
+                      kind={mapHour.weather}
+                    />
+                    {weatherLabel(mapHour.weather)}
+                  </span>
+                )}
+                {mapHour.temperature !== null && (
+                  <span className="font-semibold tabular-nums">
+                    · {Math.round(mapHour.temperature)} °C
+                  </span>
+                )}
               </p>
+              <MapBoundary key={mapAttempt} onRetry={retryMap}>
+                <Suspense
+                  fallback={
+                    <p
+                      className="m-0 grid min-h-48 place-items-center rounded-xl border bg-muted text-sm"
+                      role="status"
+                    >
+                      Carico la mappa…
+                    </p>
+                  }
+                >
+                  <ZoneMap places={places} time={mapHour.time} zone={zone} />
+                </Suspense>
+              </MapBoundary>
+              {hourRow}
+              <PlaceList
+                label={`Luoghi alle ${romeClock(mapHour.time).hour}`}
+                places={places}
+                time={mapHour.time}
+              />
+              <div className="border-t pt-1">
+                <p className="m-0 text-base font-semibold">
+                  Uscita {periodHours(slot.period)}: {summaryInWords(summary)}
+                </p>
+                {likely}
+              </div>
             </div>
           ) : (
             <>
@@ -522,54 +771,13 @@ function SlotHero({
                 {directionWithName(summary.direction)} · Forza{" "}
                 {beaufort(summary.mid)}
               </p>
-              <p className="m-0 text-sm text-muted-foreground">
-                Probabile {formatRange(summary.low, summary.high)} kn
-                {zone === "cabinati" &&
-                  summary.waveHeight !== null &&
-                  ` · Onda al largo ${formatDecimal(summary.waveHeight)} m`}
-              </p>
+              {likely}
             </>
-          )}
-          {sky && (
-            <p className="m-0 mt-1 flex items-center gap-1.5 text-base font-semibold">
-              {summary.weather && summary.weather !== "storm" ? (
-                <WeatherIcon
-                  className="size-5 shrink-0"
-                  kind={summary.weather}
-                />
-              ) : (
-                <Thermometer aria-hidden="true" className="size-5 shrink-0" />
-              )}
-              {sky}
-            </p>
           )}
 
           <HeroLines summary={summary} />
 
-          <ul
-            aria-label={
-              onMap
-                ? `Ora da mostrare sulla mappa, ${slotLabel(slot)}`
-                : `Ora per ora, ${slotLabel(slot)}`
-            }
-            className="m-0 mt-3 grid list-none gap-1 border-t p-0 pt-2"
-            style={{
-              gridTemplateColumns: `repeat(${Math.max(inSlot.length, 1)}, minmax(0, 1fr))`,
-            }}
-          >
-            {inSlot.map((hour) =>
-              onMap ? (
-                <HourCell
-                  hour={hour}
-                  key={hour.time}
-                  onSelect={(time) => setMapChoice({ slot: slot.key, time })}
-                  selected={hour.time === shownTime}
-                />
-              ) : (
-                <HourCell hour={hour} key={hour.time} />
-              ),
-            )}
-          </ul>
+          {!onMap && hourRow}
 
           {zone === "cabinati" && !onMap && (
             <PlaceRows forecast={forecast} now={now} slot={slot} zone={zone} />
@@ -591,7 +799,7 @@ function SlotHero({
         onClick={jumpToMap}
         type="button"
       >
-        Mappa LaMMA
+        LaMMA
         <ArrowDown aria-hidden="true" className="size-4" />
       </button>
     </section>
@@ -735,6 +943,8 @@ function SlotCell({
     )
   }
   const tint = tintFor(summary.mid)
+  const storm = summary.thunder === true || summary.weather === "storm"
+  const wet = isWetWeather(summary.weather)
   const label = `${slotLabel(slot).replace(` ${period}`, "")} ${number} ${period}: ${spokenSummary(summary)}`
   return (
     <button
@@ -758,20 +968,16 @@ function SlotCell({
           r{formatKnots(summary.gust)}
         </span>
       )}
-      {(summary.weather || summary.thunder || summary.split) && (
+      {(storm || wet || summary.split) && (
         <span className="wind-cell-marks" aria-hidden="true">
-          {summary.weather ? (
-            <WeatherIcon
-              className="size-4"
-              kind={summary.weather}
-              stormColor={thunderColor(tint)}
-            />
+          {storm ? (
+            <span className="grid size-5 place-items-center rounded-full bg-white">
+              <CloudLightning className="size-4 text-[#b42318]" />
+            </span>
           ) : (
-            summary.thunder && (
-              <CloudLightning
-                className="size-4"
-                style={{ color: thunderColor(tint) }}
-              />
+            wet &&
+            summary.weather && (
+              <WeatherIcon className="size-4" kind={summary.weather} />
             )
           )}
           {summary.split && <CircleHelp className="size-3.5" />}
@@ -879,6 +1085,10 @@ function WeekOverview({
           temporali,
         </span>{" "}
         <span className="whitespace-nowrap">
+          <CloudRain aria-hidden="true" className="inline size-3.5" /> pioggia o
+          nebbia,
+        </span>{" "}
+        <span className="whitespace-nowrap">
           <CircleHelp aria-hidden="true" className="inline size-3.5" /> modelli
           divisi.
         </span>{" "}
@@ -973,7 +1183,17 @@ function SourceNote() {
         >
           {DATA_CREDIT.licence}
         </a>
-        , elaborati.
+        , elaborati. Costa della mappa: ©{" "}
+        <a
+          aria-label="OpenStreetMap, i suoi collaboratori, ODbL: nuova scheda"
+          className="underline"
+          href="https://www.openstreetmap.org/copyright"
+          rel="noreferrer"
+          target="_blank"
+        >
+          collaboratori di OpenStreetMap
+        </a>
+        , ODbL.
       </p>
       <p className="m-0">
         Con Vento aperto il telefono contatta Open-Meteo e LaMMA, anche da solo
@@ -1001,7 +1221,7 @@ export function WeatherScreen({
   const { forecast, state, now, refresh } = useWindForecast(zone, "network")
   const [pickedKey, setPickedKey] = useState<string | null>(null)
   const [mapField, setMapField] = useState<LammaField>("wind10")
-  const [heroView, setHeroView] = useState<HeroView>("numbers")
+  const [heroView, setHeroView] = useState<HeroView>(storedView)
   const [announcement, setAnnouncement] = useState("")
   const heading = useRef<HTMLHeadingElement>(null)
   const hero = useRef<HTMLDivElement>(null)
@@ -1035,6 +1255,20 @@ export function WeatherScreen({
     const at = ordered.findIndex((slot) => slot.key === heroSlot.key)
     return at < 0 ? null : (ordered[at + 1] ?? null)
   }, [heroSlot, knownSlots])
+
+  // In the background: when the map is asked for it is already here, or failed quietly.
+  useEffect(() => {
+    void loadZoneMap().catch(() => undefined)
+  }, [])
+
+  function chooseView(view: HeroView) {
+    setHeroView(view)
+    try {
+      localStorage.setItem(VIEW_KEY, view)
+    } catch {
+      // Private browsing: the choice lasts until Vento closes.
+    }
+  }
 
   useEffect(() => {
     if (state === "failed") focusHero.current = false
@@ -1161,7 +1395,8 @@ export function WeatherScreen({
                 focusHero.current = true
                 pick(slot)
               }}
-              onView={setHeroView}
+              onAnnounce={setAnnouncement}
+              onView={chooseView}
               picked={picked !== null}
               slot={heroSlot}
               view={heroView}
