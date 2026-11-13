@@ -30,7 +30,7 @@ Tell your agent the item name and what happened. It records your feedback and ke
 
 **What to do:**
 
-1. Not yet: it needs WX1's test build, which can replace CVC Helper Test 0.5.4 only after B7-PHONE-CHOICE. The address follows here when it is ready.
+1. Not yet: WX1's test build, CVC Helper Test 0.5.5 from 5cca6fd, is pinned and waits for you to say it may be published (B7 is complete, so it can replace 0.5.4). The address and READY follow once it is live.
 2. Use a course with invented data. On Home, before opening Vento, note what the Vento line says.
 3. Open Vento with signal. It should show the next outing (morning 9-12:30 or afternoon 15-18) with the expected wind, gust and the likely range, sky and temperatures, and the hour row with the extra hours greyed. Say whether the numbers match what you expect for the day, and whether anything is hard to read in the sun.
 4. Switch Numeri and Mappa: the map should show the area's coast and each point's wind at the hour picked. Then tap a half-day in the week: it should appear above, and one button should bring back the next outing.
