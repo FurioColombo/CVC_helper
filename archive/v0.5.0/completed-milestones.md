@@ -168,3 +168,30 @@ under the B4 upload rules (B4 review SP-B4-3).
 
 **Evidence:** verification, self, security/privacy and data-integrity
 reviews.
+
+## B7 — Two courses on one account
+
+**Category:** FEATURE
+**Status:** AWAITING_OWNER
+
+Two devices that each make a course, one of them offline, leave the account
+with two courses, and any other route to that state does the same (review
+SC-DT-9). Today every device of the account then stops on "Non riesco ad aprire
+i dati locali" with only Riprova, and Impostazioni, Esci, export and reset are
+out of reach. The app shows both courses and the owner chooses which to keep;
+it never erases one by itself. Target: `docs/design/mockups/b7-two-courses.html`,
+approved by the owner on 2026-11-04: counts, last change with the account's
+email, and a choice that needs signal.
+
+**Success predicate:** an account holding two courses never locks a device: the
+owner can see both, export either and keep one, and afterwards every device of
+the account opens on that one course with no row of it lost.
+
+**Adversarial checklist:** the two courses reached offline, through an import
+after a lost erase answer (SC-DT-9, r16) and through a restore (SC-DT-2); both
+devices choosing differently, one offline; a choice interrupted between its
+erase and the reopen; a new empty device; a read-only device; a device signed
+out; three courses; a choice with unsent changes in the course given up.
+
+**Evidence:** verification, the owner's Android check, self, data-integrity,
+sync-chaos, field UX and security/privacy reviews.

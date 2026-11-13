@@ -36,14 +36,15 @@ proven by `verify:all`, the reviews below and the owner's Android check.
 | B4 | Complete. Every change reaches the server once, in order, across reloads and offline days; refusals stay visible and recoverable; desktop tabs each sync. Owner check passed on CVC Helper Test 0.5.3 (2026-11-10). The desktop review's third round failed on two courses per account, split to B7 (owner decision 20). See `.evidence/B4/`. |
 | B5 | Complete. An empty device restores the account's course row for row and reopens on it; a device with another course asks before replacing; a newer minimum writer opens it read-only. Owner checks passed: the minimum read rule live, the phone restore on CVC Helper Test 0.5.3 (2026-11-10; the optional PC step skipped). See `.evidence/B5/`. |
 | B6 | Complete. An erase deletes the course from the server and the device, queued changes included; offline it completes on reconnect, and an erased course stays erased. Impostazioni states what the provider's backups keep. Owner check passed on CVC Helper Test 0.5.3 (2026-11-11; the optional reset step skipped). See `.evidence/B6/`. |
-| B7 | Awaiting the owner. Verified at `cb51dbb` (full CI green); the owner ran `B7-KEEP-RULE` and the live spec passes. Reviews in `.evidence/B7/`. CVC Helper Test 0.5.4 carries it for `B7-PHONE-CHOICE`. |
-| WX1 | Awaiting the owner. Verified at `5cca6fd` (full CI green). Four reviews passed with findings (`.evidence/WX1/`); evidence recorded from CI with `--from-ci`. Waiting: `WX1-PLACES`, `WX1-TERMS`, then `WX1-PHONE-VENTO` on a test build after `B7-PHONE-CHOICE`. |
+| B7 | Complete. Accepted by the owner with a known bug (decision 28): two courses on an account never lock a device; on the owner's phone and PC the choice failed once and a course was replaced (`docs/working/BACKLOG.md`). Evidence in `.evidence/B7/`. Several courses replace the chooser in 0.6.0. |
+| WX1 | Awaiting the owner. Verified at `5cca6fd` (full CI green). Four reviews passed with findings (`.evidence/WX1/`); evidence recorded from CI with `--from-ci`. Waiting: `WX1-PLACES`, `WX1-TERMS`, and `WX1-PHONE-VENTO` on a test build the owner allows to publish. |
 
 Handoff: B4, B5 and B6 closed on 2026-11-11. B7 handed off on 2026-11-12 at
 `cb51dbb`, after full CI on `91d2fc7` (run 43194870459); its local recording
 passed with one Windows WebKit flake (`docs/FLAKY_TESTS.md`).
 WX1 handed off on 2026-11-12 at `5cca6fd`, its verification taken from the
-green full CI of `bc9a5fc` (run 43233078136). UG4 waits for both owner checks.
+green full CI of `bc9a5fc` (run 43233078136). B7 completed on 2026-11-13 on
+the owner's acceptance of a known bug (decision 28). UG4 waits for WX1.
 
 The workflow clean-up deferred by the review of 2026-11-11 waits in
 `docs/working/CLEANUP_0.5.0.md`.
@@ -82,33 +83,6 @@ should run locally.
 - Every milestone has a success predicate and an adversarial checklist; close
   each with the `milestone-close` skill.
 
-## B7 — Two courses on one account
-
-**Category:** FEATURE
-**Status:** AWAITING_OWNER
-
-Two devices that each make a course, one of them offline, leave the account
-with two courses, and any other route to that state does the same (review
-SC-DT-9). Today every device of the account then stops on "Non riesco ad aprire
-i dati locali" with only Riprova, and Impostazioni, Esci, export and reset are
-out of reach. The app shows both courses and the owner chooses which to keep;
-it never erases one by itself. Target: `docs/design/mockups/b7-two-courses.html`,
-approved by the owner on 2026-11-04: counts, last change with the account's
-email, and a choice that needs signal.
-
-**Success predicate:** an account holding two courses never locks a device: the
-owner can see both, export either and keep one, and afterwards every device of
-the account opens on that one course with no row of it lost.
-
-**Adversarial checklist:** the two courses reached offline, through an import
-after a lost erase answer (SC-DT-9, r16) and through a restore (SC-DT-2); both
-devices choosing differently, one offline; a choice interrupted between its
-erase and the reopen; a new empty device; a read-only device; a device signed
-out; three courses; a choice with unsent changes in the course given up.
-
-**Evidence:** verification, the owner's Android check, self, data-integrity,
-sync-chaos, field UX and security/privacy reviews.
-
 ## WX1 — Vento, the wind forecast
 
 **Category:** FEATURE
@@ -135,8 +109,8 @@ accessibility/mobile in round one; no blocker remains, and every open finding
 and the proposal's §8 leftovers are in the backlog. The self-review lists each.
 
 **Left.** `WX1-PLACES`' Cabinati points and `WX1-TERMS` with the owner; the
-owner's Android check on WX1's test build, which can replace CVC Helper Test
-0.5.4 only after `B7-PHONE-CHOICE`; at closure, the working documents folded
+owner's Android check on WX1's test build, which replaces CVC Helper Test
+0.5.4 when the owner allows it to be published; at closure, the working documents folded
 into `.evidence/WX1/` and the contracts.
 
 **Success predicate:** on the owner's phone, Vento shows each area's next

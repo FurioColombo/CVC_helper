@@ -11,7 +11,7 @@ that were settled are in `archive/v0.4.0/OWNER_DECISIONS.md` and
 
 Folded on 2026-11-11: 11 and 16 are in `03_TECHNICAL_DECISIONS.md` §3 "Online backup", 21 in the plan's B7 section and its mock.
 
-**Waiting for your reading:** 1, 17, 22, 23, 25 and 27.
+**Waiting for your reading:** 1, 17, 22, 23, 25, 27 and 29.
 
 ## Open from 0.4.0
 
@@ -185,3 +185,20 @@ tutti i dati locali` erases the course from the backup first; without
     CC BY-ND licence forbids drawing on it, and Porto Palma is a few pixels
     there. All of it is built on the unmerged `claude/weather-section`, so it
     arrives with WX1; the proposal's §6 lists the smaller choices.
+28. **0.5.0 ships B7 with a known bug (yours, 2026-11-13).** On your phone
+    and PC, `B7-PHONE-CHOICE` failed at step 5: the choice never appeared and
+    the PC took the phone's course in place of its own. The same path passed in
+    emulation, so the cause is device-specific and untraced. You chose to ship
+    0.5.0 with it, tracked: B7 closes on your acceptance (recorded as such in
+    `.evidence/B7/physical-device-review.json`), the bug and the interim rule
+    (one device makes a course; none on a second while another is offline) are
+    in `docs/working/BACKLOG.md` and go into 0.5.0's known limitations at UG4.
+    Several courses (29) removes the chooser where it lives.
+29. **Several courses come in 0.6.0, sharing in 0.7.0 (mine, 2026-11-13, at
+    your "your choice").** You will use the app next summer for a few C1, C2,
+    D1 and D2 across the weeks, each created in its week; that needs several
+    courses, a season calendar and past courses kept, which `02` §4 had in
+    0.7.0. Sharing invites a team to one course and later identifies each
+    person as a volunteer, both simpler once courses are separate, so the two
+    releases swap. The proposal and its milestones:
+    `docs/working/SEVERAL_COURSES_PROPOSAL.md`.

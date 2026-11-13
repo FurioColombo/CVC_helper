@@ -86,6 +86,17 @@ three were adopted on 2026-10-12, and 1, 2 and 7 on 2026-11-11 (now in
 
 ## Backup, from the owner's recheck (2026-11-02)
 
+- **Known bug shipped in 0.5.0: a course replaced without the choice**
+  (`B7-PHONE-CHOICE`, 2026-11-13, decision 28). On the owner's phone and PC,
+  a course made on the PC was replaced by one the phone made offline, and
+  _Scegli il corso da tenere_ never appeared; three variants, same result. The
+  same path passed in emulation (Chromium, development backend), so the cause
+  needs the published build, the PC's shared worker or Android's airplane mode,
+  and is not traced. Unknown: whether the PC's course left the server or only
+  the PC. Interim rule for 0.5.0: one device makes a course, none on a second
+  while another is offline. Several courses (0.6.0) removes the chooser and
+  the swap reopen; its phone check repeats this scenario.
+
 - **An open screen does not refresh on a download:** another device's change
   shows only when the screen is opened again. Needed before sharing a course.
 - **A sync client that cannot start fails silently** (the SDK swallows it): a

@@ -4,28 +4,6 @@ This is the current owner checklist, regenerated from `.milestones/owner-checks.
 
 Tell your agent the item name and what happened. It records your feedback and keeps this list current. [How pending checks affect agent work](./OWNER_WORKFLOW.md).
 
-<a id="b7-phone-choice"></a>
-
-## Reach two courses on one account, see both, and keep one — B7
-
-**State:** Owner requested changes · Required
-
-**What to do:**
-
-The owner reported: Steps 1-4 as expected. Step 5 failed: Scegli il corso da tenere never appeared; when the phone came back online, the PC loaded the phone's course in place of its own, with no choice offered. Repeated with the two courses swapped between phone and PC, and with the PC making the last change before the phone reconnected: each time the phone's course replaced the PC's. Steps 6-9 not reached. The owner asks whether this is worth debugging, since later releases need several courses in the same week and a history of courses. Agent fixes are needed before this check can be ready again.
-
-**Expected:** An account holding two courses never locks a device: you see both, can save either to a file, keep one, and every device then opens on that one with nothing of it lost. Only your actual observations can pass this check.
-
-**Build:** `cb51dbb1d859bc92afc9a7cd4ce37fe55f3c95cf`
-
-**Test address:** https://furiocolombo.github.io/CVC_helper_test/
-
-**Guide:** [Device check guide](./DEVICE_CHECKS.md)
-
-**Work affected:** Completion of B7 and the release gate wait for this result. Other agent work follows the plan's explicit dependency permissions. Work depending on the reported problem pauses for fixes.
-
-**Latest owner report:** Steps 1-4 as expected. Step 5 failed: Scegli il corso da tenere never appeared; when the phone came back online, the PC loaded the phone's course in place of its own, with no choice offered. Repeated with the two courses swapped between phone and PC, and with the PC making the last change before the phone reconnected: each time the phone's course replaced the PC's. Steps 6-9 not reached. The owner asks whether this is worth debugging, since later releases need several courses in the same week and a history of courses.
-
 <a id="b3-email-code"></a>
 
 ## Add the sign-in code to the backend email, with a custom email sender — UG4
@@ -118,6 +96,7 @@ No phone-test build is ready. Wait until the item becomes READY before running t
 - <a id="b6-erase-rules"></a>Let the server keep an erased course erased — B6, recorded 2026-11-04: report in `.evidence/B6/physical-device-review.json`
 - <a id="b6-phone-erase"></a>Erase your course on the phone, once offline, and see it gone from the backup — B6, recorded 2026-11-11: report in `.evidence/B6/physical-device-review.json`
 - <a id="b7-keep-rule"></a>Let the server keep the one course you choose — B7, recorded 2026-11-09: report in `.evidence/B7/physical-device-review.json`
+- <a id="b7-phone-choice"></a>Reach two courses on one account, see both, and keep one — B7, recorded 2026-11-13: report in `.evidence/B7/physical-device-review.json`
 - <a id="d3-phone-update"></a>Install CVC Helper Test and check Android updates — D3, recorded 2026-10-19: report in `.evidence/D3/physical-device-review.json`
 - <a id="d4-phone-transfer"></a>Check course files, persistent storage and full reset on Android — D4, recorded 2026-10-20: report in `.evidence/D4/physical-device-review.json`
 - <a id="ug3-final-build"></a>Confirm the final 0.4.0 build on your regular app — UG3, recorded 2026-10-24: report in `.evidence/UG3/physical-device-review.json`

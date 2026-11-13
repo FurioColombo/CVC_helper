@@ -15,6 +15,20 @@
       "browser": "Not restated (Chrome in earlier reports)",
       "osVersion": "Not restated (Android 15 in earlier reports)",
       "reportedAt": "2026-11-13T00:01:47.747Z"
+    },
+    {
+      "id": "B7-PHONE-CHOICE",
+      "check": "Reach two courses on one account, see both, and keep one",
+      "result": "PASSED",
+      "reportedBy": "owner",
+      "source": "Chat, 2026-11-13, on CVC Helper Test 0.5.4: 'ship 0.5.0 with the known bug, of course trace it'",
+      "summary": "Accepted by the owner with a known bug, not passed as written (decision 28). Steps 1-4 as expected. Step 5 failed on the owner's phone and PC: Scegli il corso da tenere never appeared, and the PC took the phone's course in place of its own, also with the courses swapped and with the PC changing last. No device locked. Steps 6-9 not reached. The owner's path passed in emulation on 2026-11-13 (Chromium, development backend), so the cause is specific to real devices and is not traced yet. The bug is tracked in docs/working/BACKLOG.md and 0.5.0's known limitations; several courses (0.6.0) replaces the chooser.",
+      "testedCommit": "cb51dbb1d859bc92afc9a7cd4ce37fe55f3c95cf",
+      "testUrl": "https://furiocolombo.github.io/CVC_helper_test/",
+      "device": "Not restated (Motorola Edge 60 in earlier reports) and the owner's PC",
+      "browser": "Not restated (Chrome in earlier reports)",
+      "osVersion": "Not restated (Android 15 in earlier reports)",
+      "reportedAt": "2026-11-13T00:18:09.068Z"
     }
   ]
 }

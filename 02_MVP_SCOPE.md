@@ -71,7 +71,7 @@ Out of scope until the owner changes it and the plan is updated first:
 - automatic crew generation or optimisation;
 - dashboards, course documents, PDFs and reference-material systems;
 - image exports other than the crew and Comandate summaries;
-- course locking beyond the read-only past courses of 0.7.0, version history
+- course locking beyond the read-only past courses of 0.6.0, version history
   and a general Undo (who changed what arrives with 1.0.0, §4);
 - synchronised horizontal timelines and search;
 - native packaging and platform-specific brightness control.
@@ -96,11 +96,13 @@ indefinitely: §4 schedules them.
 
 ## 4. The road to a shared database
 
-The owner's decisions of 2026-10-08.
+The owner's decisions of 2026-10-08; several courses moved ahead of sharing
+on 2026-11-13 (`docs/working/OWNER_DECISIONS.md` 29).
 
 **Objective.** The eventual goal is a course team that edits one course
 together; that is 1.0.0. Before it, the 0.x releases deliver, in this order,
-an online backup, read-only sharing and the season's history.
+an online backup, several courses with the season's history, and read-only
+sharing.
 
 **Who.** Through 0.x the owner reads and writes, and their course team reads
 only. In 1.0.0 the owner and their team read and write.
@@ -121,8 +123,8 @@ phone without a network.
 | ------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------- |
 | 0.4.0   | Local data readiness: record metadata and course ownership, duty settings as rows, version compatibility and reliable updates, export, import, persistent storage and full reset. No server. | the owner, one device |
 | 0.5.0   | Online backup: the owner signs in, the course is copied to the server and kept up to date from the owner's devices, it can be restored on a new device, and erasing it erases it on the server. | the owner            |
-| 0.6.0   | Read-only sharing: the course team is invited to read the course, sees changes as they happen, and can be removed.                                                                | the owner             |
-| 0.7.0   | Season history: several courses per account, past courses kept read-only, a new course started without erasing the last.                                                        | the owner             |
+| 0.6.0   | Several courses and the season's history: a calendar of the season's courses, past ones kept read-only, a new course started without erasing the last.                                                        | the owner             |
+| 0.7.0   | Read-only sharing: each person signs in as a volunteer; the course team is invited to read the course, sees changes as they happen, and can be removed.                                                                | the owner             |
 | 1.0.0   | Team editing: the owner and the team read and write, with conflict rules, a record of who changed what, roles, and an explicit stability decision.                                | the owner and the team |
 
 **0.4.0** was delivered by the milestones H1, D1–D4, T1 (added by the owner

@@ -87,6 +87,11 @@ device, and never picks a course to erase from the backup. Each writable open ma
 courses it holds (`local:held-course:<id>`); a mark whose course is gone clears
 that course's refused changes and records a compaction before running it, so a
 cut one is finished later. This housekeeping can never fail an open.
+Known limitation of 0.5.0 (owner, 2026-11-13): on the owner's phone and PC the
+choice once failed to appear and the course made on the PC was replaced by the
+phone's offline one; emulation does not reproduce it (`docs/working/BACKLOG.md`).
+Until several courses replace the chooser (0.6.0), one device makes a course,
+and no second device makes one while another is offline.
 
 **Online backup (0.5.0).** Signed out, nothing connects but Vento (§3.4). Sign-in is by a link
 emailed by Supabase Auth (PKCE, so it signs in only in the browser that asked

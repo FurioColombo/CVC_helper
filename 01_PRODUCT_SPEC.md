@@ -658,8 +658,8 @@ Phone and other personal data appear only where operationally relevant, never in
 announcement rows. All app users are assumed to be authorized instructors or
 assistant instructors; that assumption does not justify showing irrelevant data.
 
-Next (owner, 2026-10-08; 02 §4): online backup (0.5.0), team read-only sharing
-(0.6.0), season history (0.7.0), team editing (1.0.0), each rewriting this.
+Next (02 §4): online backup (0.5.0), several courses and the season's history
+(0.6.0), team read-only sharing (0.7.0), team editing (1.0.0), each rewriting this.
 
 ## 11. Canonical domain truth and invariants
 

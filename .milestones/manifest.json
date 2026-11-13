@@ -1362,7 +1362,7 @@
     {
       "id": "B7",
       "category": "FEATURE",
-      "status": "AWAITING_OWNER",
+      "status": "COMPLETE",
       "verificationScripts": ["verify", "verify:e2e:focus"],
       "requiredEvidence": [
         ".evidence/B7/verification.json",
@@ -1439,7 +1439,8 @@
         },
         "ciRunId": 43209637527,
         "ciUrl": "https://github.com/FurioColombo/CVC_helper/actions/runs/43209637527"
-      }
+      },
+      "verifiedSourceDigest": "ab8689b1bea8e3b9074e5c8d6a1ea7a243850c6962fa1067c3afd07156433e05"
     },
     {
       "id": "WX1",
