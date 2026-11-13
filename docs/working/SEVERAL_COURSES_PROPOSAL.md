@@ -1,11 +1,11 @@
 # Several courses and their history — proposal
 
-> Working document · Owner: the owner · Fold at: UG4
+> Working document · Owner: the owner · Fold at: 0.6.0
 
 Asked by the owner on 2026-11-13, after `B7-PHONE-CHOICE` failed (the PC took
 the phone's course with no choice shown): plan several courses in the same week
 and a history of past courses, and say whether that makes B7's bug irrelevant.
-Nothing here is decided until the owner answers the questions at the end.
+The owner ruled it out of 0.5.0 (2026-11-13); the rest waits for the questions at the end.
 
 ## Short answer
 
@@ -34,13 +34,28 @@ devices, one offline, each making a course) becomes the new milestone's own
 phone check, so whether both courses survive is tested again rather than
 assumed.
 
+## The season in practice
+
+The centre runs several courses each week, one per family and level, at three
+bases, each with its own CT and team (`01` §2; the volunteers' guide, Allegato
+2, local only). One owner could in theory hold every course of every week; in
+practice (owner, 2026-11-13) next summer brings a few C1, C2, D1 and D2 spread
+over the weeks, each created in its own week. So the app holds a dozen or so
+courses a season, rarely two in the same week, and the course identity
+(`D2 - 46 | 2026`) already names family, level, week and year.
+
 ## The behaviour proposed
 
-1. **Course list.** Tapping the course identity on Home (`D2 - 46 | 2026`)
-   opens *I tuoi corsi*: the open courses first, then past ones, each with its
-   identity, dates and student count, and *Nuovo corso*. Each device remembers
-   which course it shows; that choice is local and never synced, so the phone
-   and the PC can show different courses.
+1. **Season calendar.** *I tuoi corsi* is a calendar of the season's weeks:
+   each week a row, its courses as their identities (`D2`, `C1`), the current
+   week highlighted, past weeks marked as history. Tapping a course opens it;
+   *Nuovo corso* starts one in the current week. Tapping the course identity on
+   Home opens it. Each device remembers which course it shows; that choice is
+   local and never synced, so the phone and the PC can show different courses.
+   **Landing.** A device that has chosen no course yet (new, restored, or
+   its course erased) opens on the calendar, the current week's courses first,
+   instead of on *Crea corso*. A device with a chosen course opens straight on
+   it, as today: no extra tap in the field.
 2. **A new course erases nothing.** *Crea corso* adds a course and opens it.
    Today it switches the others off (`saveActiveCourse`) and *Elimina il corso e
    inizia un nuovo corso* erases everything; both stop.
@@ -79,27 +94,55 @@ data-integrity, sync-chaos, field UX, security/privacy.
 
 ## Where it goes
 
-| Option | 0.5.0 | Cost |
-| --- | --- | --- |
-| **A. Replace B7 inside 0.5.0** (recommended) | Several open courses (points 1–6, 8) replace B7's chooser; 0.5.0 ships without the bug's code path. History (point 7) stays with 0.7.0, or moves earlier. | One FEATURE milestone before UG4, about B7's size. B7's chooser is not fixed, then thrown away. |
-| B. Fix B7, then several courses later | 0.5.0 keeps the chooser, once its device-only bug is found. | Debugging on real devices, then the chooser removed anyway. |
-| C. Ship 0.5.0 with B7's limitation | "Don't make a course on a second device while another is offline", as before B7. Several courses becomes 0.6.0, ahead of sharing. | Cheapest now; the backup carries a known way to lose a course, tolerable only while it holds synthetic data. |
+**Not in 0.5.0** (owner, 2026-11-13). Two releases fit:
 
-Option A also suits 0.6.0: inviting the team to read *a* course is simpler once
-courses are separate things in the app.
+- **0.6.0, ahead of sharing** (recommended): several courses and the season
+  calendar first, sharing after. Inviting a team to read *a* course, and the
+  volunteer identity below, are simpler once courses are separate things in
+  the app. Sharing moves to 0.7.0.
+- **0.7.0, as planned** (`02` §4): sharing first, in an app that still holds
+  one course at a time.
 
-With A or C, WX1's test build need not wait for `B7-PHONE-CHOICE`, which has
-already failed: it can replace CVC Helper Test 0.5.4 as soon as the owner says
-to publish it.
+**What that leaves for 0.5.0.** B7's chooser stays, and its owner check failed
+on real devices only. Two ways to close it:
+
+- **Accept the limitation** (recommended, given "not too much effort"): B7
+  closes with the owner's failed step recorded as a known limitation, and the
+  interim rule from before B7 comes back in the release notes: make a course on
+  one device at a time, never on a second one while another is offline. The
+  backup holds synthetic data only until the owner's data decisions, so no real
+  roster is at risk, and several courses later removes the code path.
+- **Find the device bug:** debug on the published build with the owner's phone
+  and PC. Real effort for a screen that is later removed.
+
+Either way, WX1's test build need not wait for `B7-PHONE-CHOICE`, which has
+already been answered: it can replace CVC Helper Test 0.5.4 as soon as the
+owner says to publish it.
+
+## Later: who is signing in (0.6.0 and 1.0.0)
+
+The owner's direction (2026-11-13): each person who signs in with an email
+says which volunteer they are, or makes a new volunteer profile when they are
+not registered yet. Today a volunteer (`01` §5) is a row of one course. That
+idea needs a person behind the rows: an account linked to one volunteer
+profile, which each course then lists in its own role (ADV, IS, CT). It is how
+0.6.0 would invite a course team and 1.0.0 would say who changed what, so it
+belongs to those releases. For now the design keeps the door open: a course's
+volunteer rows can later point to a profile, and nothing here assumes that one
+account is one person forever.
 
 ## Questions for the owner
 
-1. **Placement:** A, B or C?
-2. **Same week:** several courses open and editable at once, the device showing
-   one at a time: is that what "multiple courses for the same week" means, or
-   should one screen show two courses side by side?
-3. **When a course becomes past:** a fixed number of days after its end date,
+1. **B7 in 0.5.0:** close it with the known limitation, or find the device bug?
+2. **Release:** several courses in 0.6.0 ahead of sharing, or 0.7.0 as planned?
+3. **Same week:** when two courses share a week, is switching between them on
+   the calendar enough, or should one screen show both side by side?
+4. **When a course becomes past:** a fixed number of days after its end date,
    or only when the owner closes it?
-4. **Retention:** how long a past course and its minors' data stay, on the
+5. **One per week:** may an account hold two courses of the same family and
+   level in the same week (two D2 in week 30)? If not, the app says so when
+   the second is made, and two devices that each made "D2, week 30" offline
+   show both and ask which to keep, or whether to keep both.
+6. **Retention:** how long a past course and its minors' data stay, on the
    device and on the server. This is already due before the first real roster
    goes online (`04` "Owner decisions"); history makes it concrete.
