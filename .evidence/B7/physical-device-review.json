@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "milestone": "B7",
+  "ownerReports": [
+    {
+      "id": "B7-PHONE-CHOICE",
+      "check": "Reach two courses on one account, see both, and keep one",
+      "result": "CHANGES_REQUESTED",
+      "reportedBy": "owner",
+      "source": "Chat, 2026-11-13, on CVC Helper Test 0.5.4",
+      "summary": "Steps 1-4 as expected. Step 5 failed: Scegli il corso da tenere never appeared; when the phone came back online, the PC loaded the phone's course in place of its own, with no choice offered. Repeated with the two courses swapped between phone and PC, and with the PC making the last change before the phone reconnected: each time the phone's course replaced the PC's. Steps 6-9 not reached. The owner asks whether this is worth debugging, since later releases need several courses in the same week and a history of courses.",
+      "testedCommit": "cb51dbb1d859bc92afc9a7cd4ce37fe55f3c95cf",
+      "testUrl": "https://furiocolombo.github.io/CVC_helper_test/",
+      "device": "Not restated (Motorola Edge 60 in earlier reports) and the owner's PC",
+      "browser": "Not restated (Chrome in earlier reports)",
+      "osVersion": "Not restated (Android 15 in earlier reports)",
+      "reportedAt": "2026-11-13T00:01:47.747Z"
+    }
+  ]
+}

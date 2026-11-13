@@ -8,22 +8,11 @@ Tell your agent the item name and what happened. It records your feedback and ke
 
 ## Reach two courses on one account, see both, and keep one — B7
 
-**State:** Ready for owner check · Required
+**State:** Owner requested changes · Required
 
 **What to do:**
 
-1. Open CVC Helper Test at https://furiocolombo.github.io/CVC_helper_test/ on the phone and on the PC. Impostazioni should show version 0.5.4; if it shows 0.5.3, close the app fully and open it again. B7-KEEP-RULE is already in place.
-2. Use invented data only. These steps erase one test course for good. Start with the account holding no course: if it holds one, on the phone use Impostazioni, Elimina il corso e inizia un nuovo corso. Keep the app open on the phone and on the PC, both signed in to the same account and both on Crea il corso.
-3. Put the phone in airplane mode. On the phone, create a course, Cabinato level 3, with one invented student.
-4. On the PC, create a different course, Deriva level 2, with one invented student. Wait for Copia online aggiornata in Impostazioni.
-5. Turn airplane mode off and keep the app open on the phone for up to two minutes. Both devices should reopen by themselves on Scegli il corso da tenere, with two cards showing code, counts, last change and the account's email. Neither should stop on an error. Say whether the sentence about typing that may be lost was clear.
-6. On the phone, tap Salva file on either card: a file should start saving, and the page should name it and say it holds personal data.
-7. Put the phone in airplane mode again: Tieni questo corso goes grey and the page says the choice needs a connection. Turn airplane mode off and wait for the buttons to return.
-8. On the phone, tap Tieni questo corso on Cabinato 3. The page should ask to confirm, naming the course it will erase and what that course contains. Tick Ho capito and tap Elimina.
-9. The phone should open Cabinato 3 with its student. On the PC, Deriva 2 should leave by itself and Cabinato 3 should open, with no second choice. Reload both after a minute: only that course, with its student.
-10. Report B7-PHONE-CHOICE with what you saw at each step, and which you skipped.
-
-Use the test address below and the linked device instructions.
+The owner reported: Steps 1-4 as expected. Step 5 failed: Scegli il corso da tenere never appeared; when the phone came back online, the PC loaded the phone's course in place of its own, with no choice offered. Repeated with the two courses swapped between phone and PC, and with the PC making the last change before the phone reconnected: each time the phone's course replaced the PC's. Steps 6-9 not reached. The owner asks whether this is worth debugging, since later releases need several courses in the same week and a history of courses. Agent fixes are needed before this check can be ready again.
 
 **Expected:** An account holding two courses never locks a device: you see both, can save either to a file, keep one, and every device then opens on that one with nothing of it lost. Only your actual observations can pass this check.
 
@@ -33,7 +22,9 @@ Use the test address below and the linked device instructions.
 
 **Guide:** [Device check guide](./DEVICE_CHECKS.md)
 
-**Work affected:** Completion of B7 and the release gate wait for this result. Other agent work follows the plan's explicit dependency permissions.
+**Work affected:** Completion of B7 and the release gate wait for this result. Other agent work follows the plan's explicit dependency permissions. Work depending on the reported problem pauses for fixes.
+
+**Latest owner report:** Steps 1-4 as expected. Step 5 failed: Scegli il corso da tenere never appeared; when the phone came back online, the PC loaded the phone's course in place of its own, with no choice offered. Repeated with the two courses swapped between phone and PC, and with the PC making the last change before the phone reconnected: each time the phone's course replaced the PC's. Steps 6-9 not reached. The owner asks whether this is worth debugging, since later releases need several courses in the same week and a history of courses.
 
 <a id="b3-email-code"></a>
 
